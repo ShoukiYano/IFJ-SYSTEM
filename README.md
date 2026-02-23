@@ -1,13 +1,13 @@
 # SES業界特化型 請求書管理システム (Invoice Flow Japan)
 
 ## ログイン画面
-![alt text](image-3.png)
-## ダッシュボード画面
 ![alt text](image.png)
-## 請求書作成・編集画面
+## ダッシュボード画面
 ![alt text](image-1.png)
-## 請求書PDFプレビュー画面
+## 請求書作成・編集画面
 ![alt text](image-2.png)
+## 請求書PDFプレビュー画面
+![alt text](image-3.png)
 
 SES業界の商習慣に最適化した、高機能な請求書・見積書管理システムです。
 超過・控除の自動計算、契約更新アラート、電帳法準拠の検索機能などを備えています。
