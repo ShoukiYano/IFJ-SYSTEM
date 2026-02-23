@@ -225,9 +225,11 @@ open -e .env
 `.env` の中身（`POSTGRES_PASSWORD` と `DATABASE_URL` の2箇所のパスワードを同じ値に設定）：
 
 ```env
-POSTGRES_PASSWORD=あなたのパスワード
+POSTGRES_PASSWORD=あなたのパスワード ← 好きなパスワードを設定
 
 DATABASE_URL="postgresql://postgres:あなたのパスワード@db:5432/invoice_db?schema=public"
+↑
+これはパスワード変更しなくてOK
 ```
 
 > ⚠️ `.env` ファイルは Git にコミットされません（`.gitignore` で除外済み）。  
