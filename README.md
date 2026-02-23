@@ -26,8 +26,8 @@ SES業界の商習慣に最適化した、高機能な請求書・見積書管�
 
 ### 1. リポジトリのクローン
 ```bash
-git clone https://github.com/your-username/invoice-flow-japan.git
-cd invoice-flow-japan
+git clone https://github.com/ShoukiYano/IFJ-SYSTEM.git
+cd IFJ-SYSTEM
 ```
 
 ### 2. 環境変数の設定
