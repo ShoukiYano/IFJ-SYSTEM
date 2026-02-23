@@ -80,6 +80,15 @@ docker compose up --build
 
 ---
 
+### GUIではなくターミナルで起動したい場合
+```bash
+#起動
+sudo docker compose up --build app db
+
+#停止
+sudo docker compose down
+```
+
 ### 4. データベースの初期化 (初回のみ)
 コンテナが起動している状態で、別のターミナルから以下のコマンドを実行してテーブルの作成と初期データの投入（管理者登録）を行います。
 
