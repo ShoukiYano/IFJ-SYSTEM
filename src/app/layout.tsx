@@ -5,7 +5,7 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Invoice Flow Japan",
+  title: "IFJ-SYSTEM",
   description: "日本の商慣習に合わせた請求書管理システム",
 };
 

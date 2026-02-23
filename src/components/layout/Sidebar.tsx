@@ -24,7 +24,7 @@ const Sidebar = () => {
   return (
     <aside className="w-64 bg-[#1a1c23] h-screen fixed left-0 top-0 text-slate-400 flex flex-col p-4 z-50">
       <div className="p-4 mb-8">
-        <h1 className="text-white text-xl font-black tracking-tighter">INVOICE FLOW</h1>
+        <h1 className="text-white text-xl font-black tracking-tighter">IFJ-SYSTEM</h1>
       </div>
 
       <nav className="flex-1 space-y-1">

@@ -44,7 +44,7 @@ export default function LoginPage() {
           <div className="inline-flex p-4 bg-blue-600 rounded-3xl shadow-xl shadow-blue-200 mb-6">
             <Lock className="text-white" size={32} />
           </div>
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight">Invoice Flow</h1>
+          <h1 className="text-3xl font-black text-slate-900 tracking-tight">IFJ-SYSTEM</h1>
           <p className="text-slate-500 font-medium mt-2">システムにログインしてください</p>
         </div>
 
