@@ -108,6 +108,173 @@ docker-compose exec app npx prisma db seed
 
 ---
 
+## 🍎 Macでの構築手順（詳細）
+
+> この手順は macOS（Intel・Apple Silicon 両対応）向けです。  
+> ターミナル（`Terminal.app` または `iTerm2`）を開いて進めてください。
+
+---
+
+### Step 1: Homebrew のインストール（未インストールの場合）
+
+Homebrew は Mac のパッケージマネージャーです。ターミナルを開いて以下を実行してください。
+
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
+
+インストール後、**Apple Silicon (M1/M2/M3)** の場合は以下で PATH を通します：
+
+```bash
+echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> ~/.zprofile
+eval "$(/opt/homebrew/bin/brew shellenv)"
+```
+
+動作確認：
+```bash
+brew --version
+# 例: Homebrew 4.x.x
+```
+
+---
+
+### Step 2: Node.js のインストール（nvm 推奨）
+
+`nvm`（Node Version Manager）を使うと Node.js のバージョン管理が簡単になります。
+
+```bash
+# nvm のインストール
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+```
+
+インストール後、ターミナルを **再起動** するか、以下で反映させます：
+
+```bash
+source ~/.zshrc
+# bash を使っている場合
+# source ~/.bashrc
+```
+
+動作確認と Node.js のインストール：
+
+```bash
+nvm --version
+# 例: 0.39.7
+
+# Node.js v18（LTS）をインストール
+nvm install 18
+nvm use 18
+
+node -v   # 例: v18.x.x
+npm -v    # 例: 9.x.x
+```
+
+---
+
+### Step 3: Docker Desktop for Mac のインストール
+
+1. [https://www.docker.com/products/docker-desktop/](https://www.docker.com/products/docker-desktop/) にアクセスします。
+2. **「Download for Mac」** をクリックします。
+   - Intel Mac → `Docker Desktop for Mac (Intel Chip)` をダウンロード
+   - Apple Silicon (M1/M2/M3) → `Docker Desktop for Mac (Apple Silicon)` をダウンロード
+3. ダウンロードした `.dmg` ファイルを開き、Docker を `Applications` フォルダにドラッグします。
+4. アプリケーションから **Docker Desktop** を起動します。
+5. メニューバーに 🐳 アイコンが表示され、`Docker Desktop is running` となれば起動完了です。
+
+> **Homebrew でインストールする方法**（任意）：
+> ```bash
+> brew install --cask docker
+> ```
+> インストール後、アプリケーションから Docker Desktop を起動してください。
+
+動作確認：
+```bash
+docker --version
+# 例: Docker version 24.x.x
+docker compose version
+# 例: Docker Compose version v2.x.x
+```
+
+---
+
+### Step 4: リポジトリのクローン
+
+```bash
+git clone https://github.com/ShoukiYano/IFJ-SYSTEM.git
+cd IFJ-SYSTEM
+```
+
+---
+
+### Step 5: 環境変数の設定
+
+```bash
+cp .env.example .env
+```
+
+`.env` をエディタで開き、パスワードを設定します：
+
+```bash
+# VS Code を使う場合
+code .env
+
+# テキストエディット（メモ帳相当）で開く場合
+open -e .env
+```
+
+`.env` の中身（`POSTGRES_PASSWORD` と `DATABASE_URL` の2箇所のパスワードを同じ値に設定）：
+
+```env
+POSTGRES_PASSWORD=あなたのパスワード
+
+DATABASE_URL="postgresql://postgres:あなたのパスワード@db:5432/invoice_db?schema=public"
+```
+
+> ⚠️ `.env` ファイルは Git にコミットされません（`.gitignore` で除外済み）。  
+> パスワードを他人に共有しないでください。
+
+---
+
+### Step 6: アプリケーションの起動（Docker）
+
+Docker Desktop が起動していることを確認してから実行します：
+
+```bash
+docker compose up --build
+```
+
+> 初回はイメージのビルドや依存関係のインストールが行われるため、**15〜20分程度**かかることがあります。
+
+`app_1 | Ready on http://localhost:3000` のような表示が出れば起動完了です。
+
+---
+
+### Step 7: データベースの初期化（初回のみ）
+
+コンテナが起動している状態で、**別のターミナルタブ**を開いて以下を実行します：
+
+```bash
+docker compose exec app npx prisma migrate dev --name init
+docker compose exec app npx prisma db seed
+```
+
+完了後、ブラウザで [http://localhost:3000](http://localhost:3000) にアクセスして動作確認してください。
+
+---
+
+### よく使うコマンド（Mac）
+
+| 操作 | コマンド |
+|---|---|
+| 起動 | `docker compose up --build` |
+| バックグラウンドで起動 | `docker compose up -d --build` |
+| 停止 | `docker compose down` |
+| ログを確認 | `docker compose logs -f app` |
+| コンテナ内に入る | `docker compose exec app sh` |
+| ポート確認 | `lsof -i :3000` |
+
+---
+
 ## 🛠️ ローカル開発（Dockerを使わない場合）
 
 1. `npm install`
@@ -132,9 +299,12 @@ docker-compose exec app npx prisma db seed
 - **Port**: 3000番ポートが他のサービスで使用されていないか確認してください（`sudo lsof -i :3000`）。
 
 ### 🍎 Mac (Intel/Apple Silicon)
-- **Docker**: Docker Desktop for Mac を使用してください。
+- **詳細手順**: 上の「🍎 Macでの構築手順（詳細）」セクションを参照してください。
+- **Docker**: Docker Desktop for Mac を使用してください（`brew install --cask docker` でも可）。
 - **Node.js**: `nvm` を使用したインストールを推奨します。
 - **Apple Silicon (M1/M2/M3)**: Dockerイメージは `postgres:15-alpine` を使用しているため、マルチプラットフォーム対応で問題なく動作します。
+- **Homebrew がない場合**: まず Homebrew をインストールしてください（手順は上記を参照）。
+- **Port 確認**: 3000番ポートが他のサービスで使用されていないか確認してください（`lsof -i :3000`）。
 
 ---
 
