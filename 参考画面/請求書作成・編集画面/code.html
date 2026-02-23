@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+
+<html lang="ja"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>請求書作成 - 会計システム</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1a355b",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#13181f",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100">
+<div class="flex min-h-screen">
+<!-- Sidebar -->
+<aside class="w-64 bg-primary text-white flex flex-col fixed h-full z-20">
+<div class="p-6 flex items-center gap-3">
+<div class="size-8 bg-white/20 rounded flex items-center justify-center">
+<span class="material-symbols-outlined text-white">account_balance</span>
+</div>
+<h1 class="text-lg font-bold tracking-tight">会計システム</h1>
+</div>
+<nav class="flex-1 px-4 py-4 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10 transition-colors" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="text-sm font-medium">ホーム</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-white/20 text-white transition-colors" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1">description</span>
+<span class="text-sm font-medium">請求書</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10 transition-colors" href="#">
+<span class="material-symbols-outlined">request_quote</span>
+<span class="text-sm font-medium">見積書</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10 transition-colors" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="text-sm font-medium">顧客管理</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10 transition-colors" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-sm font-medium">設定</span>
+</a>
+</nav>
+<div class="p-4 border-t border-white/10">
+<div class="flex items-center gap-3 px-2">
+<div class="size-10 rounded-full bg-primary/30 border border-white/20 overflow-hidden">
+<img alt="User Avatar" class="w-full h-full object-cover" data-alt="Professional male user profile photo" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD5OlwaSAWp5gkONQTHx5TWX2W2R2qN5vMb_0ya7VDDu-DK2tfLL5GaqtesCfBsr0ggpV4yyivfGuxMNv5gY6J1_pkEzSw1UByMQ992dbE8h68d-aozRTvw-tyKrXTgBlUUlfa1Qp8NXI9xLWmCuDE1zckb97I8R9CtvmmshOwUlfMw6WwSDWLWIl3sXhCwrJsAk5oaN4bJwxJCJBclCgStawgXZaOoNuQPJaJeGwSVuWafJ1G1oB9JaeboXicE1bQeQP2Tr4bFTq6q"/>
+</div>
+<div class="flex flex-col">
+<span class="text-xs font-semibold">田中 太郎</span>
+<span class="text-[10px] text-white/60 uppercase tracking-wider">管理者</span>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="flex-1 ml-64 flex flex-col">
+<!-- Header -->
+<header class="sticky top-0 z-10 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-8 py-4 flex items-center justify-between">
+<div class="flex items-center gap-4">
+<a class="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded" href="#">
+<span class="material-symbols-outlined text-slate-500">arrow_back</span>
+</a>
+<h2 class="text-xl font-bold">請求書作成</h2>
+<div class="flex items-center gap-2 px-3 py-1 bg-slate-100 dark:bg-slate-800 rounded-full text-xs font-medium text-slate-500">
+<span class="size-2 bg-blue-500 rounded-full"></span>
+                        編集中
+                    </div>
+</div>
+<div class="flex items-center gap-3">
+<button class="px-4 py-2 text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 transition-all">
+                        一時保存
+                    </button>
+<div class="h-6 w-px bg-slate-200 dark:bg-slate-700 mx-1"></div>
+<button class="px-3 py-2 text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg flex items-center gap-2">
+<span class="material-symbols-outlined text-[20px]">visibility</span>
+                        PDFプレビュー
+                    </button>
+<button class="px-3 py-2 text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg flex items-center gap-2">
+<span class="material-symbols-outlined text-[20px]">file_download</span>
+                        PDF出力
+                    </button>
+<button class="px-6 py-2 text-sm font-bold bg-primary text-white hover:bg-primary/90 rounded-lg shadow-sm transition-all ml-2">
+                        保存する
+                    </button>
+</div>
+</header>
+<div class="p-8 max-w-7xl w-full mx-auto space-y-6">
+<!-- Section A: Header Info -->
+<div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+<h3 class="text-sm font-bold text-primary mb-4 flex items-center gap-2 uppercase tracking-widest">
+<span class="size-1 bg-primary rounded-full"></span>基本情報
+                    </h3>
+<div class="grid grid-cols-4 gap-6">
+<div class="space-y-1.5">
+<label class="text-xs font-bold text-slate-500">請求書番号</label>
+<input class="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-primary focus:border-primary" type="text" value="INV-2023-1004"/>
+</div>
+<div class="space-y-1.5">
+<label class="text-xs font-bold text-slate-500">発行日</label>
+<input class="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-primary focus:border-primary" type="date" value="2023-10-27"/>
+</div>
+<div class="space-y-1.5">
+<label class="text-xs font-bold text-slate-500">お支払期限</label>
+<input class="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-primary focus:border-primary" type="date" value="2023-11-30"/>
+</div>
+<div class="space-y-1.5">
+<label class="text-xs font-bold text-slate-500">件名</label>
+<input class="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-primary focus:border-primary" placeholder="10月分Web制作費用" type="text"/>
+</div>
+</div>
+</div>
+<!-- Section B: Customer Info -->
+<div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+<h3 class="text-sm font-bold text-primary mb-4 flex items-center gap-2 uppercase tracking-widest">
+<span class="size-1 bg-primary rounded-full"></span>取引先情報
+                    </h3>
+<div class="flex flex-col md:flex-row gap-8">
+<div class="w-full md:w-1/3 space-y-4">
+<div class="space-y-1.5">
+<label class="text-xs font-bold text-slate-500">取引先を選択</label>
+<div class="relative">
+<input class="w-full pl-10 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-primary focus:border-primary" placeholder="取引先を検索" type="text"/>
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]">search</span>
+</div>
+</div>
+<button class="text-sm font-semibold text-primary flex items-center gap-1 hover:underline">
+<span class="material-symbols-outlined text-[18px]">add_circle</span>
+                                新規取引先を登録
+                            </button>
+</div>
+<div class="flex-1 bg-slate-50 dark:bg-slate-800 p-4 rounded-lg border border-dashed border-slate-300 dark:border-slate-700">
+<div class="grid grid-cols-2 gap-4">
+<div class="space-y-1">
+<p class="text-[10px] uppercase font-bold text-slate-400">郵便番号</p>
+<p class="text-sm font-medium">〒150-0002</p>
+</div>
+<div class="space-y-1">
+<p class="text-[10px] uppercase font-bold text-slate-400">住所</p>
+<p class="text-sm font-medium">東京都渋谷区渋谷2-24-12</p>
+</div>
+<div class="space-y-1">
+<p class="text-[10px] uppercase font-bold text-slate-400">部署・担当者</p>
+<p class="text-sm font-medium">開発部 佐藤 様</p>
+</div>
+<div class="space-y-1 text-right">
+<p class="text-[10px] uppercase font-bold text-slate-400">自動入力済み</p>
+<span class="inline-block px-2 py-0.5 bg-green-100 text-green-700 rounded text-[10px] font-bold">ACTIVE</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Section C: Line Items Table -->
+<div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+<div class="overflow-x-auto no-scrollbar">
+<table class="w-full text-left border-collapse min-w-[1000px]">
+<thead class="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
+<tr>
+<th class="px-4 py-3 text-[11px] font-bold text-slate-500 uppercase w-28">年月</th>
+<th class="px-4 py-3 text-[11px] font-bold text-slate-500 uppercase">内容 / 品目</th>
+<th class="px-4 py-3 text-[11px] font-bold text-slate-500 uppercase w-20">数量</th>
+<th class="px-4 py-3 text-[11px] font-bold text-slate-500 uppercase w-20">単位</th>
+<th class="px-4 py-3 text-[11px] font-bold text-slate-500 uppercase w-32">単価</th>
+<th class="px-4 py-3 text-[11px] font-bold text-slate-500 uppercase w-32">金額</th>
+<th class="px-4 py-3 text-[11px] font-bold text-slate-500 uppercase w-28">税区分</th>
+<th class="px-4 py-3 text-[11px] font-bold text-slate-500 uppercase">備考</th>
+<th class="px-4 py-3 text-[11px] font-bold text-slate-500 uppercase w-12 text-center">操作</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+<!-- Row 1 -->
+<tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+<td class="p-2 px-4">
+<input class="w-full text-sm bg-transparent border-none focus:ring-0 p-1" type="text" value="2023/10"/>
+</td>
+<td class="p-2 px-4">
+<input class="w-full text-sm bg-transparent border-none focus:ring-0 p-1" type="text" value="UIデザイン制作（ダッシュボード画面）"/>
+</td>
+<td class="p-2 px-4">
+<input class="w-full text-sm bg-transparent border-none focus:ring-0 p-1 text-right" type="number" value="1"/>
+</td>
+<td class="p-2 px-4">
+<input class="w-full text-sm bg-transparent border-none focus:ring-0 p-1" type="text" value="個"/>
+</td>
+<td class="p-2 px-4">
+<input class="w-full text-sm bg-transparent border-none focus:ring-0 p-1 text-right" type="text" value="200,000"/>
+</td>
+<td class="p-2 px-4">
+<div class="w-full text-sm font-semibold p-1 text-right">200,000</div>
+</td>
+<td class="p-2 px-4">
+<select class="w-full text-xs bg-transparent border-none focus:ring-0 p-1">
+<option>10%</option>
+<option>8% (軽)</option>
+<option>非課税</option>
+</select>
+</td>
+<td class="p-2 px-4">
+<input class="w-full text-sm bg-transparent border-none focus:ring-0 p-1" placeholder="備考" type="text"/>
+</td>
+<td class="p-2 px-4 text-center">
+<button class="text-slate-400 hover:text-red-500 transition-colors">
+<span class="material-symbols-outlined text-[20px]">delete</span>
+</button>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+<td class="p-2 px-4">
+<input class="w-full text-sm bg-transparent border-none focus:ring-0 p-1" type="text" value="2023/10"/>
+</td>
+<td class="p-2 px-4">
+<input class="w-full text-sm bg-transparent border-none focus:ring-0 p-1" type="text" value="フロントエンド実装作業"/>
+</td>
+<td class="p-2 px-4">
+<input class="w-full text-sm bg-transparent border-none focus:ring-0 p-1 text-right" type="number" value="5"/>
+</td>
+<td class="p-2 px-4">
+<input class="w-full text-sm bg-transparent border-none focus:ring-0 p-1" type="text" value="人日"/>
+</td>
+<td class="p-2 px-4">
+<input class="w-full text-sm bg-transparent border-none focus:ring-0 p-1 text-right" type="text" value="50,000"/>
+</td>
+<td class="p-2 px-4">
+<div class="w-full text-sm font-semibold p-1 text-right">250,000</div>
+</td>
+<td class="p-2 px-4">
+<select class="w-full text-xs bg-transparent border-none focus:ring-0 p-1">
+<option>10%</option>
+<option>8% (軽)</option>
+<option>非課税</option>
+</select>
+</td>
+<td class="p-2 px-4">
+<input class="w-full text-sm bg-transparent border-none focus:ring-0 p-1" placeholder="備考" type="text"/>
+</td>
+<td class="p-2 px-4 text-center">
+<button class="text-slate-400 hover:text-red-500 transition-colors">
+<span class="material-symbols-outlined text-[20px]">delete</span>
+</button>
+</td>
+</tr>
+<!-- Empty Input Row -->
+<tr class="bg-slate-50/20 dark:bg-slate-800/10">
+<td class="p-2 px-4"><input class="w-full text-sm bg-transparent border-none focus:ring-0 p-1 italic" placeholder="YYYY/MM" type="text"/></td>
+<td class="p-2 px-4"><input class="w-full text-sm bg-transparent border-none focus:ring-0 p-1 italic" placeholder="品目・内容を入力" type="text"/></td>
+<td class="p-2 px-4"><input class="w-full text-sm bg-transparent border-none focus:ring-0 p-1 text-right italic" placeholder="0" type="number"/></td>
+<td class="p-2 px-4"><input class="w-full text-sm bg-transparent border-none focus:ring-0 p-1 italic" placeholder="単位" type="text"/></td>
+<td class="p-2 px-4"><input class="w-full text-sm bg-transparent border-none focus:ring-0 p-1 text-right italic" placeholder="0" type="text"/></td>
+<td class="p-2 px-4"><div class="w-full text-sm font-semibold p-1 text-right text-slate-300">0</div></td>
+<td class="p-2 px-4">
+<select class="w-full text-xs bg-transparent border-none focus:ring-0 p-1 text-slate-400 italic">
+<option>10%</option>
+<option>8% (軽)</option>
+<option>非課税</option>
+</select>
+</td>
+<td class="p-2 px-4"><input class="w-full text-sm bg-transparent border-none focus:ring-0 p-1 italic" placeholder="備考" type="text"/></td>
+<td class="p-2 px-4 text-center"></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="p-4 bg-slate-50/50 dark:bg-slate-800/50 border-t border-slate-200 dark:border-slate-800">
+<button class="flex items-center gap-2 px-4 py-2 text-sm font-bold text-primary hover:bg-primary/10 rounded-lg transition-all">
+<span class="material-symbols-outlined">add_circle</span>
+                            明細行を追加
+                        </button>
+</div>
+</div>
+<!-- Bottom Summary Card -->
+<div class="flex justify-end pt-4 pb-12">
+<div class="w-full max-w-sm space-y-4">
+<div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-lg space-y-4">
+<div class="flex justify-between items-center text-sm">
+<span class="font-bold text-slate-500 uppercase tracking-wider">小計</span>
+<span class="font-semibold">¥450,000</span>
+</div>
+<div class="flex justify-between items-center text-sm">
+<div class="flex items-center gap-1.5 font-bold text-slate-500 uppercase tracking-wider">
+<span>消費税</span>
+<span class="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-[10px] rounded">10%</span>
+</div>
+<span class="font-semibold">¥45,000</span>
+</div>
+<div class="h-px bg-slate-100 dark:bg-slate-800 my-2"></div>
+<div class="flex justify-between items-end">
+<span class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">合計(税込)</span>
+<span class="text-3xl font-bold text-primary">¥495,000</span>
+</div>
+</div>
+<p class="text-[10px] text-right text-slate-400 px-2 italic">※ 請求総額の10%消費税が適用されています。</p>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>
