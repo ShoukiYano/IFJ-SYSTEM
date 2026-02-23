@@ -60,6 +60,17 @@ DATABASE_URL="postgresql://postgres:あなたのパスワード@db:5432/invoice_
 docker-compose up --build
 ```
 
+### Linuxの場合、Dockerが入っていないと思うので下記を追加
+```bash
+sudo apt update
+sudo apt install -y docker.io docker-compose-plugin
+sudo systemctl enable --now docker
+sudo usermod -aG docker $USER
+newgrp docker
+docker ps
+docker compose up --build
+```
+
 ---
 
 ## 🌐 動作確認
