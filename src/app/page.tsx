@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Plus, Users, FileText, TrendingUp, Settings, Calendar, AlertTriangle, ChevronRight } from "lucide-react";
+import { Plus, Users, FileText, TrendingUp, Settings, Calendar, AlertTriangle, ChevronRight, Search } from "lucide-react";
 import { InvoiceTable } from "@/components/invoices/InvoiceTable";
 import { BulkZipDownload } from "@/components/invoices/BulkZipDownload";
 import { formatCurrency } from "@/lib/utils";
@@ -17,14 +17,39 @@ export default function DashboardPage() {
   });
 
   const [expiringContracts, setExpiringContracts] = useState<any[]>([]);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [clients, setClients] = useState<any[]>([]);
+
+  // 絞り込みフィルタ
+  const [filterMonth, setFilterMonth] = useState("");
+  const [filterClientId, setFilterClientId] = useState("");
+
+  const fetchInvoices = async (month: string, clientId: string) => {
+    const params = new URLSearchParams();
+    if (month) params.append("month", month);
+    if (clientId) params.append("clientId", clientId);
+    const res = await fetch(`/api/invoices?${params.toString()}`);
+    const data = await res.json();
+    if (Array.isArray(data) && data.length > 0) {
+      setInvoices(data.slice(0, 10));
+      const total = data.reduce((acc, inv) => acc + Number(inv.totalAmount || 0), 0);
+      setStats({
+        totalAmount: total,
+        count: data.length,
+        pending: data.filter(inv => inv.status !== 'PAID').length,
+      });
+    } else {
+      setInvoices([]);
+    }
+  };
 
   useEffect(() => {
-    // 請求書一覧取得
-    const fetchInvoices = async () => {
+    // 初回: フィルタなしで取得
+    const fetchAll = async () => {
       const res = await fetch("/api/invoices");
       const data = await res.json();
       if (Array.isArray(data) && data.length > 0) {
-        setInvoices(data.slice(0, 5)); // 最新5件
+        setInvoices(data.slice(0, 10));
         const total = data.reduce((acc, inv) => acc + Number(inv.totalAmount || 0), 0);
         setStats({
           totalAmount: total,
@@ -59,10 +84,30 @@ export default function DashboardPage() {
       }
     };
 
-    fetchInvoices();
+    // クライアント一覧取得
+    const fetchClients = async () => {
+      try {
+        const res = await fetch("/api/clients");
+        const data = await res.json();
+        if (Array.isArray(data)) setClients(data);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    fetchAll();
     fetchStats();
     fetchContracts();
+    fetchClients();
   }, []);
+
+  // フィルタ変更時に再取得
+  useEffect(() => {
+    if (filterMonth || filterClientId) {
+      setSelectedIds([]);
+      fetchInvoices(filterMonth, filterClientId);
+    }
+  }, [filterMonth, filterClientId]);
 
   const handleBulkGenerate = async () => {
     const targetMonth = prompt("対象月を半角数字で入力してください (例: 2024-09)", new Date().toISOString().slice(0, 7));
@@ -97,7 +142,7 @@ export default function DashboardPage() {
           <p className="text-slate-500">請求書管理システムの状態を確認します。</p>
         </div>
         <div className="flex gap-4">
-          <BulkZipDownload yearMonth={new Date().toISOString().slice(0, 7)} />
+          <BulkZipDownload yearMonth={filterMonth || new Date().toISOString().slice(0, 7)} selectedIds={selectedIds} />
           <button 
             onClick={handleBulkGenerate}
             className="bg-slate-800 text-white px-6 py-2 rounded-lg font-bold flex items-center gap-2 hover:bg-slate-700 transition-all shadow-md"
@@ -233,13 +278,44 @@ export default function DashboardPage() {
 
       {/* Table Section */}
       <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <h3 className="text-lg font-bold text-slate-800">最近の請求書</h3>
-          <a href="/invoices" className="text-blue-600 text-sm font-bold hover:underline">すべて見る</a>
+          <div className="flex flex-wrap items-center gap-3">
+            {/* 発行年月フィルタ */}
+            <div className="flex items-center gap-2">
+              <label className="text-xs font-bold text-slate-500 uppercase whitespace-nowrap">発行年月</label>
+              <input
+                type="month"
+                value={filterMonth}
+                onChange={e => setFilterMonth(e.target.value)}
+                className="px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
+              />
+              {filterMonth && (
+                <button onClick={() => setFilterMonth("")} className="text-xs text-slate-400 hover:text-slate-600">✕</button>
+              )}
+            </div>
+            {/* 請求先フィルタ */}
+            <div className="flex items-center gap-2">
+              <label className="text-xs font-bold text-slate-500 uppercase whitespace-nowrap">請求先</label>
+              <select
+                value={filterClientId}
+                onChange={e => setFilterClientId(e.target.value)}
+                className="px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
+              >
+                <option value="">すべて</option>
+                {clients.map((c: any) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+            </div>
+            <a href="/invoices" className="text-blue-600 text-sm font-bold hover:underline whitespace-nowrap">すべて見る</a>
+          </div>
         </div>
         {invoices.length > 0 ? (
           <InvoiceTable 
             invoices={invoices} 
+            selectedIds={selectedIds}
+            onSelectionChange={setSelectedIds}
             onEdit={(id: string) => window.location.href = `/invoices/${id}`}
             onPrint={(invoice: any) => window.location.href = `/invoices/${invoice.id}`}
             onDuplicate={(id: string) => {}}
@@ -253,3 +329,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+

@@ -430,40 +430,154 @@ export default function EditInvoicePage() {
                   </div>
 
                   {invoice.templateType === "SES" && (
-                    <div className="grid grid-cols-12 gap-4 items-center bg-blue-50/30 p-2 rounded-lg ml-2 border border-blue-100/50">
-                      <div className="col-span-4 flex items-center gap-2 text-[10px] font-bold text-blue-600 uppercase">
-                        <span>精算幅:</span>
-                        <input 
-                          type="number" className="w-16 px-1 py-0.5 bg-white border border-blue-100 rounded text-center"
-                          value={item.minHours || ""} onChange={e => handleItemChange(index, "minHours", e.target.value)}
-                        />
-                        <span>-</span>
-                        <input 
-                          type="number" className="w-16 px-1 py-0.5 bg-white border border-blue-100 rounded text-center"
-                          value={item.maxHours || ""} onChange={e => handleItemChange(index, "maxHours", e.target.value)}
-                        />
-                        <span>h</span>
+                    <div className="space-y-2 ml-2">
+                      {/* 精算幅 */}
+                      <div className="grid grid-cols-12 gap-2 items-center bg-blue-50/30 p-2 rounded-lg border border-blue-100/50">
+                        <div className="col-span-5 flex items-center gap-2 text-[10px] font-bold text-blue-600 uppercase">
+                          <span className="shrink-0">精算幅:</span>
+                          <input 
+                            type="number" className="w-16 px-1 py-0.5 bg-white border border-blue-100 rounded text-center"
+                            value={item.minHours || ""} onChange={e => handleItemChange(index, "minHours", e.target.value)}
+                          />
+                          <span>-</span>
+                          <input 
+                            type="number" className="w-16 px-1 py-0.5 bg-white border border-blue-100 rounded text-center"
+                            value={item.maxHours || ""} onChange={e => handleItemChange(index, "maxHours", e.target.value)}
+                          />
+                          <span>h</span>
+                        </div>
+                        <div className="col-span-7 flex justify-end">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const unitPrice = Number(item.unitPrice) || 0;
+                              const min = Number(item.minHours) || 1;
+                              const max = Number(item.maxHours) || 1;
+                              if (unitPrice > 0 && min > 0 && max > 0) {
+                                const newItems = [...invoice.items];
+                                newItems[index] = calculateItemAmount({
+                                  ...newItems[index],
+                                  overtimeRate: Math.floor(unitPrice / max),
+                                  deductionRate: Math.floor(unitPrice / min),
+                                }, invoice.templateType);
+                                setInvoice({ ...invoice, items: newItems });
+                              }
+                            }}
+                            className="px-2 py-0.5 bg-blue-600 text-white text-[10px] font-bold rounded hover:bg-blue-700 transition-colors whitespace-nowrap"
+                          >
+                            精算幅から自動計算
+                          </button>
+                        </div>
                       </div>
-                      <div className="col-span-4 flex items-center gap-2 text-[10px] font-bold text-blue-600 uppercase">
-                        <span>単価:</span>
-                        <label>超過</label>
-                        <input 
-                          type="number" className="w-16 px-1 py-0.5 bg-white border border-blue-100 rounded text-right"
-                          value={item.overtimeRate || ""} onChange={e => handleItemChange(index, "overtimeRate", e.target.value)}
-                        />
-                        <label>控除</label>
-                        <input 
-                          type="number" className="w-16 px-1 py-0.5 bg-white border border-blue-100 rounded text-right"
-                          value={item.deductionRate || ""} onChange={e => handleItemChange(index, "deductionRate", e.target.value)}
-                        />
-                      </div>
-                      <div className="col-span-4 text-right text-[10px] font-bold space-x-4">
-                        {(Number(item.overtimeAmount) || 0) > 0 && (
-                          <span className="text-emerald-600">超過: +{formatCurrency(Number(item.overtimeAmount) || 0)}</span>
-                        )}
-                        {(Number(item.deductionAmount) || 0) > 0 && (
-                          <span className="text-rose-600">控除: -{formatCurrency(Number(item.deductionAmount) || 0)}</span>
-                        )}
+
+                      {/* 超過・控除単価 + 切り捨てボタン */}
+                      <div className="grid grid-cols-12 gap-2 items-start bg-blue-50/20 p-2 rounded-lg border border-blue-100/50">
+                        {/* 超過単価 */}
+                        <div className="col-span-6 space-y-1">
+                          <div className="flex items-center gap-1.5 text-[10px] font-bold text-blue-600">
+                            <span>超過単価:</span>
+                            <input 
+                              type="number" className="w-20 px-1 py-0.5 bg-white border border-blue-100 rounded text-right text-[10px]"
+                              value={item.overtimeRate || ""} onChange={e => handleItemChange(index, "overtimeRate", e.target.value)}
+                            />
+                            <span className="text-slate-400">円</span>
+                          </div>
+                          <div className="flex gap-1">
+                            {[1, 10, 100].map(unit => (
+                              <button
+                                key={unit}
+                                type="button"
+                                onClick={() => {
+                                  const newItems = [...invoice.items];
+                                  newItems[index] = calculateItemAmount({
+                                    ...newItems[index],
+                                    overtimeRate: Math.floor(Number(newItems[index].overtimeRate) / unit) * unit,
+                                  }, invoice.templateType);
+                                  setInvoice({ ...invoice, items: newItems });
+                                }}
+                                className="px-1.5 py-0.5 bg-slate-100 text-slate-600 text-[9px] font-bold rounded hover:bg-slate-200 transition-colors border border-slate-200"
+                              >
+                                {unit}円未満
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                        {/* 控除単価 */}
+                        <div className="col-span-6 space-y-1">
+                          <div className="flex items-center gap-1.5 text-[10px] font-bold text-rose-600">
+                            <span>控除単価:</span>
+                            <input 
+                              type="number" className="w-20 px-1 py-0.5 bg-white border border-rose-100 rounded text-right text-[10px]"
+                              value={item.deductionRate || ""} onChange={e => handleItemChange(index, "deductionRate", e.target.value)}
+                            />
+                            <span className="text-slate-400">円</span>
+                          </div>
+                          <div className="flex gap-1">
+                            {[1, 10, 100].map(unit => (
+                              <button
+                                key={unit}
+                                type="button"
+                                onClick={() => {
+                                  const newItems = [...invoice.items];
+                                  newItems[index] = calculateItemAmount({
+                                    ...newItems[index],
+                                    deductionRate: Math.floor(Number(newItems[index].deductionRate) / unit) * unit,
+                                  }, invoice.templateType);
+                                  setInvoice({ ...invoice, items: newItems });
+                                }}
+                                className="px-1.5 py-0.5 bg-slate-100 text-slate-600 text-[9px] font-bold rounded hover:bg-slate-200 transition-colors border border-slate-200"
+                              >
+                                {unit}円未満
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* 超過・控除金額リアルタイム表示 */}
+                        {(() => {
+                          const hours   = Number(item.quantity)         || 0;
+                          const min     = Number(item.minHours)         || 0;
+                          const max     = Number(item.maxHours)         || 0;
+                          const otAmt   = Number(item.overtimeAmount)   || 0;
+                          const deAmt   = Number(item.deductionAmount)  || 0;
+                          const hasRate = Number(item.overtimeRate) > 0 || Number(item.deductionRate) > 0;
+                          const inRange = hours > 0 && hours >= min && hours <= max;
+                          return (
+                            <div className="col-span-12 pt-1.5 border-t border-blue-100/50 flex items-center justify-between gap-2 flex-wrap">
+                              <div className="text-[10px] font-bold">
+                                {hours === 0 ? (
+                                  <span className="text-slate-400">稼働時間を入力してください</span>
+                                ) : !hasRate ? (
+                                  <span className="text-slate-400">単価を入力すると超過・控除が自動計算されます</span>
+                                ) : inRange ? (
+                                  <span className="inline-flex items-center gap-1 text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                                    ✓ 精算範囲内（{hours}h）
+                                  </span>
+                                ) : hours > max ? (
+                                  <span className="inline-flex items-center gap-1 text-blue-600 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full">
+                                    ▲ 超過 {(hours - max).toFixed(2)}h
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center gap-1 text-amber-600 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
+                                    ▼ 控除 {(min - hours).toFixed(2)}h
+                                  </span>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-3 text-[10px] font-bold tabular-nums">
+                                {otAmt > 0 && (
+                                  <span className="text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                                    超過 +{formatCurrency(otAmt)}
+                                  </span>
+                                )}
+                                {deAmt > 0 && (
+                                  <span className="text-rose-600 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded-full">
+                                    控除 −{formatCurrency(deAmt)}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })()}
                       </div>
                     </div>
                   )}

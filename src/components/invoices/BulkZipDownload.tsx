@@ -8,9 +8,10 @@ import { InvoiceDocument } from "@/components/pdf/InvoiceDocument";
 
 interface BulkZipDownloadProps {
   yearMonth: string; // e.g. "2024-09"
+  selectedIds?: string[];
 }
 
-export const BulkZipDownload: React.FC<BulkZipDownloadProps> = ({ yearMonth }) => {
+export const BulkZipDownload: React.FC<BulkZipDownloadProps> = ({ yearMonth, selectedIds = [] }) => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [progress, setProgress] = useState(0);
   const [total, setTotal] = useState(0);
@@ -22,12 +23,21 @@ export const BulkZipDownload: React.FC<BulkZipDownloadProps> = ({ yearMonth }) =
     setProgress(0);
 
     try {
-      // 1. Fetch all invoices for the month
-      const res = await fetch(`/api/invoices?month=${yearMonth}`);
-      const invoices = await res.json();
+      // 1. Fetch invoices (month or all for ID filtering)
+      const params = new URLSearchParams();
+      if (selectedIds.length === 0) {
+        params.append("month", yearMonth);
+      }
+      const res = await fetch(`/api/invoices?${params.toString()}`);
+      let invoices = await res.json();
+
+      // selectedIdsがある場合はフロントでフィルタ
+      if (selectedIds.length > 0) {
+        invoices = (invoices as any[]).filter((inv: any) => selectedIds.includes(inv.id));
+      }
       
       if (!Array.isArray(invoices) || invoices.length === 0) {
-        alert("該当する月の請求書が見つかりませんでした。");
+        alert(selectedIds.length > 0 ? "選択された請求書が見つかりませんでした。" : "該当する月の請求書が見つかりませんでした。");
         setIsGenerating(false);
         setStatus("idle");
         return;
@@ -65,7 +75,9 @@ export const BulkZipDownload: React.FC<BulkZipDownloadProps> = ({ yearMonth }) =
       const url = URL.createObjectURL(content);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `請求書一括_${yearMonth}.zip`;
+      link.download = selectedIds.length > 0
+        ? `請求書_選択_${new Date().toISOString().slice(0, 10)}.zip`
+        : `請求書一括_${yearMonth}.zip`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -101,7 +113,7 @@ export const BulkZipDownload: React.FC<BulkZipDownloadProps> = ({ yearMonth }) =
         {status === "generating" && <Loader2 size={18} className="animate-spin" />}
         {status === "completed" && <Check size={18} />}
         
-        {status === "idle" && "一括ZIPダウンロード"}
+        {status === "idle" && (selectedIds.length > 0 ? `選択 (${selectedIds.length}件) ZIP` : "一括ZIPダウンロード")}
         {status === "fetching" && "データ取得中..."}
         {status === "generating" && `作成中 (${progress}/${total})`}
         {status === "completed" && "ダウンロード完了"}
