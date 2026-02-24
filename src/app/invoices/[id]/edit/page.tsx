@@ -104,6 +104,17 @@ export default function EditInvoicePage() {
       }
     }
 
+    // SES: unitPrice / minHours / maxHours が変わったら自動で rate を再計算
+    if (invoice.templateType === "SES" && ["unitPrice", "minHours", "maxHours"].includes(field)) {
+      const unitPrice = Number(field === "unitPrice" ? value : updatedItem.unitPrice) || 0;
+      const min      = Number(field === "minHours"  ? value : updatedItem.minHours)  || 0;
+      const max      = Number(field === "maxHours"  ? value : updatedItem.maxHours)  || 0;
+      if (unitPrice > 0 && min > 0 && max > 0) {
+        updatedItem.overtimeRate  = Math.floor(unitPrice / max);
+        updatedItem.deductionRate = Math.floor(unitPrice / min);
+      }
+    }
+
     newItems[index] = calculateItemAmount(updatedItem, invoice.templateType);
     setInvoice({ ...invoice, items: newItems });
   };
