@@ -319,5 +319,96 @@ docker compose exec app npx prisma db seed
 
 ---
 
+## 🧪 テスト実施手順
+
+### 前提条件
+
+| 項目 | 必要なもの |
+|------|-----------|
+| 単体テスト・統合テスト | `node_modules` のインストール済み（`npm install`） |
+| E2Eテスト | Dockerでアプリが起動中（`docker-compose up`） + Playwrightブラウザのインストール |
+
+---
+
+### 単体テスト・統合テスト（Jest）
+
+> Dockerは不要。ローカルの `node_modules` だけで実行できます。
+
+```bash
+# 全Jestテスト（単体 + 統合）を実行
+npm test
+
+# 単体テストのみ実行
+npm run test:unit
+
+# 統合テストのみ実行
+npm run test:integration
+```
+
+**テスト対象：**
+
+| テストスイート | 内容 |
+|--------------|------|
+| `tests/unit/dateUtils.test.ts` | 支払期限計算・祝日判定・サービス月チェック |
+| `tests/unit/utils.test.ts` | 通貨フォーマット・消費税計算・請求書番号生成 |
+| `tests/unit/sesCalculation.test.ts` | SES超過・控除・精算幅からの自動単価計算 |
+| `tests/integration/api.invoices.test.ts` | Prismaレイヤーのフィルタ・CRUD動作確認 |
+
+---
+
+### E2Eテスト（Playwright）
+
+> **事前に `docker-compose up` でアプリを起動してください。**  
+> 初回のみブラウザのインストールが必要です。
+
+```bash
+# 初回のみ: Playwrightブラウザをインストール
+npx playwright install --with-deps chromium
+
+# E2Eテスト実行（ヘッドレス）
+npm run test:e2e
+
+# UIモードで実行（テストの動作を画面で確認できる）
+npm run test:e2e:ui
+```
+
+**E2Eテスト対象：**
+
+| テストファイル | 内容 |
+|--------------|------|
+| `tests/e2e/login.spec.ts` | 正常ログイン・誤パスワード・未認証リダイレクト・ログアウト |
+
+**E2Eテストで使うアカウント（`prisma db seed` で作成）：**
+
+```
+メールアドレス: drive@example.com
+パスワード:     drive1001
+```
+
+---
+
+### 全テストを一括実行
+
+```bash
+# Jest（単体+統合）→ E2E の順で実行
+npm run test:all
+```
+
+---
+
+### テスト失敗時の確認先
+
+```bash
+# Jestの詳細ログを表示
+npm test -- --verbose
+
+# E2Eのレポートを開く（失敗時のスクリーンショット・動画を確認）
+npx playwright show-report
+```
+
+> 📁 Playwrightのテスト結果は `playwright-report/` に出力されます（Gitignore済み）。
+
+---
+
 ## 📝 ライセンス
 商用利用・改変についてはプロジェクト管理者にお問い合わせください。

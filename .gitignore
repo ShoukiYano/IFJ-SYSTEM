@@ -88,6 +88,9 @@ desktop.ini
 # ==============================
 coverage/
 .nyc_output/
+# Playwright
+playwright-report/
+test-results/
 
 # ==============================
 # アップロードファイル（スタンプ画像等）
