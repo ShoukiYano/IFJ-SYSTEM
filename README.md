@@ -5,10 +5,10 @@
 ## ダッシュボード画面
 ![alt text](image-1.png)
 ## 請求書作成・編集画面
+![alt text](image-6.png)
 ![alt text](image-5.png)
-![alt text](image-2.png)
 ## 請求書PDFプレビュー画面
-![alt text](image-3.png)
+![alt text](image-2.png)
 ## マニュアル操作画面
 ![alt text](image-4.png)
 
