@@ -369,6 +369,13 @@ export default function EditInvoicePage() {
                   >
                     <Upload size={16} /> 勤怠データ読込 (CSV)
                   </label>
+                  <a 
+                    href="/tools/excel-converter" 
+                    target="_blank"
+                    className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg text-sm font-bold hover:bg-slate-200 transition-colors border border-slate-200"
+                  >
+                    <FileText size={16} /> ExcelをCSVに変換
+                  </a>
                 </div>
               )}
             </div>

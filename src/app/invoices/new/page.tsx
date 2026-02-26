@@ -411,10 +411,17 @@ export default function NewInvoicePage() {
                 />
                 <button 
                   onClick={() => document.getElementById('csv-import')?.click()}
-                  className="px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg text-xs font-bold flex items-center gap-2 hover:bg-slate-200"
+                  className="px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg text-xs font-bold flex items-center gap-2 hover:bg-slate-200 transition-colors"
                 >
                   <Upload size={14} /> 勤怠データ読込 (CSV)
                 </button>
+                <a 
+                  href="/tools/excel-converter" 
+                  target="_blank"
+                  className="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg text-xs font-bold flex items-center gap-2 hover:bg-blue-100 transition-colors border border-blue-100"
+                >
+                  <FileText size={14} /> ExcelをCSVに変換
+                </a>
               </div>
             </div>
             <div className="space-y-4">
