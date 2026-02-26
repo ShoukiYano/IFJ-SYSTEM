@@ -138,15 +138,20 @@ export default function EditInvoicePage() {
       const text = event.target?.result as string;
       if (!text) return;
 
-      const lines = text.split(/\r?\n/);
+      const lines = text.split(/\r?\n/).filter(line => line.trim() !== "");
       if (lines.length < 2) return;
 
       const headers = lines[0].split(",").map(h => h.trim().replace(/^"|"$/g, ''));
+      
+      // ヘッダー判定の拡張
       const nameIdx = headers.findIndex(h => h.includes("氏名") || h.includes("名前") || h.includes("Name"));
-      const timeIdx = headers.findIndex(h => h.includes("稼働時間") || h.includes("合計") || h.includes("Hours"));
+      const timeIdx = headers.findIndex(h => h.includes("稼働時間") || h.includes("合計") || h.includes("Hours") || h.includes("時間"));
+      const monthIdx = headers.findIndex(h => h.includes("年月") || h.includes("Month"));
+      const priceIdx = headers.findIndex(h => h.includes("単価") || h.includes("Price") || h.includes("Rate"));
+      const rangeIdx = headers.findIndex(h => h.includes("清算幅") || h.includes("精算幅") || h.includes("Range"));
 
       if (nameIdx === -1 || timeIdx === -1) {
-        alert("CSVの列が見つかりません。「氏名」と「稼働時間」の列が必要です。");
+        alert("CSVの列が見つかりません。「名前」と「時間」の列が必要です。");
         return;
       }
 
@@ -156,10 +161,24 @@ export default function EditInvoicePage() {
         
         const name = cols[nameIdx];
         const hours = Number(cols[timeIdx].replace(/[^\d.]/g, ''));
-        
+        const month = monthIdx !== -1 ? cols[monthIdx] : null;
+        const price = priceIdx !== -1 ? Number(cols[priceIdx].replace(/[^\d.]/g, '')) : null;
+        const range = rangeIdx !== -1 ? cols[rangeIdx] : null;
+
         if (!name || isNaN(hours)) return null;
-        return { name, hours };
-      }).filter(Boolean) as { name: string, hours: number }[];
+
+        let minHours = 140;
+        let maxHours = 180;
+        if (range) {
+          const parts = range.split(/[-~]/).map(p => Number(p.replace(/[^\d.]/g, '')));
+          if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+            minHours = parts[0];
+            maxHours = parts[1];
+          }
+        }
+
+        return { name, hours, month, price, minHours, maxHours };
+      }).filter(Boolean) as { name: string, hours: number, month: string | null, price: number | null, minHours: number, maxHours: number }[];
 
       if (importedItems.length === 0) {
         alert("有効な勤怠データが見つかりませんでした。");
@@ -169,31 +188,49 @@ export default function EditInvoicePage() {
       const newItems = [...invoice.items];
       importedItems.forEach(imported => {
         const existingIdx = newItems.findIndex(item => item.personName === imported.name);
+        
+        const priceValue = imported.price ?? (existingIdx !== -1 ? newItems[existingIdx].unitPrice : 0);
+        const otRate = Math.floor(priceValue / imported.maxHours);
+        const deRate = Math.floor(priceValue / imported.minHours);
+
+        const baseItem = {
+          personName: imported.name,
+          quantity: imported.hours,
+          unitPrice: priceValue,
+          minHours: imported.minHours,
+          maxHours: imported.maxHours,
+          overtimeRate: otRate,
+          deductionRate: deRate,
+          unit: "h",
+        };
+
         if (existingIdx !== -1) {
-          newItems[existingIdx] = calculateItemAmount({ ...newItems[existingIdx], quantity: imported.hours }, invoice.templateType);
+          const updated = { ...newItems[existingIdx], ...baseItem };
+          if (imported.month) updated.serviceMonth = imported.month;
+          newItems[existingIdx] = calculateItemAmount(updated, invoice.templateType);
         } else {
-          const sm = invoice.items[0]?.serviceMonth || "";
+          const sm = imported.month || invoice.items[0]?.serviceMonth || "";
           const match = sm.match(/(\d+)月/);
           const desc = match ? `${match[1]}月度稼働分` : "システムエンジニアリングサービス";
+          
           const newItem = { 
-            description: desc, serviceMonth: sm, 
-            personName: imported.name, 
-            quantity: imported.hours, unit: "h", 
-            unitPrice: 0, amount: 0,
-            minHours: 140, maxHours: 180, 
-            overtimeRate: 0, deductionRate: 0,
-            overtimeAmount: 0, deductionAmount: 0
+            ...baseItem,
+            description: desc,
+            serviceMonth: sm,
+            amount: 0,
+            overtimeAmount: 0,
+            deductionAmount: 0,
           };
           newItems.push(calculateItemAmount(newItem, invoice.templateType));
         }
       });
 
-      if (newItems.length > 1 && !newItems[0].personName && newItems[0].quantity === 1) {
+      if (newItems.length > 1 && !newItems[0].personName && newItems[0].quantity === 1 && (newItems[0].unitPrice === 0 || !newItems[0].unitPrice)) {
         newItems.shift();
       }
 
       setInvoice({ ...invoice, items: newItems });
-      alert(`${importedItems.length}件のデータをインポートしました。単価等の不足情報を入力してください。`);
+      alert(`${importedItems.length}件のデータをインポートしました。`);
     };
     reader.readAsText(file);
   };

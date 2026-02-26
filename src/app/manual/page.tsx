@@ -418,13 +418,25 @@ const SECTIONS: Section[] = [
         </div>
 
         <div className="space-y-3">
-          <h3 className="font-black text-slate-700">📤 CSV インポート（稼働時間一括入力）</h3>
+          <h3 className="font-black text-slate-700">📤 勤怠データ読込 (CSV)</h3>
           <div className="space-y-3">
-            <Step num={1}>勤怠システムから CSV ファイルをエクスポートします。</Step>
-            <Step num={2}>請求書作成・編集画面の <Badge color="slate">CSV インポート</Badge> ボタンをクリックします。</Step>
-            <Step num={3}>ファイルを選択すると、エンジニアごとの稼働時間が明細行に自動反映され、超過・控除金額も即座に計算されます。</Step>
+            <Step num={1}>勤怠システムや独自に作成した CSV ファイルを用意します。</Step>
+            <Step num={2}>請求書作成・編集画面の右上にある <Badge color="slate">勤怠データ読込 (CSV)</Badge> ボタンをクリックします。</Step>
+            <Step num={3}>ファイルを選択すると、名前、稼働時間、年月、単価、精算幅が自動で反映されます。</Step>
+            <Step num={4}>単価と精算幅が読み込まれた場合、超過・控除単価も自動的に計算・設定されます。</Step>
           </div>
-          <Warn>CSV の列に「氏名」と「稼働時間」が必要です（列順不問）。詳細はシステム管理者にお問い合わせください。</Warn>
+          <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2">
+            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">対応ヘッダー (いずれかを含めれば自動認識)</div>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
+              <div><strong>名前</strong>：名前, 氏名, Name</div>
+              <div><strong>時間</strong>：時間, 稼働時間, Hours</div>
+              <div><strong>年月</strong>：年月, Month</div>
+              <div><strong>単価</strong>：単価, Price, Rate</div>
+              <div><strong>清算幅</strong>：清算幅, 精算幅, Range</div>
+            </div>
+            <p className="text-[11px] text-slate-500 mt-2">※清算幅は <code>140-180</code> のような形式で読み書き可能です。</p>
+          </div>
+          <Tip>CSV に年月や単価が含まれていれば、都度手入力する手間が省け、計算ミスも防止できます。</Tip>
         </div>
       </div>
     ),
