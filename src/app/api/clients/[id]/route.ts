@@ -14,6 +14,7 @@ const clientSchema = z.object({
   closingDay: z.number().min(1).max(31).default(31),
   paymentMonthOffset: z.number().min(0).max(2).default(1),
   paymentDay: z.number().min(1).max(31).default(31),
+  isRecurring: z.boolean().default(false),
 });
 
 export async function PATCH(
@@ -27,7 +28,7 @@ export async function PATCH(
 
     const client = await prisma.client.update({
       where: { id },
-      data: validated,
+      data: validated as any,
     });
 
     return NextResponse.json(client);

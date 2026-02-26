@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Plus, Search, Filter, CheckCircle, Clock, Download } from "lucide-react";
+import { Plus, Search, Filter, CheckCircle, Clock as ClockIcon, Download, ListChecks } from "lucide-react";
 import { InvoiceTable } from "@/components/invoices/InvoiceTable";
+import BatchGenerateModal from "@/components/invoices/BatchGenerateModal";
 
 export default function InvoicesPage() {
   const [invoices, setInvoices] = useState<any[]>([]);
@@ -17,6 +18,7 @@ export default function InvoicesPage() {
     maxAmount: "",
   });
   const [showFilters, setShowFilters] = useState(false);
+  const [isBatchModalOpen, setIsBatchModalOpen] = useState(false);
 
   const fetchInvoices = async () => {
     setLoading(true);
@@ -62,9 +64,17 @@ export default function InvoicesPage() {
           <h2 className="text-3xl font-black text-slate-900 tracking-tight">請求書一覧</h2>
           <p className="text-slate-500">発行済みの請求書を管理します。</p>
         </div>
-        <a href="/invoices/new" className="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold flex items-center gap-2 hover:bg-blue-700 transition-all shadow-md">
-          <Plus size={20} /> 新規作成
-        </a>
+        <div className="flex gap-4">
+          <button 
+            onClick={() => setIsBatchModalOpen(true)}
+            className="bg-white text-blue-600 border border-blue-200 px-6 py-2 rounded-lg font-bold flex items-center gap-2 hover:bg-blue-50 transition-all shadow-sm"
+          >
+            <ListChecks size={20} /> 定型請求を一括作成
+          </button>
+          <a href="/invoices/new" className="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold flex items-center gap-2 hover:bg-blue-700 transition-all shadow-md">
+            <Plus size={20} /> 新規作成
+          </a>
+        </div>
       </div>
 
       <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-4">
@@ -110,7 +120,7 @@ export default function InvoicesPage() {
                 onClick={() => handleBulkUpdate('ISSUED')}
                 className="px-3 py-1.5 bg-blue-600 text-white text-xs font-bold rounded-md hover:bg-blue-700 transition-colors flex items-center gap-1"
               >
-                <Clock size={14} /> 発行済にする
+                <ClockIcon size={14} /> 発行済にする
               </button>
             </div>
           )}
@@ -172,6 +182,12 @@ export default function InvoicesPage() {
           onDuplicate={(id: string) => {/* TODO */}}
         />
       )}
+
+      <BatchGenerateModal 
+        isOpen={isBatchModalOpen} 
+        onClose={() => setIsBatchModalOpen(false)} 
+        onSuccess={fetchInvoices}
+      />
     </div>
   );
 }

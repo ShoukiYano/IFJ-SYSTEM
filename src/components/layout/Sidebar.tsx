@@ -15,7 +15,6 @@ const Sidebar = () => {
     { label: "見積書管理", icon: FileText, href: "/quotations" },
     { label: "請求書管理", icon: PlusCircle, href: "/invoices" },
     { label: "取引先管理", icon: Users, href: "/clients" },
-    { label: "CSV変換ツール", icon: FileText, href: "/tools/excel-converter" },
     { label: "操作マニュアル", icon: Book, href: "/manual" },
     { label: "システム設定", icon: Settings, href: "/settings" },
   ];

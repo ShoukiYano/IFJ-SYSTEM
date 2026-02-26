@@ -28,6 +28,7 @@ import {
   Trash2,
   Eye,
   Printer,
+  ListChecks,
 } from "lucide-react";
 
 // -------- サブコンポーネント --------
@@ -190,15 +191,17 @@ const SECTIONS: Section[] = [
           <Tip>チェックなしの場合は「発行年月」フィルタで指定した月の全請求書を ZIP 化します。</Tip>
         </div>
 
-        {/* 月始一括作成 */}
+        {/* 定型請求の一括生成 */}
         <div className="space-y-3">
-          <h3 className="font-black text-slate-700 flex items-center gap-2"><Calendar size={16} /> 月始一括作成</h3>
+          <h3 className="font-black text-slate-700 flex items-center gap-2"><ListChecks size={16} /> 定型請求の一括生成（自動下書き作成）</h3>
           <div className="space-y-3">
-            <Step num={1}>右上の <Badge color="slate">月始一括作成</Badge> ボタンをクリックします。</Step>
-            <Step num={2}>対象月（YYYY-MM 形式）を入力し、OK を押します。</Step>
-            <Step num={3}>前月の全請求書をコピーした下書きが自動生成されます。</Step>
+            <Step num={1}>「請求書管理」ページへ移動し、右上の <Badge color="white">定型請求を一括作成</Badge> ボタンをクリックします。</Step>
+            <Step num={2}>対象年月（例：翌月分）を選択します。画面には対象となる取引先一覧が表示されます。</Step>
+            <Step num={3}>「一括生成を実行する」をクリックします。</Step>
+            <Step num={4}>各取引先の「最新の請求書」をベースに、日付やサービス年月が自動更新された新しい「下書き」が作成されます。</Step>
           </div>
-          <Warn>既存の請求書が削除・上書きされることはありません。新規の下書きとして追加されます。</Warn>
+          <Tip>取引先マスタで「定型請求対象」をONにしている企業が対象となります。</Tip>
+          <Warn>最新の請求書が存在しない取引先はスキップされます。初回は手動で作成してください。</Warn>
         </div>
 
         {/* 契約更新アラート */}
@@ -237,9 +240,9 @@ const SECTIONS: Section[] = [
           <h3 className="font-black text-slate-700">👤 エンジニア（担当者）を登録する</h3>
           <div className="space-y-3">
             <Step num={1}>取引先の行をクリックして詳細を展開します（またはカードを選択します）。</Step>
-            <Step num={2}><Badge color="green">+ エンジニア追加</Badge> ボタンをクリックします。</Step>
-            <Step num={3}>氏名・契約開始日・契約終了日を入力します。</Step>
-            <Step num={4}>契約終了日を設定すると、2ヶ月前からダッシュボードにアラートが表示されます。</Step>
+            <Step num={2}>モーダル内の<strong>「毎月の定型請求対象にする」</strong>にチェックを入れると、一括作成機能の対象になります。</Step>
+            <Step num={3}>エンジニアを追加する場合は <Badge color="green">+ エンジニア追加</Badge> ボタンをクリックします。</Step>
+            <Step num={4}>氏名・契約開始日・契約終了日を入力します。終了日を設定すると、2ヶ月前からダッシュボードにアラートが表示されます。</Step>
           </div>
           <Tip>エンジニアを登録しておくと、SES請求書作成時に担当者名を選択リストから選べるようになります。</Tip>
         </div>
@@ -418,25 +421,29 @@ const SECTIONS: Section[] = [
         </div>
 
         <div className="space-y-3">
-          <h3 className="font-black text-slate-700">📤 勤怠データ読込 (CSV)</h3>
+          <h3 className="font-black text-slate-700 flex items-center gap-2"><Upload size={16} /> 勤怠データ読込 (CSV/Excel)</h3>
           <div className="space-y-3">
-            <Step num={1}>勤怠システムや独自に作成した CSV ファイルを用意します。</Step>
-            <Step num={2}>請求書作成・編集画面の右上にある <Badge color="slate">勤怠データ読込 (CSV)</Badge> ボタンをクリックします。</Step>
-            <Step num={3}>ファイルを選択すると、名前、稼働時間、年月、単価、精算幅が自動で反映されます。</Step>
-            <Step num={4}>単価と精算幅が読み込まれた場合、超過・控除単価も自動的に計算・設定されます。</Step>
+            <Step num={1}>勤怠システムから出力した <strong>CSV</strong> または <strong>Excel (.xlsx / .xls)</strong> ファイルを用意します。</Step>
+            <Step num={2}>請求書作成・編集画面の右上にある <Badge color="slate">勤怠データ読込 (CSV/Excel)</Badge> ボタンをクリックします。</Step>
+            <Step num={3}>ファイルを選択します。<strong>Excel の場合、複数のシート（企業別）が含まれていれば選択モーダルが表示されます。</strong></Step>
+            <Step num={4}>対象の企業（シート）を選択すると、名前、稼働時間、年月、単価、精算幅が自動で反映されます。</Step>
+            <Step num={5}>単価と精算幅が読み込まれた場合、超過・控除単価も自動的に計算・設定されます。</Step>
           </div>
           <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2">
-            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">対応ヘッダー (いずれかを含めれば自動認識)</div>
+            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">対応項目 (自動認識キーワード)</div>
             <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
               <div><strong>名前</strong>：名前, 氏名, Name</div>
               <div><strong>時間</strong>：時間, 稼働時間, Hours</div>
               <div><strong>年月</strong>：年月, Month</div>
               <div><strong>単価</strong>：単価, Price, Rate</div>
-              <div><strong>清算幅</strong>：清算幅, 精算幅, Range</div>
+              <div><strong>精算幅</strong>：精算幅, Range</div>
             </div>
-            <p className="text-[11px] text-slate-500 mt-2">※清算幅は <code>140-180</code> のような形式で読み書き可能です。</p>
+            <p className="text-[11px] text-slate-500 mt-2">※精算幅は <code>140-180</code> のような形式で読み取り可能です。</p>
           </div>
-          <Tip>CSV に年月や単価が含まれていれば、都度手入力する手間が省け、計算ミスも防止できます。</Tip>
+          <Tip>
+            Excel のシート名を企業名にしておくと、インポート時のシート選択が非常にスムーズになります。<br />
+            例：シート名「A株式会社」を選択 → 氏名や稼働時間が自動で展開
+          </Tip>
         </div>
       </div>
     ),

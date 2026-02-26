@@ -4,7 +4,8 @@ import React, { useState, useEffect } from "react";
 import { Plus, Trash2, Save, FileText, ChevronLeft, Upload } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { calculateDueDate, isHolidayOrWeekend, checkServiceMonthMismatch } from "@/lib/dateUtils";
-import { AlertTriangle, Info, Calendar as CalendarIcon, Loader2 } from "lucide-react";
+import { AlertTriangle, Info, Calendar as CalendarIcon, Loader2, Building2 } from "lucide-react";
+import * as XLSX from "xlsx";
 
 export default function NewInvoicePage() {
   const [clients, setClients] = useState([]);
@@ -31,6 +32,11 @@ export default function NewInvoicePage() {
   const [assignees, setAssignees] = useState<any[]>([]);
   const [clientAverage, setClientAverage] = useState(0);
   const [showAnomalyWarning, setShowAnomalyWarning] = useState(false);
+
+  // Excel直接インポート用の状態
+  const [isSheetModalOpen, setIsSheetModalOpen] = useState(false);
+  const [workbookSheets, setWorkbookSheets] = useState<string[]>([]);
+  const [pendingWorkbook, setPendingWorkbook] = useState<XLSX.WorkBook | null>(null);
 
   useEffect(() => {
     fetch("/api/clients").then(res => res.json()).then(setClients);
@@ -187,111 +193,164 @@ export default function NewInvoicePage() {
     }
   };
 
-  const handleImportCSV = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const applyImportedData = (importedItems: any[]) => {
+    if (importedItems.length === 0) {
+      alert("有効な勤怠データが見つかりませんでした。");
+      return;
+    }
+
+    const newItems = [...invoice.items];
+    importedItems.forEach(imported => {
+      const existingIdx = newItems.findIndex(item => item.personName === imported.name);
+      
+      const priceValue = imported.price ?? (existingIdx !== -1 ? newItems[existingIdx].unitPrice : 0);
+      const otRate = Math.floor(priceValue / imported.maxHours);
+      const deRate = Math.floor(priceValue / imported.minHours);
+
+      const baseItem = {
+        personName: imported.name,
+        quantity: imported.hours,
+        unitPrice: priceValue,
+        minHours: imported.minHours,
+        maxHours: imported.maxHours,
+        overtimeRate: otRate,
+        deductionRate: deRate,
+        unit: "h",
+      };
+
+      if (existingIdx !== -1) {
+        const updated = { ...newItems[existingIdx], ...baseItem };
+        if (imported.month) updated.serviceMonth = imported.month;
+        newItems[existingIdx] = calculateItemAmount(updated, invoice.templateType);
+      } else {
+        const sm = imported.month || invoice.items[0]?.serviceMonth || "";
+        const match = sm.match(/(\d+)月/);
+        const desc = match ? `${match[1]}月度稼働分` : "システムエンジニアリングサービス";
+        
+        const newItem = { 
+          ...baseItem,
+          description: desc,
+          serviceMonth: sm,
+          amount: 0,
+          overtimeAmount: 0,
+          deductionAmount: 0,
+          warnings: [] as string[]
+        };
+        newItems.push(calculateItemAmount(newItem, invoice.templateType));
+      }
+    });
+
+    // 空の初期行があれば削除（インポートしたデータがある場合）
+    const filteredItems = newItems.filter((item, idx) => {
+      if (idx === 0 && newItems.length > importedItems.length && !item.personName && item.unitPrice === 0) return false;
+      return true;
+    });
+
+    setInvoice({ ...invoice, items: filteredItems });
+    alert(`${importedItems.length}件のデータをインポートしました。`);
+  };
+
+  const handleImportFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const text = event.target?.result as string;
-      if (!text) return;
-
-      const lines = text.split(/\r?\n/).filter(line => line.trim() !== "");
-      if (lines.length < 2) return;
-
-      const headers = lines[0].split(",").map(h => h.trim().replace(/^"|"$/g, ''));
-      
-      // ヘッダー判定の拡張
-      const nameIdx = headers.findIndex(h => h.includes("氏名") || h.includes("名前") || h.includes("Name"));
-      const timeIdx = headers.findIndex(h => h.includes("稼働時間") || h.includes("合計") || h.includes("Hours") || h.includes("時間"));
-      const monthIdx = headers.findIndex(h => h.includes("年月") || h.includes("Month"));
-      const priceIdx = headers.findIndex(h => h.includes("単価") || h.includes("Price") || h.includes("Rate"));
-      const rangeIdx = headers.findIndex(h => h.includes("清算幅") || h.includes("精算幅") || h.includes("Range"));
-
-      if (nameIdx === -1 || timeIdx === -1) {
-        alert("CSVの列が見つかりません。「名前」と「時間」の列が必要です。");
-        return;
-      }
-
-      const importedItems = lines.slice(1).map(line => {
-        const cols = line.split(",").map(c => c.trim().replace(/^"|"$/g, ''));
-        if (cols.length <= Math.max(nameIdx, timeIdx)) return null;
-        
-        const name = cols[nameIdx];
-        const hours = Number(cols[timeIdx].replace(/[^\d.]/g, ''));
-        const month = monthIdx !== -1 ? cols[monthIdx] : null;
-        const price = priceIdx !== -1 ? Number(cols[priceIdx].replace(/[^\d.]/g, '')) : null;
-        const range = rangeIdx !== -1 ? cols[rangeIdx] : null;
-
-        if (!name || isNaN(hours)) return null;
-
-        let minHours = 140;
-        let maxHours = 180;
-        if (range) {
-          const parts = range.split(/[-~]/).map(p => Number(p.replace(/[^\d.]/g, '')));
-          if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
-            minHours = parts[0];
-            maxHours = parts[1];
-          }
-        }
-
-        return { name, hours, month, price, minHours, maxHours };
-      }).filter(Boolean) as { name: string, hours: number, month: string | null, price: number | null, minHours: number, maxHours: number }[];
-
-      if (importedItems.length === 0) {
-        alert("有効な勤怠データが見つかりませんでした。");
-        return;
-      }
-
-      const newItems = [...invoice.items];
-      importedItems.forEach(imported => {
-        const existingIdx = newItems.findIndex(item => item.personName === imported.name);
-        
-        const priceValue = imported.price ?? (existingIdx !== -1 ? newItems[existingIdx].unitPrice : 0);
-        const otRate = Math.floor(priceValue / imported.maxHours);
-        const deRate = Math.floor(priceValue / imported.minHours);
-
-        const baseItem = {
-          personName: imported.name,
-          quantity: imported.hours,
-          unitPrice: priceValue,
-          minHours: imported.minHours,
-          maxHours: imported.maxHours,
-          overtimeRate: otRate,
-          deductionRate: deRate,
-          unit: "h",
-        };
-
-        if (existingIdx !== -1) {
-          const updated = { ...newItems[existingIdx], ...baseItem };
-          if (imported.month) updated.serviceMonth = imported.month;
-          newItems[existingIdx] = calculateItemAmount(updated, invoice.templateType);
+    if (file.name.endsWith(".csv")) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const text = event.target?.result as string;
+        if (!text) return;
+        parseAndApplyCSV(text);
+      };
+      reader.readAsText(file);
+    } else if (file.name.endsWith(".xlsx") || file.name.endsWith(".xls")) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const data = event.target?.result;
+        const workbook = XLSX.read(data, { type: "binary" });
+        if (workbook.SheetNames.length > 1) {
+          setPendingWorkbook(workbook);
+          setWorkbookSheets(workbook.SheetNames);
+          setIsSheetModalOpen(true);
         } else {
-          const sm = imported.month || invoice.items[0]?.serviceMonth || "";
-          const match = sm.match(/(\d+)月/);
-          const desc = match ? `${match[1]}月度稼働分` : "システムエンジニアリングサービス";
-          
-          const newItem = { 
-            ...baseItem,
-            description: desc,
-            serviceMonth: sm,
-            amount: 0,
-            overtimeAmount: 0,
-            deductionAmount: 0,
-            warnings: [] as string[]
-          };
-          newItems.push(calculateItemAmount(newItem, invoice.templateType));
+          processExcelSheet(workbook, workbook.SheetNames[0]);
         }
-      });
+      };
+      reader.readAsBinaryString(file);
+    }
+  };
 
-      if (newItems.length > 1 && !newItems[0].personName && newItems[0].quantity === 1 && newItems[0].unitPrice === 0) {
-        newItems.shift();
+  const parseAndApplyCSV = (text: string) => {
+    const lines = text.split(/\r?\n/).filter(line => line.trim() !== "");
+    if (lines.length < 2) return;
+
+    const headers = lines[0].split(",").map(h => h.trim().replace(/^"|"$/g, ''));
+    const nameIdx = headers.findIndex(h => h.includes("氏名") || h.includes("名前") || h.includes("Name"));
+    const timeIdx = headers.findIndex(h => h.includes("稼働時間") || h.includes("合計") || h.includes("Hours") || h.includes("時間"));
+    const monthIdx = headers.findIndex(h => h.includes("年月") || h.includes("Month"));
+    const priceIdx = headers.findIndex(h => h.includes("単価") || h.includes("Price") || h.includes("Rate"));
+    const rangeIdx = headers.findIndex(h => h.includes("清算幅") || h.includes("精算幅") || h.includes("Range"));
+
+    if (nameIdx === -1 || timeIdx === -1) {
+      alert("CSVの列が見つかりません。「名前」と「時間」の列が必要です。");
+      return;
+    }
+
+    const importedItems = lines.slice(1).map(line => {
+      const cols = line.split(",").map(c => c.trim().replace(/^"|"$/g, ''));
+      if (cols.length <= Math.max(nameIdx, timeIdx)) return null;
+      return mapRowToItem(cols, nameIdx, timeIdx, monthIdx, priceIdx, rangeIdx);
+    }).filter(Boolean);
+
+    applyImportedData(importedItems);
+  };
+
+  const processExcelSheet = (workbook: XLSX.WorkBook, sheetName: string) => {
+    const worksheet = workbook.Sheets[sheetName];
+    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as any[][];
+    if (jsonData.length < 2) return;
+
+    const headers = jsonData[0].map(h => String(h || "").trim());
+    const nameIdx = headers.findIndex(h => h.includes("氏名") || h.includes("名前") || h.includes("Name"));
+    const timeIdx = headers.findIndex(h => h.includes("稼働時間") || h.includes("合計") || h.includes("Hours") || h.includes("時間"));
+    const monthIdx = headers.findIndex(h => h.includes("年月") || h.includes("Month"));
+    const priceIdx = headers.findIndex(h => h.includes("単価") || h.includes("Price") || h.includes("Rate"));
+    const rangeIdx = headers.findIndex(h => h.includes("清算幅") || h.includes("精算幅") || h.includes("Range"));
+
+    if (nameIdx === -1 || timeIdx === -1) {
+      alert("Excelの列が見つかりません。「名前」と「時間」の列が必要です。");
+      return;
+    }
+
+    const importedItems = jsonData.slice(1).map(row => {
+      if (row.length <= Math.max(nameIdx, timeIdx)) return null;
+      const cols = row.map(v => String(v || ""));
+      return mapRowToItem(cols, nameIdx, timeIdx, monthIdx, priceIdx, rangeIdx);
+    }).filter(Boolean);
+
+    applyImportedData(importedItems);
+    setIsSheetModalOpen(false);
+    setPendingWorkbook(null);
+  };
+
+  const mapRowToItem = (cols: string[], nameIdx: number, timeIdx: number, monthIdx: number, priceIdx: number, rangeIdx: number) => {
+    const name = cols[nameIdx];
+    const hours = Number(cols[timeIdx].replace(/[^\d.]/g, ''));
+    const month = monthIdx !== -1 ? cols[monthIdx] : null;
+    const price = priceIdx !== -1 ? Number(cols[priceIdx].replace(/[^\d.]/g, '')) : null;
+    const range = rangeIdx !== -1 ? cols[rangeIdx] : null;
+
+    if (!name || isNaN(hours)) return null;
+
+    let minHours = 140;
+    let maxHours = 180;
+    if (range) {
+      const parts = range.split(/[-~]/).map(p => Number(p.replace(/[^\d.]/g, '')));
+      if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+        minHours = parts[0];
+        maxHours = parts[1];
       }
-
-      setInvoice({ ...invoice, items: newItems });
-      alert(`${importedItems.length}件のデータをインポートしました。`);
-    };
-    reader.readAsText(file);
+    }
+    return { name, hours, month, price, minHours, maxHours };
   };
 
   return (
@@ -406,22 +465,15 @@ export default function NewInvoicePage() {
               </h2>
               <div className="flex gap-2">
                 <input 
-                  type="file" id="csv-import" accept=".csv" className="hidden" 
-                  onChange={handleImportCSV}
+                  type="file" id="csv-import" accept=".csv, .xlsx, .xls" className="hidden" 
+                  onChange={handleImportFile}
                 />
                 <button 
                   onClick={() => document.getElementById('csv-import')?.click()}
-                  className="px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg text-xs font-bold flex items-center gap-2 hover:bg-slate-200 transition-colors"
+                  className="px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg text-xs font-bold flex items-center gap-2 hover:bg-slate-200 transition-colors border border-slate-200 shadow-sm outline-none focus:ring-2 focus:ring-slate-400/20"
                 >
-                  <Upload size={14} /> 勤怠データ読込 (CSV)
+                  <Upload size={14} /> 勤怠データ読込 (CSV/Excel)
                 </button>
-                <a 
-                  href="/tools/excel-converter" 
-                  target="_blank"
-                  className="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg text-xs font-bold flex items-center gap-2 hover:bg-blue-100 transition-colors border border-blue-100"
-                >
-                  <FileText size={14} /> ExcelをCSVに変換
-                </a>
               </div>
             </div>
             <div className="space-y-4">
@@ -748,6 +800,58 @@ export default function NewInvoicePage() {
           </div>
         </div>
       </div>
+      {/* 複数シート選択モーダル */}
+      {isSheetModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="bg-blue-600 p-6 text-white text-center">
+              <div className="bg-white/20 w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <Building2 size={24} />
+              </div>
+              <h3 className="text-xl font-black italic">どの企業（シート）を読み込みますか？</h3>
+              <p className="text-blue-100 text-sm mt-1 opacity-90">
+                Excelファイルから複数のシートが検出されました。
+              </p>
+            </div>
+            
+            <div className="p-4 max-h-[400px] overflow-y-auto">
+              <div className="grid grid-cols-1 gap-2">
+                {workbookSheets.map((sheet) => (
+                  <button
+                    key={sheet}
+                    onClick={() => pendingWorkbook && processExcelSheet(pendingWorkbook, sheet)}
+                    className="flex items-center gap-4 p-4 rounded-2xl hover:bg-blue-50 border border-transparent hover:border-blue-100 transition-all text-left group"
+                  >
+                    <div className="p-2 bg-slate-100 text-slate-400 rounded-xl group-hover:bg-blue-100 group-hover:text-blue-600 transition-colors">
+                      <FileSpreadsheet size={20} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-bold text-slate-800 truncate">{sheet}</div>
+                      <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">Excel Sheet</div>
+                    </div>
+                    <ChevronLeft size={16} className="text-slate-300 group-hover:text-blue-400 rotate-180 transition-all" />
+                  </button>
+                ))}
+              </div>
+            </div>
+            
+            <div className="p-4 bg-slate-50 border-t border-slate-100">
+              <button 
+                onClick={() => {
+                  setIsSheetModalOpen(false);
+                  setPendingWorkbook(null);
+                }}
+                className="w-full py-3 text-slate-500 font-bold hover:text-slate-700 transition-colors text-sm"
+              >
+                キャンセル
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
+// 足りないアイコンの追加（既存のlucide-reactから）
+import { FileSpreadsheet } from "lucide-react";

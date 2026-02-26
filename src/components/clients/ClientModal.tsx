@@ -30,6 +30,7 @@ export default function ClientModal({ isOpen, onClose, onSuccess, client }: Clie
     closingDay: 31,
     paymentMonthOffset: 1,
     paymentDay: 31,
+    isRecurring: false,
   });
   const [assignees, setAssignees] = useState<Assignee[]>([]);
   const [newAssignee, setNewAssignee] = useState({
@@ -54,6 +55,7 @@ export default function ClientModal({ isOpen, onClose, onSuccess, client }: Clie
         closingDay: client.closingDay || 31,
         paymentMonthOffset: client.paymentMonthOffset || 1,
         paymentDay: client.paymentDay || 31,
+        isRecurring: client.isRecurring || false,
       });
       fetchAssignees(client.id);
     } else {
@@ -69,6 +71,7 @@ export default function ClientModal({ isOpen, onClose, onSuccess, client }: Clie
         closingDay: 31,
         paymentMonthOffset: 1,
         paymentDay: 31,
+        isRecurring: false,
       });
       setAssignees([]);
     }
@@ -297,6 +300,30 @@ export default function ClientModal({ isOpen, onClose, onSuccess, client }: Clie
                     ))}
                     <option value={31}>月末</option>
                   </select>
+                </div>
+
+                <div className="md:col-span-3 pt-4 pt-2">
+                  <label className="flex items-center gap-3 p-4 bg-blue-50/50 border border-blue-100 rounded-2xl cursor-pointer hover:bg-blue-50 transition-colors group">
+                    <div className="relative flex items-center">
+                      <input 
+                        type="checkbox"
+                        className="peer h-6 w-6 cursor-pointer appearance-none rounded-lg border-2 border-blue-200 bg-white checked:bg-blue-600 checked:border-blue-600 transition-all"
+                        checked={formData.isRecurring}
+                        onChange={e => setFormData({ ...formData, isRecurring: e.target.checked })}
+                      />
+                      <X className="absolute h-4 w-4 left-1 text-white opacity-0 peer-checked:opacity-100 pointer-events-none rotate-45 scale-125" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="text-sm font-bold text-slate-800 group-hover:text-blue-700 transition-colors">毎月の定型請求対象にする</div>
+                      <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">Recurring Invoice Option</div>
+                    </div>
+                    <div className="px-2 py-1 bg-blue-100 text-blue-600 text-[10px] font-black rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
+                      RECOMMENDED FOR SES
+                    </div>
+                  </label>
+                  <p className="text-[10px] text-slate-400 mt-2 px-1">
+                    ※ チェックを入れると、請求書一覧の「一括作成」から翌月分の下書きを自動生成できるようになります。
+                  </p>
                 </div>
               </div>
             </div>

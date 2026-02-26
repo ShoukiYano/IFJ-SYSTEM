@@ -54,6 +54,7 @@ model Client {
   paymentMonthOffset Int?  @default(1)  // 支払月 (0:当月, 1:翌月, 2:翌々月)
   paymentDay     Int?      @default(31) // 支払日 (1-31, 31は月末)
   defaultNotes   String?
+  isRecurring    Boolean   @default(false)
   deletedAt      DateTime?
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt

@@ -14,12 +14,19 @@ const clientSchema = z.object({
   closingDay: z.number().min(1).max(31).default(31),
   paymentMonthOffset: z.number().min(0).max(2).default(1),
   paymentDay: z.number().min(1).max(31).default(31),
+  isRecurring: z.boolean().default(false),
 });
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
+    const { searchParams } = new URL(req.url);
+    const recurringOnly = searchParams.get("recurringOnly") === "true";
+
     const clients = await prisma.client.findMany({
-      where: { deletedAt: null },
+      where: { 
+        deletedAt: null,
+        ...(recurringOnly ? { isRecurring: true } : {}),
+      } as any,
       orderBy: { createdAt: "desc" },
     });
     return NextResponse.json(clients);
