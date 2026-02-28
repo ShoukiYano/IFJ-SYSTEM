@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Building2, Users, FileText, Save, Trash2, Loader2, CheckCircle2, Plus, Mail, Key, Settings } from "lucide-react";
+import { ArrowLeft, Building2, Users, FileText, Save, Trash2, Loader2, CheckCircle2, Plus, Mail, Key, Settings, Database, Download } from "lucide-react";
 import Link from "next/link";
 
 export default function TenantDetailPage({ params }: { params: { id: string } }) {
@@ -15,6 +15,10 @@ export default function TenantDetailPage({ params }: { params: { id: string } })
   const [deleting, setDeleting] = useState(false);
   const [success, setSuccess] = useState(false);
   
+  const [backups, setBackups] = useState<any[]>([]);
+  const [backupsLoading, setBackupsLoading] = useState(true);
+  const [creatingBackup, setCreatingBackup] = useState(false);
+
   const [newUser, setNewUser] = useState({
     email: "",
     name: "",
@@ -26,6 +30,7 @@ export default function TenantDetailPage({ params }: { params: { id: string } })
   useEffect(() => {
     fetchTenant();
     fetchUsers();
+    fetchBackups();
   }, []);
 
   const fetchTenant = async () => {
@@ -57,6 +62,40 @@ export default function TenantDetailPage({ params }: { params: { id: string } })
       console.error(error);
     } finally {
       setUsersLoading(false);
+    }
+  };
+
+  const fetchBackups = async () => {
+    setBackupsLoading(true);
+    try {
+      const res = await fetch(`/api/admin/tenants/${params.id}/backups`);
+      if (res.ok) {
+        const data = await res.json();
+        setBackups(data);
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setBackupsLoading(false);
+    }
+  };
+
+  const handleCreateBackup = async () => {
+    if (!confirm("現在のデータのスナップショットを作成しますか？")) return;
+    setCreatingBackup(true);
+    try {
+      const res = await fetch(`/api/admin/tenants/${params.id}/backups`, {
+        method: "POST",
+      });
+      if (res.ok) {
+        fetchBackups();
+      } else {
+        alert("バックアップの作成に失敗しました");
+      }
+    } catch (error) {
+      alert("通信エラーが発生しました");
+    } finally {
+      setCreatingBackup(false);
     }
   };
 
@@ -382,6 +421,61 @@ export default function TenantDetailPage({ params }: { params: { id: string } })
               </table>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* バックアップ管理セクション */}
+      <div className="mt-16 space-y-8 pb-20">
+        <div className="flex justify-between items-center">
+          <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
+            <Database size={24} className="text-indigo-600" />
+            データバックアップ (スナップショット)
+          </h2>
+          <button 
+            onClick={handleCreateBackup}
+            disabled={creatingBackup}
+            className="bg-indigo-600 text-white px-4 py-2 rounded-xl font-bold flex items-center gap-2 hover:bg-indigo-700 transition disabled:opacity-50"
+          >
+            {creatingBackup ? <Loader2 size={18} className="animate-spin" /> : <Database size={18} />}
+            今すぐバックアップを作成
+          </button>
+        </div>
+
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden text-sm">
+          <table className="w-full text-left">
+            <thead>
+              <tr className="bg-slate-50 border-b border-slate-100">
+                <th className="px-6 py-4 font-bold text-slate-500 uppercase">ファイル名</th>
+                <th className="px-6 py-4 font-bold text-slate-500 uppercase">サイズ</th>
+                <th className="px-6 py-4 font-bold text-slate-500 uppercase">作成日時</th>
+                <th className="px-6 py-4 font-bold text-slate-500 uppercase text-right">操作</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {backupsLoading ? (
+                <tr>
+                  <td colSpan={4} className="px-6 py-8 text-center text-slate-400">読み込み中...</td>
+                </tr>
+              ) : backups.length > 0 ? (
+                backups.map((backup) => (
+                  <tr key={backup.id} className="hover:bg-slate-50 transition">
+                    <td className="px-6 py-4 font-medium text-slate-800">{backup.filename}</td>
+                    <td className="px-6 py-4 text-slate-500">{(backup.size / 1024).toFixed(1)} KB</td>
+                    <td className="px-6 py-4 text-slate-500">{new Date(backup.createdAt).toLocaleString()}</td>
+                    <td className="px-6 py-4 text-right">
+                      <button className="text-indigo-600 font-bold hover:underline flex items-center justify-end gap-1 ml-auto">
+                        <Download size={14} /> ダウンロード
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={4} className="px-6 py-12 text-center text-slate-400">バックアップ履歴がありません</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>

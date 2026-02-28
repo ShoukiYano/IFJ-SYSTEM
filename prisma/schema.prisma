@@ -64,7 +64,22 @@ model Tenant {
   quotations         Quotation[]
   sequences          InvoiceSequence[]
   assignees          Assignee[]
+  backups            TenantBackup[]
   auditLogs          AuditLog[]
+}
+
+model TenantBackup {
+  id          String   @id @default(uuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  filename    String
+  data        Json?    // Optional: Snapshot of data at the time of backup
+  fileUrl     String?
+  size        Int?     // bytes
+  backupType  String   @default("MANUAL") // MANUAL, AUTO
+  createdAt   DateTime @default(now())
+
+  @@index([tenantId])
 }
 
 model Client {

@@ -235,20 +235,34 @@ export default function NewInvoicePage() {
 
     const newItems = [...invoice.items];
     importedItems.forEach(imported => {
-      const existingIdx = newItems.findIndex(item => item.personName === imported.name);
+      // インポートされた名前の空白を除去して比較用に使用
+      const cleanImportedName = (imported.name || "").replace(/\s/g, '');
       
-      const priceValue = imported.price ?? (existingIdx !== -1 ? newItems[existingIdx].unitPrice : 0);
-      const otRate = Math.floor(priceValue / imported.maxHours);
-      const deRate = Math.floor(priceValue / imported.minHours);
+      // マスタから一致する要員を探す（空白除去して比較）
+      const matchedStaff = staffs.find(s => (s.name || "").replace(/\s/g, '') === cleanImportedName);
+
+      const existingIdx = newItems.findIndex(item => {
+        const cleanItemName = (item.personName || "").replace(/\s/g, '');
+        return cleanItemName === cleanImportedName;
+      });
+      
+      // 価格や精算幅の決定（インポートデータ優先、なければマスタ、それもなければデフォルト）
+      const priceValue = imported.price ?? (matchedStaff ? Number(matchedStaff.unitPrice) : (existingIdx !== -1 ? newItems[existingIdx].unitPrice : 0));
+      const minHours = imported.minHours ?? (matchedStaff?.minHours ? Number(matchedStaff.minHours) : (existingIdx !== -1 ? newItems[existingIdx].minHours : 140));
+      const maxHours = imported.maxHours ?? (matchedStaff?.maxHours ? Number(matchedStaff.maxHours) : (existingIdx !== -1 ? newItems[existingIdx].maxHours : 180));
+      
+      const overtimeRate = matchedStaff?.excessAmount ? Number(matchedStaff.excessAmount) : Math.floor(priceValue / (maxHours || 1));
+      const deductionRate = matchedStaff?.deductionAmount ? Number(matchedStaff.deductionAmount) : Math.floor(priceValue / (minHours || 1));
 
       const baseItem = {
-        personName: imported.name,
+        staffId: matchedStaff?.id || (existingIdx !== -1 ? newItems[existingIdx].staffId : ""),
+        personName: matchedStaff?.name || imported.name, // マスタがあれば正式名称を使用
         quantity: imported.hours,
         unitPrice: priceValue,
-        minHours: imported.minHours,
-        maxHours: imported.maxHours,
-        overtimeRate: otRate,
-        deductionRate: deRate,
+        minHours,
+        maxHours,
+        overtimeRate,
+        deductionRate,
         unit: "h",
       };
 
@@ -369,7 +383,15 @@ export default function NewInvoicePage() {
   const mapRowToItem = (cols: string[], nameIdx: number, timeIdx: number, monthIdx: number, priceIdx: number, rangeIdx: number) => {
     const name = cols[nameIdx];
     const hours = Number(cols[timeIdx].replace(/[^\d.]/g, ''));
-    const month = monthIdx !== -1 ? cols[monthIdx] : null;
+    
+    let month = monthIdx !== -1 ? cols[monthIdx] : null;
+    // Excelの日付数値（例: 45000〜）をチェック
+    if (month && /^\d+(\.\d+)?$/.test(month) && Number(month) > 40000) {
+      const num = Number(month);
+      const date = new Date(Math.round((num - 25569) * 86400 * 1000));
+      month = `${date.getFullYear()}年${date.getMonth() + 1}月`;
+    }
+
     const price = priceIdx !== -1 ? Number(cols[priceIdx].replace(/[^\d.]/g, '')) : null;
     const range = rangeIdx !== -1 ? cols[rangeIdx] : null;
 
