@@ -1,14 +1,21 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { getTenantContext } from "@/lib/tenantContext";
 
 export async function GET() {
   try {
+    const context = await getTenantContext();
+    if (!context) {
+      return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
+    }
+
     // 過去6ヶ月分の売上を取得
     const today = new Date();
     const sixMonthsAgo = new Date(today.getFullYear(), today.getMonth() - 5, 1);
 
     const invoices = await prisma.invoice.findMany({
       where: {
+        tenantId: context.tenantId,
         deletedAt: null,
         issueDate: {
           gte: sixMonthsAgo,
@@ -45,7 +52,7 @@ export async function GET() {
 
     return NextResponse.json(data);
   } catch (error) {
-    console.error(error);
+    console.error("GET /api/stats/sales error:", error);
     return NextResponse.json({ error: "統計の取得に失敗しました" }, { status: 500 });
   }
 }

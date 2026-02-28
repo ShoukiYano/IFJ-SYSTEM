@@ -13,6 +13,7 @@ export default function EditInvoicePage() {
   const [clients, setClients] = useState<any[]>([]);
   const [invoice, setInvoice] = useState<any>(null);
   const [assignees, setAssignees] = useState<any[]>([]);
+  const [staffs, setStaffs] = useState<any[]>([]);
 
   // Excel直接インポート用の状態
   const [isSheetModalOpen, setIsSheetModalOpen] = useState(false);
@@ -37,13 +38,14 @@ export default function EditInvoicePage() {
           dueDate: invoiceData.dueDate ? invoiceData.dueDate.split("T")[0] : "",
         });
 
-        // Fetch initial assignees
+        // Fetch initial assignees and staffs
         if (invoiceData.clientId) {
-          const assigneesRes = await fetch(`/api/assignees?clientId=${invoiceData.clientId}`);
-          if (assigneesRes.ok) {
-            const assigneesData = await assigneesRes.json();
-            setAssignees(assigneesData);
-          }
+          const [assigneesRes, staffsRes] = await Promise.all([
+            fetch(`/api/assignees?clientId=${invoiceData.clientId}`),
+            fetch(`/api/staff?clientId=${invoiceData.clientId}`)
+          ]);
+          if (assigneesRes.ok) setAssignees(await assigneesRes.json());
+          if (staffsRes.ok) setStaffs(await staffsRes.json());
         }
       } catch (error) {
         console.error("Failed to fetch data:", error);
@@ -60,8 +62,14 @@ export default function EditInvoicePage() {
         .then(res => res.json())
         .then(data => setAssignees(Array.isArray(data) ? data : []))
         .catch(err => console.error("Fetch assignees error:", err));
+      
+      fetch(`/api/staff?clientId=${invoice.clientId}`)
+        .then(res => res.json())
+        .then(data => setStaffs(Array.isArray(data) ? data : []))
+        .catch(err => console.error("Fetch staffs error:", err));
     } else {
       setAssignees([]);
+      setStaffs([]);
     }
   }, [invoice?.clientId]);
 
@@ -73,7 +81,8 @@ export default function EditInvoicePage() {
         quantity: 1, unit: invoice.templateType === "SES" ? "h" : "式", 
         unitPrice: 0, amount: 0,
         minHours: 140, maxHours: 180, overtimeRate: 0, deductionRate: 0,
-        overtimeAmount: 0, deductionAmount: 0
+        overtimeAmount: 0, deductionAmount: 0,
+        staffId: ""
       }],
     });
   };
@@ -118,6 +127,23 @@ export default function EditInvoicePage() {
       if (unitPrice > 0 && min > 0 && max > 0) {
         updatedItem.overtimeRate  = Math.floor(unitPrice / max);
         updatedItem.deductionRate = Math.floor(unitPrice / min);
+      }
+    }
+
+    // 要員選択時の自動補完
+    if (invoice.templateType === "SES" && field === "staffId" && value) {
+      const selectedStaff = staffs.find(s => s.id === value);
+      if (selectedStaff) {
+        updatedItem.personName = selectedStaff.name;
+        updatedItem.unitPrice = Number(selectedStaff.unitPrice);
+        updatedItem.minHours = selectedStaff.minHours ?? 140;
+        updatedItem.maxHours = selectedStaff.maxHours ?? 180;
+        
+        // 再計算を促すためにレートも設定
+        if (updatedItem.unitPrice > 0 && updatedItem.minHours > 0 && updatedItem.maxHours > 0) {
+          updatedItem.overtimeRate = Math.floor(updatedItem.unitPrice / updatedItem.maxHours);
+          updatedItem.deductionRate = Math.floor(updatedItem.unitPrice / updatedItem.minHours);
+        }
       }
     }
 
@@ -469,17 +495,16 @@ export default function EditInvoicePage() {
                         </div>
                         <div className="col-span-2">
                           <div className="relative">
-                            <input 
-                              type="text" list={`assignees-${index}`} placeholder="該当者：山田太郎"
-                              className="w-full px-3 py-1.5 bg-slate-50 border border-slate-100 rounded text-sm"
-                              value={item.personName || ""}
-                              onChange={e => handleItemChange(index, "personName", e.target.value)}
-                            />
-                            <datalist id={`assignees-${index}`}>
-                              {assignees.map((a: any) => (
-                                <option key={a.id} value={a.name} />
+                            <select 
+                              className="w-full px-3 py-1.5 bg-blue-50 border border-blue-200 rounded text-sm font-bold text-blue-800"
+                              value={item.staffId || ""}
+                              onChange={e => handleItemChange(index, "staffId", e.target.value)}
+                            >
+                              <option value="">要員を選択</option>
+                              {staffs.map((s: any) => (
+                                <option key={s.id} value={s.id}>{s.name} ({s.type === 'PROPER' ? 'プ' : 'BP'})</option>
                               ))}
-                            </datalist>
+                            </select>
                           </div>
                         </div>
                         <div className="col-span-2">

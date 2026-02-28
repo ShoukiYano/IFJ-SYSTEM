@@ -1,11 +1,20 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { format } from "date-fns";
+import { getTenantContext } from "@/lib/tenantContext";
 
 export async function GET() {
   try {
+    const context = await getTenantContext();
+    if (!context) {
+      return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
+    }
+
     const invoices = await prisma.invoice.findMany({
-      where: { deletedAt: null },
+      where: { 
+        tenantId: context.tenantId,
+        deletedAt: null 
+      },
       include: {
         client: true,
       },

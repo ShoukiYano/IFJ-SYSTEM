@@ -3,11 +3,17 @@ import prisma from "@/lib/prisma";
 import { z } from "zod";
 import { getTenantContext } from "@/lib/tenantContext";
 
-const assigneeSchema = z.object({
-  name: z.string().min(1, "氏名は必須です"),
+const staffSchema = z.object({
+  name: z.string().min(1, "名前は必須です"),
+  type: z.enum(["PROPER", "BP"]),
+  area: z.enum(["KANSAI", "KANTO"]),
+  manager: z.string().optional().nullable(),
   clientId: z.string().uuid("無効な取引先IDです"),
-  contractStartDate: z.string().optional().nullable(),
-  contractEndDate: z.string().optional().nullable(),
+  unitPrice: z.number().min(0, "単価は0以上である必要があります"),
+  minHours: z.number().optional().nullable(),
+  maxHours: z.number().optional().nullable(),
+  contractStartMonth: z.number().min(1).max(12).optional().nullable(),
+  renewalInterval: z.number().min(1).optional().nullable(),
 });
 
 export async function GET(req: Request) {
@@ -20,21 +26,21 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const clientId = searchParams.get("clientId");
 
-    if (!clientId) {
-      return NextResponse.json({ error: "clientIdが必要です" }, { status: 400 });
-    }
-
-    const assignees = await prisma.assignee.findMany({
-      where: { 
+    const staffs = await prisma.staff.findMany({
+      where: {
         tenantId: context.tenantId,
-        clientId 
+        deletedAt: null,
+        ...(clientId ? { clientId } : {}),
       },
-      orderBy: { createdAt: "asc" },
+      include: {
+        client: true,
+      },
+      orderBy: { createdAt: "desc" },
     });
 
-    return NextResponse.json(assignees);
+    return NextResponse.json(staffs);
   } catch (error) {
-    console.error("GET /api/assignees error:", error);
+    console.error("GET /api/staff error:", error);
     return NextResponse.json({ error: "取得に失敗しました" }, { status: 500 });
   }
 }
@@ -47,23 +53,21 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const validated = assigneeSchema.parse(body);
+    const validated = staffSchema.parse(body);
 
-    const assignee = await prisma.assignee.create({
+    const staff = await prisma.staff.create({
       data: {
         ...validated,
         tenantId: context.tenantId,
-        contractStartDate: validated.contractStartDate ? new Date(validated.contractStartDate) : null,
-        contractEndDate: validated.contractEndDate ? new Date(validated.contractEndDate) : null,
       },
     });
 
-    return NextResponse.json(assignee);
+    return NextResponse.json(staff);
   } catch (error) {
-    if (error instanceof z.ZodError || (error as any).name === 'ZodError') {
-      return NextResponse.json({ error: "入力内容に不備があります", details: (error as any).errors }, { status: 400 });
+    if (error instanceof z.ZodError) {
+      return NextResponse.json({ error: "入力内容に不備があります", details: error.errors }, { status: 400 });
     }
-    console.error("POST /api/assignees error:", error);
+    console.error("POST /api/staff error:", error);
     return NextResponse.json({ error: "登録に失敗しました", details: error instanceof Error ? error.message : String(error) }, { status: 500 });
   }
 }

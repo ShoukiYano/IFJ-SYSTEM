@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { z } from "zod";
+import { getTenantContext } from "@/lib/tenantContext";
 
 const invoiceItemSchema = z.object({
   description: z.string().min(1),
@@ -16,6 +17,7 @@ const invoiceItemSchema = z.object({
   deductionRate: z.coerce.number().optional().nullable(),
   overtimeAmount: z.coerce.number().optional().nullable(),
   deductionAmount: z.coerce.number().optional().nullable(),
+  staffId: z.string().uuid().optional().nullable(),
 });
 
 const invoiceSchema = z.object({
@@ -32,16 +34,25 @@ const invoiceSchema = z.object({
 });
 
 export async function GET(req: Request) {
-  const { searchParams } = new URL(req.url);
-  const clientId = searchParams.get("clientId");
-  const month = searchParams.get("month"); // YYYY-MM
-  const minDate = searchParams.get("minDate");
-  const maxDate = searchParams.get("maxDate");
-  const minAmount = searchParams.get("minAmount");
-  const maxAmount = searchParams.get("maxAmount");
-
   try {
-    const where: any = { deletedAt: null };
+    const context = await getTenantContext();
+    if (!context) {
+      return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(req.url);
+    const clientId = searchParams.get("clientId");
+    const month = searchParams.get("month"); // YYYY-MM
+    const minDate = searchParams.get("minDate");
+    const maxDate = searchParams.get("maxDate");
+    const minAmount = searchParams.get("minAmount");
+    const maxAmount = searchParams.get("maxAmount");
+
+    const where: any = { 
+      tenantId: context.tenantId,
+      deletedAt: null 
+    };
+
     if (clientId) where.clientId = clientId;
     
     if (month) {
@@ -71,27 +82,42 @@ export async function GET(req: Request) {
     });
     return NextResponse.json(invoices);
   } catch (error) {
+    console.error("GET /api/invoices error:", error);
     return NextResponse.json({ error: "取得に失敗しました" }, { status: 500 });
   }
 }
 
 export async function POST(req: Request) {
   try {
+    const context = await getTenantContext();
+    if (!context) {
+      return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
+    }
+
     const body = await req.json();
     const validated = invoiceSchema.parse(body);
 
-    // 採番管理 (invoiceNumber が指定されていない場合のみ)
+    // 採番管理 (tenantId ごとに管理)
     let invoiceNumber = validated.invoiceNumber;
     if (!invoiceNumber) {
       const sequence = await prisma.invoiceSequence.upsert({
-        where: { id: "default" },
+        where: { 
+          tenantId_id: {
+            tenantId: context.tenantId,
+            id: "default"
+          }
+        },
         update: { current: { increment: 1 } },
-        create: { id: "default", current: 1 },
+        create: { 
+          id: "default", 
+          tenantId: context.tenantId,
+          current: 1 
+        },
       });
 
       const date = new Date(validated.issueDate);
       const yearMonth = `${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, "0")}`;
-      invoiceNumber = `INV-${yearMonth}-${sequence.current.toString().padStart(4, "0")}`;
+      invoiceNumber = `${sequence.prefix}${yearMonth}-${sequence.current.toString().padStart(4, "0")}`;
     }
 
     const subtotal = validated.items.reduce((acc, item) => acc + item.amount, 0);
@@ -100,11 +126,11 @@ export async function POST(req: Request) {
 
     const invoice = await prisma.invoice.create({
       data: {
+        tenantId: context.tenantId,
         invoiceNumber,
         issueDate: validated.issueDate ? new Date(validated.issueDate) : new Date(),
         dueDate: (validated.dueDate && !isNaN(Date.parse(validated.dueDate))) ? new Date(validated.dueDate) : null,
         subject: validated.subject,
-        // @ts-ignore
         registrationNumber: validated.registrationNumber,
         templateType: validated.templateType as any,
         notes: validated.notes,
@@ -124,7 +150,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json(invoice);
   } catch (error) {
-    console.error(error);
+    console.error("POST /api/invoices error:", error);
     if (error instanceof z.ZodError || (error as any).name === 'ZodError') {
       return NextResponse.json({ error: "入力内容に不備があります", details: (error as any).errors }, { status: 400 });
     }

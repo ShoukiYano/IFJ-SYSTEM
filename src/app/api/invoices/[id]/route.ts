@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { z } from "zod";
+import { getTenantContext } from "@/lib/tenantContext";
 
 const invoiceItemSchema = z.object({
   description: z.string().min(1),
@@ -16,6 +17,7 @@ const invoiceItemSchema = z.object({
   deductionRate: z.coerce.number().optional().nullable(),
   overtimeAmount: z.coerce.number().optional().nullable(),
   deductionAmount: z.coerce.number().optional().nullable(),
+  staffId: z.string().uuid().optional().nullable(),
 });
 
 const invoiceSchema = z.object({
@@ -36,8 +38,18 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
+    const context = await getTenantContext();
+    if (!context) {
+      return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
+    }
+
     const invoice = await prisma.invoice.findUnique({
-      where: { id: params.id },
+      where: { 
+        tenantId_id: {
+          id: params.id,
+          tenantId: context.tenantId 
+        }
+      },
       include: { 
         client: true,
         items: {
@@ -52,6 +64,7 @@ export async function GET(
 
     return NextResponse.json(invoice);
   } catch (error) {
+    console.error("GET /api/invoices/[id] error:", error);
     return NextResponse.json({ error: "取得に失敗しました" }, { status: 500 });
   }
 }
@@ -61,12 +74,29 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
+    const context = await getTenantContext();
+    if (!context) {
+      return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
+    }
+
     const body = await req.json();
     const validated = invoiceSchema.parse(body);
 
     const subtotal = validated.items.reduce((acc, item) => acc + item.amount, 0);
     const taxAmount = Math.floor(subtotal * validated.taxRate);
     const totalAmount = subtotal + taxAmount;
+
+    // Check ownership before updating
+    const existing = await prisma.invoice.findFirst({
+      where: { 
+        id: params.id,
+        tenantId: context.tenantId 
+      }
+    });
+
+    if (!existing) {
+      return NextResponse.json({ error: "請求書が見つかりません" }, { status: 404 });
+    }
 
     const result = await prisma.$transaction(async (tx) => {
       // Delete existing items
@@ -76,13 +106,17 @@ export async function PUT(
 
       // Update invoice
       return tx.invoice.update({
-        where: { id: params.id },
+        where: { 
+          tenantId_id: {
+            id: params.id,
+            tenantId: context.tenantId 
+          }
+        },
         data: {
           invoiceNumber: validated.invoiceNumber || undefined,
           issueDate: new Date(validated.issueDate),
           dueDate: (validated.dueDate && !isNaN(Date.parse(validated.dueDate))) ? new Date(validated.dueDate) : null,
           subject: validated.subject,
-          // @ts-ignore
           registrationNumber: validated.registrationNumber,
           templateType: validated.templateType as any,
           notes: validated.notes,
@@ -103,7 +137,7 @@ export async function PUT(
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error(error);
+    console.error("PUT /api/invoices/[id] error:", error);
     if (error instanceof z.ZodError || (error as any).name === 'ZodError') {
       return NextResponse.json({ error: "入力内容に不備があります", details: (error as any).errors }, { status: 400 });
     }

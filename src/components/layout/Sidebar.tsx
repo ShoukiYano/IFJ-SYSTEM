@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { LayoutDashboard, FileText, Users, Settings, PlusCircle, HelpCircle, LogOut, Book } from "lucide-react";
+import { LayoutDashboard, FileText, Users, Settings, PlusCircle, HelpCircle, LogOut, Book, Building2 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useSession, signOut } from "next-auth/react";
@@ -14,10 +14,18 @@ const Sidebar = () => {
     { label: "ダッシュボード", icon: LayoutDashboard, href: "/" },
     { label: "見積書管理", icon: FileText, href: "/quotations" },
     { label: "請求書管理", icon: PlusCircle, href: "/invoices" },
+    { label: "要員管理", icon: Users, href: "/staff" },
     { label: "取引先管理", icon: Users, href: "/clients" },
     { label: "操作マニュアル", icon: Book, href: "/manual" },
     { label: "システム設定", icon: Settings, href: "/settings" },
   ];
+
+  const adminItems = [
+    { label: "テナント管理", icon: Building2, href: "/admin/tenants" },
+    { label: "プロフィール設定", icon: Settings, href: "/admin/profile" },
+  ];
+
+  const role = (session?.user as any)?.role;
 
   if (!session) return null;
 
@@ -28,7 +36,7 @@ const Sidebar = () => {
       </div>
 
       <nav className="flex-1 space-y-1">
-        {menuItems.map((item) => (
+        {role !== "SYSTEM_ADMIN" && menuItems.map((item) => (
           <a
             key={item.href}
             href={item.href}
@@ -43,6 +51,27 @@ const Sidebar = () => {
             {item.label}
           </a>
         ))}
+
+        {role === "SYSTEM_ADMIN" && (
+          <div className="pt-4 mt-4 border-t border-slate-800">
+            <p className="px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">システム管理</p>
+            {adminItems.map((item) => (
+              <a
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium",
+                  pathname === item.href 
+                    ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/20" 
+                    : "hover:bg-slate-800 hover:text-white"
+                )}
+              >
+                <item.icon size={20} />
+                {item.label}
+              </a>
+            ))}
+          </div>
+        )}
       </nav>
 
       <div className="mt-auto space-y-4">

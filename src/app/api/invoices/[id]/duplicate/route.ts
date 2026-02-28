@@ -1,17 +1,25 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { getTenantContext } from "@/lib/tenantContext";
 
 export async function POST(
   req: Request,
   { params }: { params: { id: string } }
 ) {
   try {
+    const context = await getTenantContext();
+    if (!context) {
+      return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
+    }
+
     const id = params.id;
 
-    // 获取原始发票及其明细
-    // Get original invoice and its items
-    const original = await prisma.invoice.findUnique({
-      where: { id },
+    // Ensure ownership before duplicating
+    const original = await prisma.invoice.findFirst({
+      where: { 
+        id,
+        tenantId: context.tenantId 
+      },
       include: { items: true },
     });
 
@@ -19,10 +27,6 @@ export async function POST(
       return NextResponse.json({ error: "請求書が見つかりません" }, { status: 404 });
     }
 
-    // 作成中、または下書き状態の新しい請求書番号を生成するために、
-    // 既存の採番ロジックに準拠するか、空にしてユーザーに振ってもらう形式にする。
-    // ここではコピーであることを示すために番号をリセットし、日付もクリアする。
-    
     const now = new Date();
     const currentYear = now.getFullYear();
     const currentMonth = now.getMonth() + 1;
@@ -40,7 +44,8 @@ export async function POST(
     const duplicated = await prisma.invoice.create({
       data: {
         ...invoiceData,
-        invoiceNumber: `COPY-${original.invoiceNumber}-${Date.now()}`, // Temporary number
+        tenantId: context.tenantId,
+        invoiceNumber: `COPY-${original.invoiceNumber}-${Date.now()}`, 
         status: "DRAFT",
         issueDate: new Date(),
         dueDate: null,

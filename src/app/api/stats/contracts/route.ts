@@ -1,17 +1,23 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { addMonths } from "date-fns";
+import { getTenantContext } from "@/lib/tenantContext";
 
 export async function GET() {
   try {
+    const context = await getTenantContext();
+    if (!context) {
+      return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
+    }
+
     const twoMonthsLater = addMonths(new Date(), 2);
 
-    // @ts-ignore
     const expiringContracts = await prisma.assignee.findMany({
       where: {
+        tenantId: context.tenantId,
         contractEndDate: {
           lte: twoMonthsLater,
-          gte: new Date(), // Only focus on future expirations (or very recent ones)
+          gte: new Date(), 
         },
       },
       include: {

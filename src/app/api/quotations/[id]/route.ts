@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { z } from "zod";
+import { getTenantContext } from "@/lib/tenantContext";
 
 const quotationItemSchema = z.object({
   description: z.string().min(1),
@@ -36,8 +37,18 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
+    const context = await getTenantContext();
+    if (!context) {
+      return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
+    }
+
     const quotation = await prisma.quotation.findUnique({
-      where: { id: params.id },
+      where: { 
+        tenantId_id: {
+          id: params.id,
+          tenantId: context.tenantId 
+        }
+      },
       include: { 
         client: true,
         items: {
@@ -52,6 +63,7 @@ export async function GET(
 
     return NextResponse.json(quotation);
   } catch (error) {
+    console.error("GET /api/quotations/[id] error:", error);
     return NextResponse.json({ error: "取得に失敗しました" }, { status: 500 });
   }
 }
@@ -61,12 +73,29 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   try {
+    const context = await getTenantContext();
+    if (!context) {
+      return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
+    }
+
     const body = await req.json();
     const validated = quotationSchema.parse(body);
 
     const subtotal = validated.items.reduce((acc: number, item: any) => acc + item.amount, 0);
     const taxAmount = Math.floor(subtotal * validated.taxRate);
     const totalAmount = subtotal + taxAmount;
+
+    // Check ownership
+    const existing = await prisma.quotation.findFirst({
+      where: { 
+        id: params.id,
+        tenantId: context.tenantId 
+      }
+    });
+
+    if (!existing) {
+      return NextResponse.json({ error: "見積書が見つかりません" }, { status: 404 });
+    }
 
     const result = await prisma.$transaction(async (tx) => {
       // Delete existing items
@@ -76,14 +105,18 @@ export async function PATCH(
 
       // Update quotation
       return tx.quotation.update({
-        where: { id: params.id },
+        where: { 
+          tenantId_id: {
+            id: params.id,
+            tenantId: context.tenantId 
+          }
+        },
         data: {
           quotationNumber: validated.quotationNumber || undefined,
           clientId: validated.clientId,
           issueDate: new Date(validated.issueDate),
           expiryDate: validated.expiryDate ? new Date(validated.expiryDate) : null,
           subject: validated.subject,
-          // @ts-ignore
           registrationNumber: validated.registrationNumber,
           templateType: validated.templateType as any,
           notes: validated.notes,
@@ -103,7 +136,7 @@ export async function PATCH(
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error(error);
+    console.error("PATCH /api/quotations/[id] error:", error);
     if (error instanceof z.ZodError || (error as any).name === 'ZodError') {
       return NextResponse.json({ error: "入力内容に不備があります", details: (error as any).errors }, { status: 400 });
     }

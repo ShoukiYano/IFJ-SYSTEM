@@ -1,8 +1,14 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { getTenantContext } from "@/lib/tenantContext";
 
 export async function POST(req: Request) {
   try {
+    const context = await getTenantContext();
+    if (!context) {
+      return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
+    }
+
     const { targetMonth } = await req.json(); // "YYYY-MM"
     if (!targetMonth) {
       return NextResponse.json({ error: "対象年月は必須です" }, { status: 400 });
@@ -10,13 +16,14 @@ export async function POST(req: Request) {
 
     const [year, month] = targetMonth.split("-").map(Number);
     
-    // 1. 定型請求対象の全取引先を取得
+    // 1. 定型請求対象のテナント内取引先を取得
     const clients = await prisma.client.findMany({
       where: { 
+        tenantId: context.tenantId,
         isRecurring: true,
         deletedAt: null 
       }
-    } as any);
+    });
 
     let count = 0;
 
@@ -25,7 +32,11 @@ export async function POST(req: Request) {
       for (const client of clients) {
         // 2. この取引先の最新の請求書を取得 (コピー元)
         const lastInvoice = await tx.invoice.findFirst({
-          where: { clientId: client.id, deletedAt: null },
+          where: { 
+            tenantId: context.tenantId,
+            clientId: client.id, 
+            deletedAt: null 
+          },
           orderBy: { issueDate: "desc" },
           include: { items: true }
         });
@@ -36,7 +47,6 @@ export async function POST(req: Request) {
         const issueDate = new Date(year, month - 1, 25);
 
         // 4. 支払期日を計算
-        // 締め日設定に基づき、その月の末尾などを考慮
         const closingDate = new Date(year, month - 1, client.closingDay || 31);
         if (client.closingDay === 31) {
           closingDate.setMonth(closingDate.getMonth() + 1);
@@ -51,23 +61,33 @@ export async function POST(req: Request) {
           dueDate.setDate(0);
         }
 
-        // 5. 採番
+        // 5. 採番 (テナント固有)
         const sequence = await tx.invoiceSequence.upsert({
-          where: { id: "default" },
+          where: { 
+            tenantId_id: {
+              tenantId: context.tenantId,
+              id: "default"
+            }
+          },
           update: { current: { increment: 1 } },
-          create: { id: "default", current: 1 },
+          create: { 
+            id: "default", 
+            tenantId: context.tenantId,
+            current: 1 
+          },
         });
 
         const yearMonthStr = `${year}${month.toString().padStart(2, "0")}`;
-        const invoiceNumber = `INV-${yearMonthStr}-${sequence.current.toString().padStart(4, "0")}`;
+        const invoiceNumber = `${sequence.prefix}${yearMonthStr}-${sequence.current.toString().padStart(4, "0")}`;
 
         // 6. メインの請求書データ作成
         const subtotal = lastInvoice.items.reduce((acc, item) => acc + Number(item.amount), 0);
         const taxAmount = Math.floor(subtotal * Number(lastInvoice.taxRate));
         const totalAmount = subtotal + taxAmount;
 
-        const newInvoice = await tx.invoice.create({
+        await tx.invoice.create({
           data: {
+            tenantId: context.tenantId,
             invoiceNumber,
             issueDate,
             dueDate,
@@ -82,11 +102,8 @@ export async function POST(req: Request) {
             clientId: client.id,
             items: {
               create: lastInvoice.items.map((item, index) => {
-                // 明細のサービス年月を更新
                 const newServiceMonth = `${year}-${month.toString().padStart(2, "0")}`;
                 let newDescription = item.description;
-                
-                // "X月度" という表現が含まれていれば置換
                 if (newDescription.includes("月度")) {
                   newDescription = newDescription.replace(/\d+月度/, `${month}月度`);
                 }
@@ -107,11 +124,12 @@ export async function POST(req: Request) {
                   overtimeRate2: item.overtimeRate2,
                   deductionRate: item.deductionRate,
                   deductionRate2: item.deductionRate2,
-                  overtimeAmount: 0, // 下書きなので精算額はリセット
+                  overtimeAmount: 0,
                   overtimeAmount2: 0,
                   deductionAmount: 0,
                   deductionAmount2: 0,
                   order: index,
+                  staffId: item.staffId,
                 };
               })
             }

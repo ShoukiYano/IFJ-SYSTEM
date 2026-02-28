@@ -7,7 +7,19 @@ import { BulkZipDownload } from "@/components/invoices/BulkZipDownload";
 import { formatCurrency } from "@/lib/utils";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+
 export default function DashboardPage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (status === "authenticated" && (session?.user as any)?.role === "SYSTEM_ADMIN") {
+      router.push("/admin/tenants");
+    }
+  }, [session, status, router]);
+
   const [invoices, setInvoices] = useState<any[]>([]);
   const [salesData, setSalesData] = useState<any[]>([]);
   const [stats, setStats] = useState({

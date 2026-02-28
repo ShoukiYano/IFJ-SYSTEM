@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { z } from "zod";
+import { getTenantContext } from "@/lib/tenantContext";
 
 const quotationItemSchema = z.object({
   description: z.string().min(1),
@@ -33,29 +34,53 @@ const quotationSchema = z.object({
 
 export async function GET() {
   try {
+    const context = await getTenantContext();
+    if (!context) {
+      return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
+    }
+
     const quotations = await prisma.quotation.findMany({
-      where: { deletedAt: null },
+      where: { 
+        tenantId: context.tenantId,
+        deletedAt: null 
+      },
       include: { client: true },
       orderBy: { createdAt: "desc" },
     });
     return NextResponse.json(quotations);
   } catch (error) {
+    console.error("GET /api/quotations error:", error);
     return NextResponse.json({ error: "取得に失敗しました" }, { status: 500 });
   }
 }
 
 export async function POST(req: Request) {
   try {
+    const context = await getTenantContext();
+    if (!context) {
+      return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
+    }
+
     const body = await req.json();
     const validated = quotationSchema.parse(body);
 
-    // 採番管理 (quotationNumber が指定されていない場合のみ)
+    // 採番管理 (tenantId ごとに管理)
     let quotationNumber = validated.quotationNumber;
     if (!quotationNumber) {
       const sequence = await prisma.invoiceSequence.upsert({
-        where: { id: "quotation" },
+        where: { 
+          tenantId_id: {
+            tenantId: context.tenantId,
+            id: "quotation"
+          }
+        },
         update: { current: { increment: 1 } },
-        create: { id: "quotation", prefix: "EST-", current: 1 },
+        create: { 
+          id: "quotation", 
+          tenantId: context.tenantId,
+          prefix: "EST-", 
+          current: 1 
+        },
       });
 
       const date = new Date(validated.issueDate);
@@ -69,12 +94,12 @@ export async function POST(req: Request) {
 
     const quotation = await prisma.quotation.create({
       data: {
+        tenantId: context.tenantId,
         quotationNumber,
         clientId: validated.clientId,
         issueDate: new Date(validated.issueDate),
         expiryDate: validated.expiryDate ? new Date(validated.expiryDate) : null,
         subject: validated.subject,
-        // @ts-ignore
         registrationNumber: validated.registrationNumber,
         templateType: validated.templateType as any,
         notes: validated.notes,
@@ -88,11 +113,12 @@ export async function POST(req: Request) {
           })),
         },
       },
+      include: { items: true, client: true }
     });
 
     return NextResponse.json(quotation, { status: 201 });
   } catch (error) {
-    console.error(error);
-    return NextResponse.json({ error: "作成に失敗しました" }, { status: 500 });
+    console.error("POST /api/quotations error:", error);
+    return NextResponse.json({ error: "作成に失敗しました", details: error instanceof Error ? error.message : String(error) }, { status: 500 });
   }
 }
