@@ -50,20 +50,20 @@ export default function ClientsPage() {
   };
 
   return (
-    <div className="p-8 max-w-6xl mx-auto">
-      <div className="flex justify-between items-center mb-10">
+    <div className="p-4 sm:p-8 max-w-6xl mx-auto">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-10">
         <div>
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight">取引先マスタ</h1>
-          <p className="text-slate-500 mt-1">請求先企業の詳細および所属エンジニアを管理します。</p>
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">取引先マスタ</h1>
+          <p className="text-slate-500 mt-1 text-sm">請求先企業の詳細および所属エンジニアを管理します。</p>
         </div>
-        <button 
+        <button
           onClick={() => {
             setEditingClient(null);
             setShowModal(true);
           }}
-          className="bg-blue-600 text-white px-8 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-blue-700 transition-all shadow-xl shadow-blue-500/20 hover:-translate-y-0.5 active:translate-y-0"
+          className="w-full sm:w-auto bg-blue-600 text-white px-8 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-blue-700 transition-all shadow-xl shadow-blue-500/20 hover:-translate-y-0.5 active:translate-y-0 text-sm"
         >
-          <Plus size={20} /> 新規登録
+          <Plus size={18} /> 新規登録
         </button>
       </div>
 
@@ -71,20 +71,20 @@ export default function ClientsPage() {
         {clients.map((client: any) => (
           <div key={client.id} className="bg-white border border-slate-100 p-8 rounded-2xl shadow-sm hover:shadow-xl transition-all group relative overflow-hidden">
             <div className="absolute top-0 left-0 w-1.5 h-full bg-blue-500 opacity-0 group-hover:opacity-100 transition-opacity" />
-            
+
             <div className="flex justify-between items-start mb-6">
               <h3 className="font-bold text-xl text-slate-800 leading-tight">
                 {client.name} <span className="text-sm font-normal text-slate-400 ml-1">{client.honorific}</span>
               </h3>
               <div className="flex gap-1">
-                <button 
+                <button
                   onClick={() => handleEdit(client)}
                   className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
                   title="編集"
                 >
                   <Edit2 size={18} />
                 </button>
-                <button 
+                <button
                   onClick={() => handleDelete(client.id)}
                   className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
                   title="削除"
@@ -114,7 +114,7 @@ export default function ClientsPage() {
                 </div>
               )}
             </div>
-            
+
             {client.staffs && client.staffs.length > 0 && (
               <div className="mt-6 pt-6 border-t border-slate-50">
                 <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">
@@ -122,13 +122,12 @@ export default function ClientsPage() {
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {client.staffs.map((staff: any) => (
-                    <span 
-                      key={staff.id} 
-                      className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold border ${
-                        staff.type === 'PROPER' 
-                          ? 'bg-indigo-50 text-indigo-600 border-indigo-100' 
+                    <span
+                      key={staff.id}
+                      className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold border ${staff.type === 'PROPER'
+                          ? 'bg-indigo-50 text-indigo-600 border-indigo-100'
                           : 'bg-amber-50 text-amber-600 border-amber-100'
-                      }`}
+                        }`}
                     >
                       {staff.name}
                     </span>
@@ -136,7 +135,7 @@ export default function ClientsPage() {
                 </div>
               </div>
             )}
-            
+
             <div className="mt-8 pt-6 border-t border-slate-50 flex justify-between items-center text-xs text-slate-400">
               <span>登録日: {new Date(client.createdAt).toLocaleDateString()}</span>
             </div>
@@ -146,7 +145,7 @@ export default function ClientsPage() {
         {clients.length === 0 && (
           <div className="col-span-full py-20 bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200 text-center">
             <p className="text-slate-400 font-bold">取引先が登録されていません</p>
-            <button 
+            <button
               onClick={() => setShowModal(true)}
               className="mt-4 text-blue-600 font-bold hover:underline"
             >
@@ -156,9 +155,9 @@ export default function ClientsPage() {
         )}
       </div>
 
-      <ClientModal 
-        isOpen={showModal} 
-        onClose={handleCloseModal} 
+      <ClientModal
+        isOpen={showModal}
+        onClose={handleCloseModal}
         onSuccess={fetchClients}
         client={editingClient}
       />

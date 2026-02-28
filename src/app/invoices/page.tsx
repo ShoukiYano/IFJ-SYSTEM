@@ -44,7 +44,7 @@ export default function InvoicesPage() {
 
   const handleBulkUpdate = async (status: string) => {
     if (selectedIds.length === 0) return;
-    
+
     const res = await fetch("/api/invoices/bulk-update", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -59,69 +59,72 @@ export default function InvoicesPage() {
 
   return (
     <div className="space-y-8">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-3xl font-black text-slate-900 tracking-tight">請求書一覧</h2>
-          <p className="text-slate-500">発行済みの請求書を管理します。</p>
+          <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">請求書一覧</h2>
+          <p className="text-slate-500 text-sm">発行済みの請求書を管理します。</p>
         </div>
-        <div className="flex gap-4">
-          <button 
+        <div className="flex flex-wrap gap-3 w-full sm:w-auto">
+          <button
             onClick={() => setIsBatchModalOpen(true)}
-            className="bg-white text-blue-600 border border-blue-200 px-6 py-2 rounded-lg font-bold flex items-center gap-2 hover:bg-blue-50 transition-all shadow-sm"
+            className="flex-1 sm:flex-none justify-center bg-white text-blue-600 border border-blue-200 px-4 sm:px-6 py-2 rounded-lg font-bold flex items-center gap-2 hover:bg-blue-50 transition-all shadow-sm text-sm"
           >
-            <ListChecks size={20} /> 定型請求を一括作成
+            <ListChecks size={18} /> 一括作成
           </button>
-          <a href="/invoices/new" className="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold flex items-center gap-2 hover:bg-blue-700 transition-all shadow-md">
-            <Plus size={20} /> 新規作成
+          <a href="/invoices/new" className="flex-1 sm:flex-none justify-center bg-blue-600 text-white px-4 sm:px-6 py-2 rounded-lg font-bold flex items-center gap-2 hover:bg-blue-700 transition-all shadow-md text-sm">
+            <Plus size={18} /> 新規作成
           </a>
         </div>
       </div>
 
       <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-4">
-        <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
-          <div className="flex items-center gap-4 w-full md:w-auto">
-            <div className="relative flex-1 md:w-64">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-              <input 
-                type="text" 
-                placeholder="請求書番号・宛先で検索..."
-                className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20 text-sm"
+        <div className="flex flex-col lg:flex-row gap-4 justify-between items-stretch lg:items-center">
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="relative flex-1 min-w-[200px]">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+              <input
+                type="text"
+                placeholder="番号・宛先で検索..."
+                className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20 text-sm"
                 value={filters.keyword}
                 onChange={e => setFilters({ ...filters, keyword: e.target.value })}
               />
             </div>
-            <button 
-              onClick={() => window.location.href = '/api/export/invoices'}
-              className="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors"
-            >
-              <Download size={18} /> CSV出力
-            </button>
-            <button 
-              onClick={() => setShowFilters(!showFilters)}
-              className={`flex items-center gap-2 px-4 py-2 border rounded-lg text-sm font-bold transition-colors ${
-                showFilters ? "bg-blue-50 border-blue-200 text-blue-600" : "border-slate-200 text-slate-600 hover:bg-slate-50"
-              }`}
-            >
-              <Filter size={18} /> フィルタ
-            </button>
+            <div className="flex gap-2 w-full sm:w-auto">
+              <button
+                onClick={() => window.location.href = '/api/export/invoices'}
+                className="flex-1 sm:flex-none justify-center flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors"
+              >
+                <Download size={16} /> CSV
+              </button>
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className={`flex-1 sm:flex-none justify-center flex items-center gap-2 px-4 py-2 border rounded-lg text-xs font-bold transition-colors ${showFilters ? "bg-blue-50 border-blue-200 text-blue-600" : "border-slate-200 text-slate-600 hover:bg-slate-50"
+                  }`}
+              >
+                <Filter size={16} /> フィルタ
+              </button>
+            </div>
           </div>
 
           {selectedIds.length > 0 && (
-            <div className="flex items-center gap-2 w-full md:w-auto p-2 bg-blue-50 rounded-lg border border-blue-100 animate-in fade-in slide-in-from-top-2">
-              <span className="text-sm font-bold text-blue-700 px-2">{selectedIds.length}件を選択中</span>
-              <div className="h-4 w-px bg-blue-200 mx-1"></div>
-              <button 
-                onClick={() => handleBulkUpdate('PAID')}
-                className="px-3 py-1.5 bg-emerald-600 text-white text-xs font-bold rounded-md hover:bg-emerald-700 transition-colors flex items-center gap-1"
-              >
-                <CheckCircle size={14} /> 入金済にする
-              </button>
-              <button 
-                onClick={() => handleBulkUpdate('ISSUED')}
-                className="px-3 py-1.5 bg-blue-600 text-white text-xs font-bold rounded-md hover:bg-blue-700 transition-colors flex items-center gap-1"
-              >
-                <ClockIcon size={14} /> 発行済にする
-              </button>
+            <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto p-2 bg-blue-50 rounded-lg border border-blue-100 animate-in fade-in slide-in-from-top-2">
+              <span className="text-xs font-bold text-blue-700 px-2">{selectedIds.length}件選択中</span>
+              <div className="hidden sm:block h-4 w-px bg-blue-200 mx-1"></div>
+              <div className="flex gap-2 w-full sm:w-auto">
+                <button
+                  onClick={() => handleBulkUpdate('PAID')}
+                  className="flex-1 sm:flex-none justify-center px-3 py-1.5 bg-emerald-600 text-white text-[10px] font-bold rounded-md hover:bg-emerald-700 transition-colors flex items-center gap-1"
+                >
+                  <CheckCircle size={14} /> 入金済
+                </button>
+                <button
+                  onClick={() => handleBulkUpdate('ISSUED')}
+                  className="flex-1 sm:flex-none justify-center px-3 py-1.5 bg-blue-600 text-white text-[10px] font-bold rounded-md hover:bg-blue-700 transition-colors flex items-center gap-1"
+                >
+                  <ClockIcon size={14} /> 発行済
+                </button>
+              </div>
             </div>
           )}
         </div>
@@ -130,8 +133,8 @@ export default function InvoicesPage() {
           <div className="pt-4 border-t border-slate-100 grid grid-cols-1 md:grid-cols-4 gap-4 animate-in fade-in slide-in-from-top-4">
             <div className="space-y-1.5">
               <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">日付 (開始)</label>
-              <input 
-                type="date" 
+              <input
+                type="date"
                 className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm"
                 value={filters.minDate}
                 onChange={e => setFilters({ ...filters, minDate: e.target.value })}
@@ -139,8 +142,8 @@ export default function InvoicesPage() {
             </div>
             <div className="space-y-1.5">
               <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">日付 (終了)</label>
-              <input 
-                type="date" 
+              <input
+                type="date"
                 className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm"
                 value={filters.maxDate}
                 onChange={e => setFilters({ ...filters, maxDate: e.target.value })}
@@ -148,8 +151,8 @@ export default function InvoicesPage() {
             </div>
             <div className="space-y-1.5">
               <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">金額 (最小)</label>
-              <input 
-                type="number" 
+              <input
+                type="number"
                 placeholder="0"
                 className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm"
                 value={filters.minAmount}
@@ -158,8 +161,8 @@ export default function InvoicesPage() {
             </div>
             <div className="space-y-1.5">
               <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">金額 (最大)</label>
-              <input 
-                type="number" 
+              <input
+                type="number"
                 placeholder="1,000,000"
                 className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm"
                 value={filters.maxAmount}
@@ -173,19 +176,19 @@ export default function InvoicesPage() {
       {loading ? (
         <div className="p-20 text-center text-slate-400">読み込み中...</div>
       ) : (
-        <InvoiceTable 
-          invoices={invoices} 
+        <InvoiceTable
+          invoices={invoices}
           selectedIds={selectedIds}
           onSelectionChange={setSelectedIds}
           onEdit={(id: string) => window.location.href = `/invoices/${id}/edit`}
           onPrint={(inv: any) => window.location.href = `/invoices/${inv.id}`}
-          onDuplicate={(id: string) => {/* TODO */}}
+          onDuplicate={(id: string) => {/* TODO */ }}
         />
       )}
 
-      <BatchGenerateModal 
-        isOpen={isBatchModalOpen} 
-        onClose={() => setIsBatchModalOpen(false)} 
+      <BatchGenerateModal
+        isOpen={isBatchModalOpen}
+        onClose={() => setIsBatchModalOpen(false)}
         onSuccess={fetchInvoices}
       />
     </div>

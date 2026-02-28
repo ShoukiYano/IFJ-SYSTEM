@@ -148,21 +148,21 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-3xl font-black text-slate-900 tracking-tight">ダッシュボード</h2>
-          <p className="text-slate-500">請求書管理システムの状態を確認します。</p>
+          <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">ダッシュボード</h2>
+          <p className="text-slate-500 text-sm">請求書管理システムの状態を確認します。</p>
         </div>
-        <div className="flex gap-4">
+        <div className="flex flex-wrap gap-3 w-full sm:w-auto">
           <BulkZipDownload yearMonth={filterMonth || new Date().toISOString().slice(0, 7)} selectedIds={selectedIds} />
-          <button 
+          <button
             onClick={handleBulkGenerate}
-            className="bg-slate-800 text-white px-6 py-2 rounded-lg font-bold flex items-center gap-2 hover:bg-slate-700 transition-all shadow-md"
+            className="flex-1 sm:flex-none justify-center bg-slate-800 text-white px-4 sm:px-6 py-2 rounded-lg font-bold flex items-center gap-2 hover:bg-slate-700 transition-all shadow-md text-sm"
           >
-            <Calendar size={20} /> 月始一括作成
+            <Calendar size={18} /> 月始一括作成
           </button>
-          <a href="/invoices/new" className="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold flex items-center gap-2 hover:bg-blue-700 transition-all shadow-md">
-            <Plus size={20} /> 新規作成
+          <a href="/invoices/new" className="flex-1 sm:flex-none justify-center bg-blue-600 text-white px-4 sm:px-6 py-2 rounded-lg font-bold flex items-center gap-2 hover:bg-blue-700 transition-all shadow-md text-sm">
+            <Plus size={18} /> 新規作成
           </a>
         </div>
       </div>
@@ -190,8 +190,8 @@ export default function DashboardPage() {
                     <span className="text-amber-600 font-bold">終了日: {new Date(contract.contractEndDate).toLocaleDateString()}</span>
                   </div>
                 </div>
-                <a 
-                  href="/clients" 
+                <a
+                  href="/clients"
                   className="p-2 text-amber-400 group-hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-all"
                 >
                   <ChevronRight size={18} />
@@ -252,35 +252,35 @@ export default function DashboardPage() {
               <AreaChart data={salesData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.1}/>
-                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.1} />
+                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis 
-                  dataKey="name" 
-                  axisLine={false} 
-                  tickLine={false} 
-                  tick={{ fontSize: 12, fill: '#64748b' }} 
+                <XAxis
+                  dataKey="name"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fontSize: 12, fill: '#64748b' }}
                   dy={10}
                 />
-                <YAxis 
-                  axisLine={false} 
-                  tickLine={false} 
+                <YAxis
+                  axisLine={false}
+                  tickLine={false}
                   tick={{ fontSize: 12, fill: '#64748b' }}
                   tickFormatter={(val) => `¥${(val / 10000).toFixed(0)}万`}
                 />
-                <Tooltip 
+                <Tooltip
                   contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
                   formatter={(val: any) => [`${Number(val || 0).toLocaleString()}円`, "売上"]}
                 />
-                <Area 
-                  type="monotone" 
-                  dataKey="sales" 
-                  stroke="#3b82f6" 
+                <Area
+                  type="monotone"
+                  dataKey="sales"
+                  stroke="#3b82f6"
                   strokeWidth={3}
-                  fillOpacity={1} 
-                  fill="url(#colorSales)" 
+                  fillOpacity={1}
+                  fill="url(#colorSales)"
                 />
               </AreaChart>
             </ResponsiveContainer>
@@ -324,13 +324,13 @@ export default function DashboardPage() {
           </div>
         </div>
         {invoices.length > 0 ? (
-          <InvoiceTable 
-            invoices={invoices} 
+          <InvoiceTable
+            invoices={invoices}
             selectedIds={selectedIds}
             onSelectionChange={setSelectedIds}
             onEdit={(id: string) => window.location.href = `/invoices/${id}`}
             onPrint={(invoice: any) => window.location.href = `/invoices/${invoice.id}`}
-            onDuplicate={(id: string) => {}}
+            onDuplicate={(id: string) => { }}
           />
         ) : (
           <div className="p-12 border border-dashed border-slate-300 rounded-xl text-center">

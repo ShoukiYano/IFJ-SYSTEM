@@ -51,29 +51,29 @@ export default function StaffListPage() {
   );
 
   return (
-    <div className="min-h-screen bg-slate-50 p-8">
+    <div className="min-h-screen bg-slate-50 p-4 sm:p-8">
       <div className="max-w-6xl mx-auto">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-3xl font-black text-slate-900">要員管理</h1>
-            <p className="text-slate-500 mt-1">SES要員や自社要員の情報を管理します。</p>
+            <h1 className="text-2xl sm:text-3xl font-black text-slate-900">要員管理</h1>
+            <p className="text-slate-500 mt-1 text-sm">SES要員や自社要員の情報を管理します。</p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex gap-3 w-full sm:w-auto">
             <button
               onClick={() => setIsImportModalOpen(true)}
-              className="bg-emerald-600 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-emerald-700 shadow-lg shadow-emerald-500/20 transition-all hover:-translate-y-0.5"
+              className="flex-1 sm:flex-none justify-center bg-emerald-600 text-white px-4 sm:px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-emerald-700 shadow-lg shadow-emerald-500/20 transition-all hover:-translate-y-0.5 text-sm"
             >
-              <FileUp size={20} />
-              Excelインポート
+              <FileUp size={18} />
+              <span className="hidden xs:inline">Excel</span>インポート
             </button>
             <button
               onClick={() => {
                 setEditingStaff(null);
                 setIsModalOpen(true);
               }}
-              className="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-blue-700 shadow-lg shadow-blue-500/20 transition-all hover:-translate-y-0.5"
+              className="flex-1 sm:flex-none justify-center bg-blue-600 text-white px-4 sm:px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-blue-700 shadow-lg shadow-blue-500/20 transition-all hover:-translate-y-0.5 text-sm"
             >
-              <Plus size={20} />
+              <Plus size={18} />
               新規登録
             </button>
           </div>
@@ -131,8 +131,8 @@ export default function StaffListPage() {
                       </td>
                       <td className="px-6 py-4">
                         <span className={`inline-flex items-center text-[10px] font-bold px-2.5 py-1 rounded-lg whitespace-nowrap ${staff.area === 'KANSAI' ? 'bg-orange-100 text-orange-600' :
-                            staff.area === 'NAGOYA' ? 'bg-emerald-100 text-emerald-600' :
-                              'bg-sky-100 text-sky-600'
+                          staff.area === 'NAGOYA' ? 'bg-emerald-100 text-emerald-600' :
+                            'bg-sky-100 text-sky-600'
                           }`}>
                           {staff.area === 'KANSAI' ? '関西' : staff.area === 'NAGOYA' ? '名古屋' : '関東'}
                         </span>
