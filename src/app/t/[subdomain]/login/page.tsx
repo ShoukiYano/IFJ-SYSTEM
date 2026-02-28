@@ -18,11 +18,12 @@ export default function TenantLoginPage({ params }: { params: { subdomain: strin
     // サブドメインからテナント情報を取得（簡易的な識別）
     const fetchTenantBySubdomain = async () => {
       try {
-        const res = await fetch(`/api/admin/tenants`); // 全件からフィルタする形（本番ではサブドメイン検索APIが必要）
-        const tenants = await res.json();
-        const found = tenants.find((t: any) => t.subdomain === params.subdomain);
-        if (found) {
+        const res = await fetch(`/api/tenants/${params.subdomain}`);
+        if (res.ok) {
+          const found = await res.json();
           setTenant(found);
+        } else {
+          console.error("Tenant fetch failed:", res.status);
         }
       } catch (err) {
         console.error(err);
@@ -96,7 +97,7 @@ export default function TenantLoginPage({ params }: { params: { subdomain: strin
               <label className="text-xs font-black text-slate-500 uppercase tracking-wider ml-1">メールアドレス</label>
               <div className="relative group">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors" size={18} />
-                <input 
+                <input
                   type="email" required
                   className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 transition-all font-medium"
                   placeholder="name@email.com"
@@ -110,7 +111,7 @@ export default function TenantLoginPage({ params }: { params: { subdomain: strin
               <label className="text-xs font-black text-slate-500 uppercase tracking-wider ml-1">パスワード</label>
               <div className="relative group">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors" size={18} />
-                <input 
+                <input
                   type="password" required
                   className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 transition-all font-medium"
                   placeholder="••••••••"
@@ -127,7 +128,7 @@ export default function TenantLoginPage({ params }: { params: { subdomain: strin
               </div>
             )}
 
-            <button 
+            <button
               type="submit" disabled={loading}
               className="w-full bg-slate-900 text-white py-5 rounded-2xl font-black text-lg shadow-xl shadow-slate-300 hover:bg-indigo-600 transition-all hover:-translate-y-1 active:translate-y-0 disabled:opacity-50 disabled:translate-y-0"
             >
@@ -137,7 +138,7 @@ export default function TenantLoginPage({ params }: { params: { subdomain: strin
         </div>
 
         <p className="text-center mt-12 text-slate-400 text-xs font-bold uppercase tracking-widest">
-           &copy; {new Date().getFullYear()} {tenant.name} 
+          &copy; {new Date().getFullYear()} {tenant.name}
         </p>
       </div>
     </div>
