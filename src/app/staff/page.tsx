@@ -97,15 +97,15 @@ export default function StaffListPage() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-slate-50/50 border-b border-slate-200">
-                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">No</th>
-                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">区分</th>
-                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">エリア</th>
-                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">担当者</th>
-                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">名前</th>
-                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">取引先</th>
-                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">単価</th>
-                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">精算幅</th>
-                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">契約更新</th>
+                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">No</th>
+                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">区分</th>
+                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">エリア</th>
+                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">担当者</th>
+                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">名前</th>
+                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">取引先</th>
+                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap text-right">単価</th>
+                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap text-center">精算幅</th>
+                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap text-center">契約更新</th>
                   <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider"></th>
                 </tr>
               </thead>
@@ -123,21 +123,21 @@ export default function StaffListPage() {
                     <tr key={staff.id} className="hover:bg-slate-50/50 transition-colors group">
                       <td className="px-6 py-4 text-sm text-slate-500 font-mono">{index + 1}</td>
                       <td className="px-6 py-4">
-                        <span className={`px-2 py-1 rounded-lg text-[10px] font-black uppercase ${
+                        <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-black uppercase whitespace-nowrap ${
                           staff.type === 'PROPER' ? 'bg-indigo-100 text-indigo-600' : 'bg-amber-100 text-amber-600'
                         }`}>
                           {staff.type === 'PROPER' ? 'プロパー' : 'BP'}
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        <span className={`text-[10px] font-bold px-2 py-1 rounded-lg ${
+                        <span className={`inline-flex items-center text-[10px] font-bold px-2.5 py-1 rounded-lg whitespace-nowrap ${
                           staff.area === 'KANSAI' ? 'bg-orange-100 text-orange-600' : 'bg-sky-100 text-sky-600'
                         }`}>
                           {staff.area === 'KANSAI' ? '関西' : '関東'}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-sm text-slate-600">{staff.manager || "-"}</td>
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-2">
                           <div className="size-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
                             <User size={16} />
@@ -145,7 +145,7 @@ export default function StaffListPage() {
                           <span className="text-sm font-bold text-slate-800">{staff.name}</span>
                         </div>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-2 text-sm text-slate-600">
                           <Building2 size={14} className="text-slate-400" />
                           {staff.client?.name || "未設定"}
@@ -161,12 +161,18 @@ export default function StaffListPage() {
                       </td>
                       <td className="px-6 py-4 text-center">
                         <div className="flex flex-col items-center">
-                          <span className="text-sm font-bold text-slate-700 flex items-center gap-1">
-                            <Calendar size={12} className="text-slate-400" /> {staff.contractStartMonth}月開始
-                          </span>
-                          <span className="text-[10px] text-slate-400 font-medium">
-                            {staff.renewalInterval === 1 ? '毎月更新' : `${staff.renewalInterval}ヶ月毎`}
-                          </span>
+                          {staff.contractStartMonth ? (
+                            <>
+                              <span className="text-sm font-bold text-slate-700 flex items-center gap-1 whitespace-nowrap">
+                                <Calendar size={12} className="text-slate-400" /> {staff.contractStartMonth}月開始
+                              </span>
+                              <span className="text-[10px] text-slate-400 font-medium whitespace-nowrap">
+                                {staff.renewalInterval === 1 ? '毎月更新' : staff.renewalInterval ? `${staff.renewalInterval}ヶ月毎` : '期間未設定'}
+                              </span>
+                            </>
+                          ) : (
+                            <span className="text-sm text-slate-400 font-medium">-</span>
+                          )}
                         </div>
                       </td>
                       <td className="px-6 py-4">

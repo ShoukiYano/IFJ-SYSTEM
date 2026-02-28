@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Plus, Mail, Phone, MapPin, Edit2, Trash2 } from "lucide-react";
+import { Plus, Mail, Phone, MapPin, Edit2, Trash2, Users } from "lucide-react";
 import ClientModal from "@/components/clients/ClientModal";
 
 export default function ClientsPage() {
@@ -114,6 +114,28 @@ export default function ClientsPage() {
                 </div>
               )}
             </div>
+            
+            {client.staffs && client.staffs.length > 0 && (
+              <div className="mt-6 pt-6 border-t border-slate-50">
+                <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">
+                  <Users size={12} /> 所属要員 ({client.staffs.length})
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {client.staffs.map((staff: any) => (
+                    <span 
+                      key={staff.id} 
+                      className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold border ${
+                        staff.type === 'PROPER' 
+                          ? 'bg-indigo-50 text-indigo-600 border-indigo-100' 
+                          : 'bg-amber-50 text-amber-600 border-amber-100'
+                      }`}
+                    >
+                      {staff.name}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
             
             <div className="mt-8 pt-6 border-t border-slate-50 flex justify-between items-center text-xs text-slate-400">
               <span>登録日: {new Date(client.createdAt).toLocaleDateString()}</span>

@@ -28,11 +28,21 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const recurringOnly = searchParams.get("recurringOnly") === "true";
 
-    const clients = await prisma.client.findMany({
+    const clients = await (prisma as any).client.findMany({
       where: { 
         tenantId: context.tenantId,
         deletedAt: null,
         ...(recurringOnly ? { isRecurring: true } : {}),
+      },
+      include: {
+        staffs: {
+          where: { deletedAt: null },
+          select: {
+            id: true,
+            name: true,
+            type: true,
+          }
+        }
       },
       orderBy: { createdAt: "desc" },
     });
@@ -53,7 +63,7 @@ export async function POST(req: Request) {
     const body = await req.json();
     const validated = clientSchema.parse(body);
     
-    const client = await prisma.client.create({
+    const client = await (prisma as any).client.create({
       data: {
         ...validated,
         tenantId: context.tenantId,

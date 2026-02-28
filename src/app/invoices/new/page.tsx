@@ -174,10 +174,17 @@ export default function NewInvoicePage() {
         updatedItem.minHours = selectedStaff.minHours ?? 140;
         updatedItem.maxHours = selectedStaff.maxHours ?? 180;
         
-        // 再計算を促すためにレートも設定
-        if (updatedItem.unitPrice > 0 && updatedItem.minHours > 0 && updatedItem.maxHours > 0) {
-          updatedItem.overtimeRate = Math.floor(updatedItem.unitPrice / updatedItem.maxHours);
-          updatedItem.deductionRate = Math.floor(updatedItem.unitPrice / updatedItem.minHours);
+        // 追加: 控除・超過単価の初期設定（マスタにあればそれを使用、なければ計算）
+        const unitPrice = Number(selectedStaff.unitPrice) || 0;
+        const min = Number(selectedStaff.minHours) || 140;
+        const max = Number(selectedStaff.maxHours) || 180;
+
+        updatedItem.overtimeRate = selectedStaff.excessAmount ? Number(selectedStaff.excessAmount) : Math.floor(unitPrice / max);
+        updatedItem.deductionRate = selectedStaff.deductionAmount ? Number(selectedStaff.deductionAmount) : Math.floor(unitPrice / min);
+        
+        // 支払サイトなどの情報があれば活用（将来的な拡張用）
+        if (selectedStaff.paymentTerms) {
+          // メモ欄に追加するなどの処理も検討可能
         }
       }
     }
