@@ -14,6 +14,8 @@ const staffUpdateSchema = z.object({
   maxHours: z.number().optional().nullable(),
   contractStartDate: z.string().optional().nullable(),
   renewalInterval: z.number().min(1).optional().nullable(),
+  paymentTerms: z.string().optional().nullable(),
+  settlementUnit: z.number().optional().nullable(),
 });
 
 export async function GET(req: Request, { params }: { params: { id: string } }) {
@@ -24,10 +26,10 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
     }
 
     const staff = await (prisma as any).staff.findUnique({
-      where: { 
+      where: {
         tenantId_id: {
           id: params.id,
-          tenantId: context.tenantId 
+          tenantId: context.tenantId
         }
       },
       include: { client: true },
@@ -55,10 +57,10 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     const validated = staffUpdateSchema.parse(body);
 
     const staff = await (prisma as any).staff.update({
-      where: { 
+      where: {
         tenantId_id: {
           id: params.id,
-          tenantId: context.tenantId 
+          tenantId: context.tenantId
         }
       },
       data: {
@@ -86,10 +88,10 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
 
     // Soft delete with tenant check
     await (prisma as any).staff.update({
-      where: { 
+      where: {
         tenantId_id: {
           id: params.id,
-          tenantId: context.tenantId 
+          tenantId: context.tenantId
         }
       },
       data: { deletedAt: new Date() },

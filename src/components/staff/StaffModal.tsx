@@ -28,6 +28,8 @@ export default function StaffModal({ isOpen, onClose, onSuccess, staff }: StaffM
     maxHours: 180,
     contractStartDate: new Date().toISOString().split("-").slice(0, 2).join("-"), // Default to current YYYY-MM
     renewalInterval: 3,
+    paymentTerms: "",
+    settlementUnit: 15,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -61,6 +63,8 @@ export default function StaffModal({ isOpen, onClose, onSuccess, staff }: StaffM
         maxHours: staff.maxHours || 180,
         contractStartDate: staff.contractStartDate ? new Date(staff.contractStartDate).toISOString().split("-").slice(0, 2).join("-") : "",
         renewalInterval: staff.renewalInterval || 3,
+        paymentTerms: staff.paymentTerms || "",
+        settlementUnit: staff.settlementUnit || 15,
       });
     } else {
       setFormData({
@@ -74,6 +78,8 @@ export default function StaffModal({ isOpen, onClose, onSuccess, staff }: StaffM
         maxHours: 180,
         contractStartDate: new Date().toISOString().split("-").slice(0, 2).join("-"),
         renewalInterval: 3,
+        paymentTerms: "",
+        settlementUnit: 15,
       });
     }
   }, [staff, isOpen]);
@@ -172,6 +178,17 @@ export default function StaffModal({ isOpen, onClose, onSuccess, staff }: StaffM
             </div>
 
             <div>
+              <label className="text-xs font-bold text-slate-500 uppercase mb-1.5 block">支払いサイト (例: 15日, 45日)</label>
+              <input
+                type="text"
+                className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20"
+                placeholder="例: 45日サイト"
+                value={formData.paymentTerms}
+                onChange={(e) => setFormData({ ...formData, paymentTerms: e.target.value })}
+              />
+            </div>
+
+            <div>
               <label className="text-xs font-bold text-slate-500 uppercase mb-1.5 block">所属取引先</label>
               <select
                 required
@@ -216,6 +233,19 @@ export default function StaffModal({ isOpen, onClose, onSuccess, staff }: StaffM
                   className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none"
                   value={formData.maxHours}
                   onChange={(e) => setFormData({ ...formData, maxHours: parseFloat(e.target.value) || 0 })}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs font-bold text-slate-500 uppercase mb-1.5 block">精算単位 (分)</label>
+                <input
+                  type="number"
+                  className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none"
+                  placeholder="15"
+                  value={formData.settlementUnit}
+                  onChange={(e) => setFormData({ ...formData, settlementUnit: parseInt(e.target.value) || 0 })}
                 />
               </div>
             </div>

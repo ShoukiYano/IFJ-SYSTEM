@@ -45,7 +45,7 @@ export default function StaffListPage() {
     }
   };
 
-  const filteredStaffs = staffs.filter(s => 
+  const filteredStaffs = staffs.filter(s =>
     s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     s.client?.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -59,14 +59,14 @@ export default function StaffListPage() {
             <p className="text-slate-500 mt-1">SES要員や自社要員の情報を管理します。</p>
           </div>
           <div className="flex gap-3">
-            <button 
+            <button
               onClick={() => setIsImportModalOpen(true)}
               className="bg-emerald-600 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-emerald-700 shadow-lg shadow-emerald-500/20 transition-all hover:-translate-y-0.5"
             >
               <FileUp size={20} />
               Excelインポート
             </button>
-            <button 
+            <button
               onClick={() => {
                 setEditingStaff(null);
                 setIsModalOpen(true);
@@ -83,8 +83,8 @@ export default function StaffListPage() {
           <div className="p-6 border-b bg-slate-50/50 flex flex-col md:flex-row gap-4">
             <div className="relative flex-1">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-              <input 
-                type="text" 
+              <input
+                type="text"
                 placeholder="名前や取引先で検索..."
                 className="w-full pl-11 pr-4 py-2 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/10 transition-all"
                 value={searchTerm}
@@ -105,6 +105,7 @@ export default function StaffListPage() {
                   <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">取引先</th>
                   <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap text-right">単価</th>
                   <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap text-center">精算幅</th>
+                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap text-center">サイト</th>
                   <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap text-center">契約更新</th>
                   <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider"></th>
                 </tr>
@@ -123,16 +124,14 @@ export default function StaffListPage() {
                     <tr key={staff.id} className="hover:bg-slate-50/50 transition-colors group">
                       <td className="px-6 py-4 text-sm text-slate-500 font-mono">{index + 1}</td>
                       <td className="px-6 py-4">
-                        <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-black uppercase whitespace-nowrap ${
-                          staff.type === 'PROPER' ? 'bg-indigo-100 text-indigo-600' : 'bg-amber-100 text-amber-600'
-                        }`}>
+                        <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-black uppercase whitespace-nowrap ${staff.type === 'PROPER' ? 'bg-indigo-100 text-indigo-600' : 'bg-amber-100 text-amber-600'
+                          }`}>
                           {staff.type === 'PROPER' ? 'プロパー' : 'BP'}
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        <span className={`inline-flex items-center text-[10px] font-bold px-2.5 py-1 rounded-lg whitespace-nowrap ${
-                          staff.area === 'KANSAI' ? 'bg-orange-100 text-orange-600' : 'bg-sky-100 text-sky-600'
-                        }`}>
+                        <span className={`inline-flex items-center text-[10px] font-bold px-2.5 py-1 rounded-lg whitespace-nowrap ${staff.area === 'KANSAI' ? 'bg-orange-100 text-orange-600' : 'bg-sky-100 text-sky-600'
+                          }`}>
                           {staff.area === 'KANSAI' ? '関西' : '関東'}
                         </span>
                       </td>
@@ -160,11 +159,16 @@ export default function StaffListPage() {
                         </span>
                       </td>
                       <td className="px-6 py-4 text-center">
+                        <span className="text-xs font-bold text-slate-600">
+                          {staff.paymentTerms || "-"}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-center">
                         <div className="flex flex-col items-center">
                           {staff.contractStartDate ? (
                             <>
                               <span className="text-sm font-bold text-slate-700 flex items-center gap-1 whitespace-nowrap">
-                                <Calendar size={12} className="text-slate-400" /> 
+                                <Calendar size={12} className="text-slate-400" />
                                 {new Date(staff.contractStartDate).getFullYear()}年
                                 {new Date(staff.contractStartDate).getMonth() + 1}月
                                 開始
@@ -180,7 +184,7 @@ export default function StaffListPage() {
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button 
+                          <button
                             onClick={() => {
                               setEditingStaff(staff);
                               setIsModalOpen(true);
@@ -190,7 +194,7 @@ export default function StaffListPage() {
                           >
                             <Edit2 size={16} />
                           </button>
-                          <button 
+                          <button
                             onClick={() => handleDelete(staff.id)}
                             className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
                             title="削除"
@@ -208,13 +212,13 @@ export default function StaffListPage() {
         </div>
       </div>
 
-      <StaffModal 
+      <StaffModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSuccess={fetchStaffs}
         staff={editingStaff}
       />
-      <StaffImportModal 
+      <StaffImportModal
         isOpen={isImportModalOpen}
         onClose={() => setIsImportModalOpen(false)}
         onSuccess={fetchStaffs}

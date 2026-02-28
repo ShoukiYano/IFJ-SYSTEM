@@ -14,6 +14,8 @@ const staffSchema = z.object({
   maxHours: z.number().optional().nullable(),
   contractStartDate: z.string().optional().nullable(),
   renewalInterval: z.number().min(1).optional().nullable(),
+  paymentTerms: z.string().optional().nullable(),
+  settlementUnit: z.number().optional().nullable().default(15),
 });
 
 export async function GET(req: Request) {
