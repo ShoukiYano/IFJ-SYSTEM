@@ -7,6 +7,9 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "IFJ-SYSTEM",
   description: "日本の商慣習に合わせた請求書管理システム",
+  icons: {
+    icon: "/icon.png",
+  },
 };
 
 import { NextAuthProvider } from "@/components/providers/SessionProvider";
