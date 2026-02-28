@@ -161,10 +161,13 @@ export default function StaffListPage() {
                       </td>
                       <td className="px-6 py-4 text-center">
                         <div className="flex flex-col items-center">
-                          {staff.contractStartMonth ? (
+                          {staff.contractStartDate ? (
                             <>
                               <span className="text-sm font-bold text-slate-700 flex items-center gap-1 whitespace-nowrap">
-                                <Calendar size={12} className="text-slate-400" /> {staff.contractStartMonth}月開始
+                                <Calendar size={12} className="text-slate-400" /> 
+                                {new Date(staff.contractStartDate).getFullYear()}年
+                                {new Date(staff.contractStartDate).getMonth() + 1}月
+                                開始
                               </span>
                               <span className="text-[10px] text-slate-400 font-medium whitespace-nowrap">
                                 {staff.renewalInterval === 1 ? '毎月更新' : staff.renewalInterval ? `${staff.renewalInterval}ヶ月毎` : '期間未設定'}

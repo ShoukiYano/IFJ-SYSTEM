@@ -26,7 +26,7 @@ export default function StaffModal({ isOpen, onClose, onSuccess, staff }: StaffM
     unitPrice: 0,
     minHours: 140,
     maxHours: 180,
-    contractStartMonth: 1,
+    contractStartDate: new Date().toISOString().split("-").slice(0, 2).join("-"), // Default to current YYYY-MM
     renewalInterval: 3,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -59,7 +59,7 @@ export default function StaffModal({ isOpen, onClose, onSuccess, staff }: StaffM
         unitPrice: Number(staff.unitPrice) || 0,
         minHours: staff.minHours || 140,
         maxHours: staff.maxHours || 180,
-        contractStartMonth: staff.contractStartMonth || 1,
+        contractStartDate: staff.contractStartDate ? new Date(staff.contractStartDate).toISOString().split("-").slice(0, 2).join("-") : "",
         renewalInterval: staff.renewalInterval || 3,
       });
     } else {
@@ -72,7 +72,7 @@ export default function StaffModal({ isOpen, onClose, onSuccess, staff }: StaffM
         unitPrice: 0,
         minHours: 140,
         maxHours: 180,
-        contractStartMonth: 1,
+        contractStartDate: new Date().toISOString().split("-").slice(0, 2).join("-"),
         renewalInterval: 3,
       });
     }
@@ -87,7 +87,10 @@ export default function StaffModal({ isOpen, onClose, onSuccess, staff }: StaffM
 
       const res = await fetch(url, {
         method,
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          contractStartDate: formData.contractStartDate ? `${formData.contractStartDate}-01T00:00:00Z` : null,
+        }),
         headers: { "Content-Type": "application/json" },
       });
 
@@ -223,18 +226,13 @@ export default function StaffModal({ isOpen, onClose, onSuccess, staff }: StaffM
               </h3>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-[10px] font-bold text-blue-600 uppercase mb-1.5 block">契約開始月</label>
-                  <select
+                  <label className="text-[10px] font-bold text-blue-600 uppercase mb-1.5 block">契約開始年月</label>
+                  <input
+                    type="month"
                     className="w-full px-4 py-2 bg-white border border-blue-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20"
-                    value={formData.contractStartMonth}
-                    onChange={(e) => setFormData({ ...formData, contractStartMonth: parseInt(e.target.value) })}
-                  >
-                    {[...Array(12)].map((_, i) => (
-                      <option key={i + 1} value={i + 1}>
-                        {i + 1}月
-                      </option>
-                    ))}
-                  </select>
+                    value={formData.contractStartDate}
+                    onChange={(e) => setFormData({ ...formData, contractStartDate: e.target.value })}
+                  />
                 </div>
                 <div>
                   <label className="text-[10px] font-bold text-blue-600 uppercase mb-1.5 block flex items-center gap-1">

@@ -12,7 +12,7 @@ const staffUpdateSchema = z.object({
   unitPrice: z.number().min(0, "単価は0以上である必要があります").optional(),
   minHours: z.number().optional().nullable(),
   maxHours: z.number().optional().nullable(),
-  contractStartMonth: z.number().min(1).max(12).optional().nullable(),
+  contractStartDate: z.string().optional().nullable(),
   renewalInterval: z.number().min(1).optional().nullable(),
 });
 
@@ -23,7 +23,7 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
       return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
     }
 
-    const staff = await prisma.staff.findUnique({
+    const staff = await (prisma as any).staff.findUnique({
       where: { 
         tenantId_id: {
           id: params.id,
@@ -54,14 +54,17 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     const body = await req.json();
     const validated = staffUpdateSchema.parse(body);
 
-    const staff = await prisma.staff.update({
+    const staff = await (prisma as any).staff.update({
       where: { 
         tenantId_id: {
           id: params.id,
           tenantId: context.tenantId 
         }
       },
-      data: validated,
+      data: {
+        ...validated,
+        contractStartDate: validated.contractStartDate ? new Date(validated.contractStartDate) : (validated.contractStartDate === null ? null : undefined),
+      },
     });
 
     return NextResponse.json(staff);
@@ -82,7 +85,7 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
     }
 
     // Soft delete with tenant check
-    await prisma.staff.update({
+    await (prisma as any).staff.update({
       where: { 
         tenantId_id: {
           id: params.id,

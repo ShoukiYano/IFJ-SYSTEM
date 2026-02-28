@@ -3,6 +3,23 @@ import prisma from "@/lib/prisma";
 import { getTenantContext } from "@/lib/tenantContext";
 import * as xlsx from "xlsx";
 
+function parseExcelDate(val: any) {
+    if (!val) return null;
+    // Excelの日付数値形式
+    if (typeof val === 'number') {
+        const date = xlsx.SSF.parse_date_code(val);
+        return new Date(date.y, date.m - 1, date.d);
+    }
+    const dateStr = String(val).trim();
+    // YYYY/MM, YYYY-MM, YYYY年MM月 をパース
+    const match = dateStr.match(/(\d{4})[/\-年](\d{1,2})/);
+    if (match) {
+        return new Date(parseInt(match[1]), parseInt(match[2]) - 1, 1);
+    }
+    const d = new Date(dateStr);
+    return isNaN(d.getTime()) ? null : d;
+}
+
 export async function POST(req: Request) {
   try {
     const context = await getTenantContext();
@@ -45,12 +62,14 @@ export async function POST(req: Request) {
         const manager = row[3];
         const paymentTerms = row[4];
         const unitPrice = parseFloat(row[5]);
+        const contractStartDate = parseExcelDate(row[6]);
         const settlementUnit = parseInt(row[7]);
         const minHours = parseFloat(row[8]);
         const maxHours = parseFloat(row[9]);
         const deductionAmount = parseFloat(row[10]);
         const excessAmount = parseFloat(row[11]);
         const roundingUnit = parseInt(row[12]);
+        const renewalInterval = parseInt(row[13]);
 
         try {
             // クライアントの取得または作成
@@ -81,12 +100,14 @@ export async function POST(req: Request) {
                     manager: manager ? String(manager) : null,
                     unitPrice: isNaN(unitPrice) ? 0 : unitPrice,
                     paymentTerms: paymentTerms ? String(paymentTerms) : null,
+                    contractStartDate,
                     settlementUnit: isNaN(settlementUnit) ? null : settlementUnit,
                     minHours: isNaN(minHours) ? null : minHours,
                     maxHours: isNaN(maxHours) ? null : maxHours,
                     deductionAmount: isNaN(deductionAmount) ? null : deductionAmount,
                     excessAmount: isNaN(excessAmount) ? null : excessAmount,
                     roundingUnit: isNaN(roundingUnit) ? null : roundingUnit,
+                    renewalInterval: isNaN(renewalInterval) ? null : renewalInterval,
                 }
             });
             results.push(staff);

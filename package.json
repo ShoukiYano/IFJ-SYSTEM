@@ -14,7 +14,8 @@
     "test:integration": "jest --testPathPatterns=tests/integration",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "test:all": "jest && playwright test"
+    "test:all": "jest && playwright test",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@next-auth/prisma-adapter": "^1.0.7",

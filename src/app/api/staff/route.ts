@@ -12,7 +12,7 @@ const staffSchema = z.object({
   unitPrice: z.number().min(0, "単価は0以上である必要があります"),
   minHours: z.number().optional().nullable(),
   maxHours: z.number().optional().nullable(),
-  contractStartMonth: z.number().min(1).max(12).optional().nullable(),
+  contractStartDate: z.string().optional().nullable(),
   renewalInterval: z.number().min(1).optional().nullable(),
 });
 
@@ -26,7 +26,7 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const clientId = searchParams.get("clientId");
 
-    const staffs = await prisma.staff.findMany({
+    const staffs = await (prisma as any).staff.findMany({
       where: {
         tenantId: context.tenantId,
         deletedAt: null,
@@ -55,9 +55,10 @@ export async function POST(req: Request) {
     const body = await req.json();
     const validated = staffSchema.parse(body);
 
-    const staff = await prisma.staff.create({
+    const staff = await (prisma as any).staff.create({
       data: {
         ...validated,
+        contractStartDate: validated.contractStartDate ? new Date(validated.contractStartDate) : null,
         tenantId: context.tenantId,
       },
     });
