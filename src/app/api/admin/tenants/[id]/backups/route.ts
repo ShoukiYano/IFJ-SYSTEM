@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getTenantContext } from "@/lib/tenantContext";
+export const dynamic = "force-dynamic";
 
 export async function GET(
   req: Request,
@@ -50,14 +51,14 @@ export async function POST(
     }
 
     const timestamp = new Date().toLocaleString("ja-JP", {
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
     }).replace(/\//g, "").replace(/ /g, "_").replace(/:/g, "");
-    
+
     const filename = `backup_${tenant.name}_${timestamp}.json`;
 
     const backup = await (prisma as any).tenantBackup.create({

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { z } from "zod";
 import { getTenantContext } from "@/lib/tenantContext";
+export const dynamic = "force-dynamic";
 
 const invoiceItemSchema = z.object({
   description: z.string().min(1),
@@ -48,13 +49,13 @@ export async function GET(req: Request) {
     const minAmount = searchParams.get("minAmount");
     const maxAmount = searchParams.get("maxAmount");
 
-    const where: any = { 
+    const where: any = {
       tenantId: context.tenantId,
-      deletedAt: null 
+      deletedAt: null
     };
 
     if (clientId) where.clientId = clientId;
-    
+
     if (month) {
       const [year, m] = month.split("-").map(Number);
       const startDate = new Date(year, m - 1, 1);
@@ -101,17 +102,17 @@ export async function POST(req: Request) {
     let invoiceNumber = validated.invoiceNumber;
     if (!invoiceNumber) {
       const sequence = await prisma.invoiceSequence.upsert({
-        where: { 
+        where: {
           tenantId_id: {
             tenantId: context.tenantId,
             id: "default"
           }
         },
         update: { current: { increment: 1 } },
-        create: { 
-          id: "default", 
+        create: {
+          id: "default",
           tenantId: context.tenantId,
-          current: 1 
+          current: 1
         },
       });
 

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getTenantContext } from "@/lib/tenantContext";
+export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
@@ -29,7 +30,7 @@ export async function GET() {
 
     // 月ごとに集計
     const monthlySales: { [key: string]: number } = {};
-    
+
     // 過去6ヶ月のキーを初期化
     for (let i = 0; i < 6; i++) {
       const d = new Date(today.getFullYear(), today.getMonth() - i, 1);

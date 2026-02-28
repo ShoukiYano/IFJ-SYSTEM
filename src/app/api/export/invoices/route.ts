@@ -3,7 +3,9 @@ import prisma from "@/lib/prisma";
 import { format } from "date-fns";
 import { getTenantContext } from "@/lib/tenantContext";
 
-export async function GET() {
+export const dynamic = "force-dynamic";
+
+export async function GET(req: Request) {
   try {
     const context = await getTenantContext();
     if (!context) {
@@ -11,9 +13,9 @@ export async function GET() {
     }
 
     const invoices = await prisma.invoice.findMany({
-      where: { 
+      where: {
         tenantId: context.tenantId,
-        deletedAt: null 
+        deletedAt: null
       },
       include: {
         client: true,

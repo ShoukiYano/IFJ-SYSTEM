@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { addMonths } from "date-fns";
 import { getTenantContext } from "@/lib/tenantContext";
+export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
@@ -17,7 +18,7 @@ export async function GET() {
         tenantId: context.tenantId,
         contractEndDate: {
           lte: twoMonthsLater,
-          gte: new Date(), 
+          gte: new Date(),
         },
       },
       include: {

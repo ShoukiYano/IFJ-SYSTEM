@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { z } from "zod";
 import { getTenantContext } from "@/lib/tenantContext";
+export const dynamic = "force-dynamic";
 
 const quotationItemSchema = z.object({
   description: z.string().min(1),
@@ -40,9 +41,9 @@ export async function GET() {
     }
 
     const quotations = await prisma.quotation.findMany({
-      where: { 
+      where: {
         tenantId: context.tenantId,
-        deletedAt: null 
+        deletedAt: null
       },
       include: { client: true },
       orderBy: { createdAt: "desc" },
@@ -68,18 +69,18 @@ export async function POST(req: Request) {
     let quotationNumber = validated.quotationNumber;
     if (!quotationNumber) {
       const sequence = await prisma.invoiceSequence.upsert({
-        where: { 
+        where: {
           tenantId_id: {
             tenantId: context.tenantId,
             id: "quotation"
           }
         },
         update: { current: { increment: 1 } },
-        create: { 
-          id: "quotation", 
+        create: {
+          id: "quotation",
           tenantId: context.tenantId,
-          prefix: "EST-", 
-          current: 1 
+          prefix: "EST-",
+          current: 1
         },
       });
 
