@@ -15,6 +15,16 @@ export async function GET(
 
     const backups = await (prisma as any).tenantBackup.findMany({
       where: { tenantId: params.id },
+      select: {
+        id: true,
+        tenantId: true,
+        filename: true,
+        size: true,
+        fileUrl: true,
+        backupType: true,
+        createdAt: true,
+        // dataは重いので除外
+      },
       orderBy: { createdAt: "desc" },
     });
 
@@ -60,13 +70,29 @@ export async function POST(
     }).replace(/\//g, "").replace(/ /g, "_").replace(/:/g, "");
 
     const filename = `backup_${tenant.name}_${timestamp}.json`;
+    const storagePath = `${params.id}/${filename}`;
+
+    // Supabase SDK（管理者モード）を使用してStorageにアップロード
+    const { supabaseAdmin } = await import("@/lib/supabaseAdmin");
+    const { error: uploadError } = await supabaseAdmin.storage
+      .from("backups")
+      .upload(storagePath, JSON.stringify(tenant, null, 2), {
+        contentType: "application/json",
+        upsert: true
+      });
+
+    if (uploadError) {
+      console.error("Storage upload error:", uploadError);
+      throw new Error(`ストレージへのアップロードに失敗しました: ${uploadError.message}`);
+    }
 
     const backup = await (prisma as any).tenantBackup.create({
       data: {
         tenantId: params.id,
         filename,
         backupType: "MANUAL",
-        data: tenant, // スナップショットをJSONとして保存
+        data: null, // DBには保存せずnullにする
+        fileUrl: storagePath, // Storage内のパスを保存
         size: JSON.stringify(tenant).length,
       }
     });
@@ -74,6 +100,9 @@ export async function POST(
     return NextResponse.json(backup);
   } catch (error) {
     console.error("POST /api/admin/tenants/[id]/backups error:", error);
-    return NextResponse.json({ error: "バックアップに失敗しました", details: error instanceof Error ? error.message : String(error) }, { status: 500 });
+    return NextResponse.json({
+      error: "バックアップに失敗しました",
+      details: error instanceof Error ? error.message : String(error)
+    }, { status: 500 });
   }
 }

@@ -14,7 +14,7 @@ export default function TenantDetailPage({ params }: { params: { id: string } })
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [success, setSuccess] = useState(false);
-  
+
   const [backups, setBackups] = useState<any[]>([]);
   const [backupsLoading, setBackupsLoading] = useState(true);
   const [creatingBackup, setCreatingBackup] = useState(false);
@@ -147,7 +147,7 @@ export default function TenantDetailPage({ params }: { params: { id: string } })
 
   const handleDelete = async () => {
     if (!confirm("本当にこのテナントを削除しますか？\n関連するすべてのデータ（ユーザー、取引先、請求書など）が永久に削除されます。")) return;
-    
+
     setDeleting(true);
     try {
       const res = await fetch(`/api/admin/tenants/${params.id}`, {
@@ -162,6 +162,26 @@ export default function TenantDetailPage({ params }: { params: { id: string } })
       alert("通信エラーが発生しました");
     } finally {
       setDeleting(false);
+    }
+  };
+
+  const handleDownloadBackup = async (backupId: string, filename: string) => {
+    try {
+      const res = await fetch(`/api/admin/tenants/${params.id}/backups/${backupId}`);
+      if (!res.ok) throw new Error("ダウンロードに失敗しました");
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      alert("ダウンロードに失敗しました");
+      console.error(error);
     }
   };
 
@@ -180,7 +200,7 @@ export default function TenantDetailPage({ params }: { params: { id: string } })
             <h1 className="text-3xl font-bold text-slate-800">{tenant.name}</h1>
             <p className="text-slate-500 mt-1">ID: {tenant.id}</p>
           </div>
-          <button 
+          <button
             onClick={handleDelete}
             disabled={deleting}
             className="text-rose-600 flex items-center gap-2 text-sm font-bold hover:bg-rose-50 px-3 py-2 rounded-lg transition"
@@ -223,38 +243,38 @@ export default function TenantDetailPage({ params }: { params: { id: string } })
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <label className="text-sm font-bold text-slate-700">テナント名</label>
-              <input 
+              <input
                 required
                 type="text"
                 value={tenant.name}
-                onChange={e => setTenant({...tenant, name: e.target.value})}
+                onChange={e => setTenant({ ...tenant, name: e.target.value })}
                 className="w-full px-4 py-2 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-indigo-500/10 outline-none transition"
               />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-bold text-slate-700">サブドメイン</label>
-              <input 
+              <input
                 type="text"
                 value={tenant.subdomain || ""}
-                onChange={e => setTenant({...tenant, subdomain: e.target.value})}
+                onChange={e => setTenant({ ...tenant, subdomain: e.target.value })}
                 className="w-full px-4 py-2 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-indigo-500/10 outline-none transition"
               />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-bold text-slate-700">適格請求書登録番号</label>
-              <input 
+              <input
                 type="text"
                 value={tenant.registrationNumber || ""}
-                onChange={e => setTenant({...tenant, registrationNumber: e.target.value})}
+                onChange={e => setTenant({ ...tenant, registrationNumber: e.target.value })}
                 className="w-full px-4 py-2 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-indigo-500/10 outline-none transition"
               />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-bold text-slate-700">メールアドレス</label>
-              <input 
+              <input
                 type="email"
                 value={tenant.email || ""}
-                onChange={e => setTenant({...tenant, email: e.target.value})}
+                onChange={e => setTenant({ ...tenant, email: e.target.value })}
                 className="w-full px-4 py-2 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-indigo-500/10 outline-none transition"
               />
             </div>
@@ -264,19 +284,19 @@ export default function TenantDetailPage({ params }: { params: { id: string } })
             <label className="text-sm font-bold text-slate-700">有効化設定</label>
             <div className="flex items-center gap-4">
               <label className="flex items-center gap-2 cursor-pointer">
-                <input 
-                  type="radio" 
+                <input
+                  type="radio"
                   checked={tenant.isActive === true}
-                  onChange={() => setTenant({...tenant, isActive: true})}
+                  onChange={() => setTenant({ ...tenant, isActive: true })}
                   className="size-4 text-indigo-600"
                 />
                 <span className="text-sm font-medium">有効</span>
               </label>
               <label className="flex items-center gap-2 cursor-pointer">
-                <input 
-                  type="radio" 
+                <input
+                  type="radio"
                   checked={tenant.isActive === false}
-                  onChange={() => setTenant({...tenant, isActive: false})}
+                  onChange={() => setTenant({ ...tenant, isActive: false })}
                   className="size-4 text-rose-600"
                 />
                 <span className="text-sm font-medium">無効（ログイン不可）</span>
@@ -285,7 +305,7 @@ export default function TenantDetailPage({ params }: { params: { id: string } })
           </div>
 
           <div className="pt-6 border-t border-slate-100 flex justify-end">
-            <button 
+            <button
               type="submit"
               disabled={saving}
               className="bg-indigo-600 text-white px-8 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-indigo-700 transition shadow-lg shadow-indigo-600/20 disabled:opacity-50"
@@ -317,32 +337,32 @@ export default function TenantDetailPage({ params }: { params: { id: string } })
               <form onSubmit={handleCreateUser} className="space-y-4">
                 <div className="space-y-1">
                   <label className="text-xs font-bold text-slate-500 uppercase">メールアドレス</label>
-                  <input 
+                  <input
                     required
                     type="email"
                     value={newUser.email}
-                    onChange={e => setNewUser({...newUser, email: e.target.value})}
+                    onChange={e => setNewUser({ ...newUser, email: e.target.value })}
                     className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none"
                     placeholder="example@company.com"
                   />
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-bold text-slate-500 uppercase">氏名</label>
-                  <input 
+                  <input
                     type="text"
                     value={newUser.name}
-                    onChange={e => setNewUser({...newUser, name: e.target.value})}
+                    onChange={e => setNewUser({ ...newUser, name: e.target.value })}
                     className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none"
                     placeholder="山田 太郎"
                   />
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-bold text-slate-500 uppercase">パスワード</label>
-                  <input 
+                  <input
                     required
                     type="password"
                     value={newUser.password}
-                    onChange={e => setNewUser({...newUser, password: e.target.value})}
+                    onChange={e => setNewUser({ ...newUser, password: e.target.value })}
                     className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none"
                     placeholder="••••••••"
                   />
@@ -351,14 +371,14 @@ export default function TenantDetailPage({ params }: { params: { id: string } })
                   <label className="text-xs font-bold text-slate-500 uppercase">ロール</label>
                   <select
                     value={newUser.role}
-                    onChange={e => setNewUser({...newUser, role: e.target.value})}
+                    onChange={e => setNewUser({ ...newUser, role: e.target.value })}
                     className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none"
                   >
                     <option value="TENANT_ADMIN">テナント管理者</option>
                     <option value="TENANT_USER">一般ユーザー</option>
                   </select>
                 </div>
-                <button 
+                <button
                   type="submit"
                   disabled={creatingUser}
                   className="w-full bg-slate-800 text-white py-2 rounded-xl font-bold hover:bg-slate-700 transition flex items-center justify-center gap-2"
@@ -397,9 +417,8 @@ export default function TenantDetailPage({ params }: { params: { id: string } })
                           <div className="text-xs text-slate-500">{user.email}</div>
                         </td>
                         <td className="px-6 py-4">
-                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase ${
-                            user.role === 'TENANT_ADMIN' ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-600'
-                          }`}>
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase ${user.role === 'TENANT_ADMIN' ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-600'
+                            }`}>
                             {user.role === 'TENANT_ADMIN' ? 'Admin' : 'User'}
                           </span>
                         </td>
@@ -431,7 +450,7 @@ export default function TenantDetailPage({ params }: { params: { id: string } })
             <Database size={24} className="text-indigo-600" />
             データバックアップ (スナップショット)
           </h2>
-          <button 
+          <button
             onClick={handleCreateBackup}
             disabled={creatingBackup}
             className="bg-indigo-600 text-white px-4 py-2 rounded-xl font-bold flex items-center gap-2 hover:bg-indigo-700 transition disabled:opacity-50"
@@ -463,7 +482,10 @@ export default function TenantDetailPage({ params }: { params: { id: string } })
                     <td className="px-6 py-4 text-slate-500">{(backup.size / 1024).toFixed(1)} KB</td>
                     <td className="px-6 py-4 text-slate-500">{new Date(backup.createdAt).toLocaleString()}</td>
                     <td className="px-6 py-4 text-right">
-                      <button className="text-indigo-600 font-bold hover:underline flex items-center justify-end gap-1 ml-auto">
+                      <button
+                        onClick={() => handleDownloadBackup(backup.id, backup.filename)}
+                        className="text-indigo-600 font-bold hover:underline flex items-center justify-end gap-1 ml-auto"
+                      >
                         <Download size={14} /> ダウンロード
                       </button>
                     </td>
