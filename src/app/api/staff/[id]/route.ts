@@ -6,7 +6,7 @@ import { getTenantContext } from "@/lib/tenantContext";
 const staffUpdateSchema = z.object({
   name: z.string().min(1, "名前は必須です").optional(),
   type: z.enum(["PROPER", "BP"]).optional(),
-  area: z.enum(["KANSAI", "KANTO"]).optional(),
+  area: z.enum(["KANSAI", "KANTO", "NAGOYA"]).optional(),
   manager: z.string().optional().nullable(),
   clientId: z.string().uuid("無効な取引先IDです").optional(),
   unitPrice: z.number().min(0, "単価は0以上である必要があります").optional(),

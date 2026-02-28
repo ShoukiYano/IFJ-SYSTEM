@@ -163,6 +163,7 @@ export default function StaffModal({ isOpen, onClose, onSuccess, staff }: StaffM
                 >
                   <option value="KANTO">関東</option>
                   <option value="KANSAI">関西</option>
+                  <option value="NAGOYA">名古屋</option>
                 </select>
               </div>
             </div>

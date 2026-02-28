@@ -130,9 +130,11 @@ export default function StaffListPage() {
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        <span className={`inline-flex items-center text-[10px] font-bold px-2.5 py-1 rounded-lg whitespace-nowrap ${staff.area === 'KANSAI' ? 'bg-orange-100 text-orange-600' : 'bg-sky-100 text-sky-600'
+                        <span className={`inline-flex items-center text-[10px] font-bold px-2.5 py-1 rounded-lg whitespace-nowrap ${staff.area === 'KANSAI' ? 'bg-orange-100 text-orange-600' :
+                            staff.area === 'NAGOYA' ? 'bg-emerald-100 text-emerald-600' :
+                              'bg-sky-100 text-sky-600'
                           }`}>
-                          {staff.area === 'KANSAI' ? '関西' : '関東'}
+                          {staff.area === 'KANSAI' ? '関西' : staff.area === 'NAGOYA' ? '名古屋' : '関東'}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-sm text-slate-600">{staff.manager || "-"}</td>
