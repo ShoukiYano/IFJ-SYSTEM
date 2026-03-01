@@ -8,7 +8,7 @@ export default withAuth(
 
     // 1. 公開パスの場合は何もしない (authorized callback で既に true を返している)
     if (
-      pathname.startsWith("/login") ||
+      pathname.startsWith("/admin-portal") ||
       pathname.startsWith("/register") ||
       pathname.startsWith("/tos") ||
       (pathname.startsWith("/t/") && pathname.endsWith("/login"))
@@ -48,7 +48,7 @@ export default withAuth(
 
         // 公開パスは常に許可
         if (
-          pathname.startsWith("/login") ||
+          pathname.startsWith("/admin-portal") ||
           pathname.startsWith("/register") ||
           pathname.startsWith("/tos") ||
           (pathname.startsWith("/t/") && pathname.endsWith("/login"))
