@@ -124,7 +124,12 @@ export default function AdminDashboardPage() {
                                                         body: JSON.stringify({ tenantId: t.id }),
                                                     });
                                                     if (res.ok) {
-                                                        window.location.href = `http://${t.subdomain}.localhost:3000/`;
+                                                        const isLocalhost = window.location.hostname === "localhost" || window.location.hostname.endsWith(".localhost");
+                                                        if (isLocalhost) {
+                                                            window.location.href = `${window.location.protocol}//${t.subdomain}.localhost:${window.location.port || "3000"}/`;
+                                                        } else {
+                                                            window.location.href = `${window.location.origin}/t/${t.subdomain}`;
+                                                        }
                                                     }
                                                 }}
                                                 className="p-2 text-slate-400 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 rounded-xl transition-all flex items-center gap-2 text-xs font-bold"
