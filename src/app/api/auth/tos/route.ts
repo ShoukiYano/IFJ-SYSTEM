@@ -5,14 +5,15 @@ import prisma from "@/lib/prisma";
 
 export async function POST() {
     const session = await getServerSession(authOptions);
+    const userId = (session?.user as any)?.id;
 
-    if (!session?.user?.id) {
+    if (!userId) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     try {
         await (prisma as any).user.update({
-            where: { id: (session.user as any).id },
+            where: { id: userId },
             data: { tosAcceptedAt: new Date() },
         });
 
