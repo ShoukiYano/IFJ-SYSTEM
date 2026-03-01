@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { z } from "zod";
@@ -29,7 +31,7 @@ export async function GET(req: Request) {
     const recurringOnly = searchParams.get("recurringOnly") === "true";
 
     const clients = await (prisma as any).client.findMany({
-      where: { 
+      where: {
         tenantId: context.tenantId,
         deletedAt: null,
         ...(recurringOnly ? { isRecurring: true } : {}),
@@ -62,7 +64,7 @@ export async function POST(req: Request) {
 
     const body = await req.json();
     const validated = clientSchema.parse(body);
-    
+
     const client = await (prisma as any).client.create({
       data: {
         ...validated,

@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getTenantContext } from "@/lib/tenantContext";
@@ -14,9 +16,9 @@ export async function POST(
 
     // 見積書取得 (テナントチェック込み)
     const quotation = await prisma.quotation.findFirst({
-      where: { 
+      where: {
         id: params.id,
-        tenantId: context.tenantId 
+        tenantId: context.tenantId
       },
       include: { items: true },
     });
@@ -31,17 +33,17 @@ export async function POST(
 
     // 請求書採番 (テナント固有)
     const sequence = await prisma.invoiceSequence.upsert({
-      where: { 
+      where: {
         tenantId_id: {
           tenantId: context.tenantId,
           id: "default"
         }
       },
       update: { current: { increment: 1 } },
-      create: { 
-        id: "default", 
+      create: {
+        id: "default",
         tenantId: context.tenantId,
-        current: 1 
+        current: 1
       },
     });
 
@@ -89,7 +91,7 @@ export async function POST(
       // 見積書ステータス更新
       await tx.quotation.update({
         where: { id: quotation.id },
-        data: { 
+        data: {
           status: "INVOICED",
           invoiceId: inv.id
         },

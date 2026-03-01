@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getTenantContext } from "@/lib/tenantContext";
@@ -16,9 +18,9 @@ export async function POST(
 
     // Ensure ownership before duplicating
     const original = await prisma.invoice.findFirst({
-      where: { 
+      where: {
         id,
-        tenantId: context.tenantId 
+        tenantId: context.tenantId
       },
       include: { items: true },
     });
@@ -45,7 +47,7 @@ export async function POST(
       data: {
         ...invoiceData,
         tenantId: context.tenantId,
-        invoiceNumber: `COPY-${original.invoiceNumber}-${Date.now()}`, 
+        invoiceNumber: `COPY-${original.invoiceNumber}-${Date.now()}`,
         status: "DRAFT",
         issueDate: new Date(),
         dueDate: null,

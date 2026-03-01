@@ -1,8 +1,9 @@
+export const dynamic = "force-dynamic";
+
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { z } from "zod";
 import { getTenantContext } from "@/lib/tenantContext";
-export const dynamic = "force-dynamic";
 
 const invoiceItemSchema = z.object({
   description: z.string().min(1),

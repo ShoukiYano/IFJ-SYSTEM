@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { z } from "zod";
@@ -45,12 +47,12 @@ export async function PUT(req: Request) {
 
     const body = await req.json();
     const validated = tenantSchema.parse(body);
-    
+
     const tenant = await prisma.tenant.update({
       where: { id: context.tenantId },
       data: validated,
     });
-    
+
     return NextResponse.json(tenant);
   } catch (error) {
     if (error instanceof z.ZodError) {

@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { z } from "zod";
@@ -25,9 +27,9 @@ export async function GET(req: Request) {
     }
 
     const assignees = await prisma.assignee.findMany({
-      where: { 
+      where: {
         tenantId: context.tenantId,
-        clientId 
+        clientId
       },
       orderBy: { createdAt: "asc" },
     });
