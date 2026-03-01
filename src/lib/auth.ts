@@ -40,7 +40,7 @@ export const authOptions: NextAuthOptions = {
           tenantId: user.tenantId,
           tenantSubdomain: user.tenant?.subdomain,
           role: user.role,
-          tosAccepted: !!user.tosAcceptedAt,
+          tosAccepted: !!(user as any).tosAcceptedAt,
         };
       },
     }),
