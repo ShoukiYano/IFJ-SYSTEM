@@ -14,7 +14,22 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
+        // --- TEMPORARY TEST ACCOUNT ---
+        if (credentials?.email === "test@example.com" && credentials?.password === "test123") {
+          console.log("[AUTH] Test login successful");
+          return {
+            id: "test-user-id",
+            email: "test@example.com",
+            name: "Test User",
+            role: "SYSTEM_ADMIN",
+            tosAccepted: true,
+          };
+        }
+        // ------------------------------
+
+        console.log("[AUTH] Authorize called with email:", credentials?.email);
         if (!credentials?.email || !credentials?.password) {
+          console.log("[AUTH] Missing credentials");
           throw new Error("メールアドレスとパスワードを入力してください");
         }
 
@@ -23,13 +38,23 @@ export const authOptions: NextAuthOptions = {
           include: { tenant: true },
         });
 
-        if (!user || !user.password) {
+        if (!user) {
+          console.log("[AUTH] User not found in DB:", credentials.email);
+          throw new Error("ユーザー名またはパスワードが正しくありません");
+        }
+
+        console.log("[AUTH] User found, comparing password...");
+
+        if (!user.password) {
+          console.log("[AUTH] User has no password set");
           throw new Error("ユーザー名またはパスワードが正しくありません");
         }
 
         const isValid = await bcrypt.compare(credentials.password, user.password);
+        console.log("[AUTH] Password valid:", isValid);
 
         if (!isValid) {
+          console.log("[AUTH] Password mismatch");
           throw new Error("ユーザー名またはパスワードが正しくありません");
         }
 
