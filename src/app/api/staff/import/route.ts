@@ -49,6 +49,7 @@ export async function POST(req: Request) {
 
         const results = [];
         const errors = [];
+        let duplicates = 0;
 
         // クライアント名のキャッシュ
         const clientCache: Record<string, string> = {};
@@ -78,6 +79,20 @@ export async function POST(req: Request) {
             else if (areaStr.includes("名古屋")) area = "NAGOYA";
 
             try {
+                // 重複チェック（同じ名前の要員が既に存在するか）
+                const existingStaff = await (prisma as any).staff.findFirst({
+                    where: {
+                        name,
+                        tenantId: context.tenantId,
+                        deletedAt: null,
+                    }
+                });
+
+                if (existingStaff) {
+                    duplicates++;
+                    continue;
+                }
+
                 // クライアントの取得または作成
                 let clientId = clientCache[clientName];
                 if (!clientId) {
@@ -127,8 +142,9 @@ export async function POST(req: Request) {
         }
 
         return NextResponse.json({
-            message: `${results.length}件のインポートが完了しました`,
+            message: `${results.length}件のインポートが完了しました${duplicates > 0 ? `（${duplicates}件は既に存在するためスキップしました）` : ''}`,
             count: results.length,
+            duplicates: duplicates,
             errors: errors.length > 0 ? errors : undefined
         });
 
