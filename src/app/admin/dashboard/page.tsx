@@ -16,14 +16,23 @@ export default function AdminDashboardPage() {
     const fetchTenants = () => {
         setLoading(true);
         fetch("/api/admin/tenants")
-            .then(res => res.json())
+            .then(res => {
+                if (!res.ok) throw new Error("API response error");
+                return res.json();
+            })
             .then(data => {
+                if (!Array.isArray(data)) throw new Error("Invalid data format");
                 setTenants(data);
                 setStats({
                     total: data.length,
                     active: data.filter((t: any) => t.isActive).length,
                     pending: 0, // Placeholder
                 });
+                setLoading(false);
+            })
+            .catch(err => {
+                console.error("Dashboard fetch error:", err);
+                setTenants([]);
                 setLoading(false);
             });
     };

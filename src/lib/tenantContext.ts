@@ -28,7 +28,8 @@ export async function getTenantContext() {
       return {
         userId: impUserId || realUserId,
         tenantId: impTenantId,
-        role: "TENANT_ADMIN", // Assume admin role during impersonation
+        role: "TENANT_ADMIN", // Role for the CURRENT SCOPE
+        originalRole: realRole, // Preserve system admin status
         user: session.user,
         isImpersonating: true,
       };
@@ -39,6 +40,7 @@ export async function getTenantContext() {
     userId: realUserId,
     tenantId: realTenantId,
     role: realRole,
+    originalRole: realRole,
     user: session.user,
     isImpersonating: false,
   };

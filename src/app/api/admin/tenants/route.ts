@@ -7,7 +7,7 @@ import { getTenantContext } from "@/lib/tenantContext";
 export async function GET() {
   try {
     const context = await getTenantContext();
-    if (!context || context.role !== "SYSTEM_ADMIN") {
+    if (!context || (context.role !== "SYSTEM_ADMIN" && (context as any).originalRole !== "SYSTEM_ADMIN")) {
       return NextResponse.json({ error: "権限がありません" }, { status: 403 });
     }
 
@@ -30,7 +30,7 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const context = await getTenantContext();
-    if (!context || context.role !== "SYSTEM_ADMIN") {
+    if (!context || (context.role !== "SYSTEM_ADMIN" && (context as any).originalRole !== "SYSTEM_ADMIN")) {
       return NextResponse.json({ error: "権限がありません" }, { status: 403 });
     }
 
