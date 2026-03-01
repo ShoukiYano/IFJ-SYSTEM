@@ -20,7 +20,7 @@ export const authOptions: NextAuthOptions = {
           throw new Error("メールアドレスとパスワードを入力してください");
         }
 
-        const email = credentials.email.toLowerCase();
+        const email = credentials.email.trim().toLowerCase();
 
         const user = await prisma.user.findUnique({
           where: { email },
@@ -28,23 +28,23 @@ export const authOptions: NextAuthOptions = {
         });
 
         if (!user) {
-          console.log("[AUTH] User not found in DB:", credentials.email);
-          throw new Error("ユーザー名またはパスワードが正しくありません");
+          console.log("[AUTH] User not found in DB:", email);
+          throw new Error("ERR_USER_NOT_FOUND");
         }
 
         console.log("[AUTH] User found, comparing password...");
 
         if (!user.password) {
           console.log("[AUTH] User has no password set");
-          throw new Error("ユーザー名またはパスワードが正しくありません");
+          throw new Error("ERR_NO_PASSWORD");
         }
 
         const isValid = await bcrypt.compare(credentials.password, user.password);
         console.log("[AUTH] Password valid:", isValid);
 
         if (!isValid) {
-          console.log("[AUTH] Password mismatch");
-          throw new Error("ユーザー名またはパスワードが正しくありません");
+          console.log("[AUTH] Password mismatch for:", email);
+          throw new Error("ERR_INVALID_PASSWORD");
         }
 
         return {

@@ -25,7 +25,11 @@ export default function LoginPage() {
       });
 
       if (res?.error) {
-        setError("メールアドレスまたはパスワードが正しくありません");
+        let msg = "メールアドレスまたはパスワードが正しくありません";
+        if (res.error === "ERR_USER_NOT_FOUND") msg = "エラー: ユーザーが見つかりません";
+        if (res.error === "ERR_NO_PASSWORD") msg = "エラー: パスワード未設定";
+        if (res.error === "ERR_INVALID_PASSWORD") msg = "エラー: パスワード不一致";
+        setError(msg);
       } else {
         router.push("/");
         router.refresh();
