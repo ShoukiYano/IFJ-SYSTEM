@@ -69,13 +69,16 @@ export const authOptions: NextAuthOptions = {
     signIn: "/login",
   },
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id;
         token.tenantId = (user as any).tenantId;
         token.tenantSubdomain = (user as any).tenantSubdomain;
         token.role = (user as any).role;
         token.tosAccepted = (user as any).tosAccepted;
+      }
+      if (trigger === "update" && session?.tosAccepted !== undefined) {
+        token.tosAccepted = session.tosAccepted;
       }
       return token;
     },

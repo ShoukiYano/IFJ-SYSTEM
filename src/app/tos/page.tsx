@@ -1,34 +1,51 @@
-import { redirect } from "next/navigation";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import prisma from "@/lib/prisma";
-import { revalidatePath } from "next/cache";
-import { ShieldCheck, CheckCircle2, ArrowRight } from "lucide-react";
+"use client";
 
-export default async function TosPage() {
-    const session = await getServerSession(authOptions);
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { ShieldCheck, CheckCircle2, ArrowRight, Loader2 } from "lucide-react";
 
-    if (!session) {
-        redirect("/login");
-    }
+export default function TosPage() {
+    const { data: session, status, update } = useSession();
+    const router = useRouter();
+    const [isPending, setIsPending] = useState(false);
 
-    // Already accepted?
-    if ((session.user as any).tosAccepted) {
-        redirect("/");
-    }
+    useEffect(() => {
+        if (status === "unauthenticated") {
+            router.push("/login");
+        } else if (session?.user && (session.user as any).tosAccepted) {
+            router.push("/");
+        }
+    }, [status, session, router]);
 
-    async function acceptTos() {
-        "use server";
-        const session = await getServerSession(authOptions) as any;
-        if (!session?.user?.id) return;
+    const handleAccept = async () => {
+        if (isPending) return;
+        setIsPending(true);
+        try {
+            const res = await fetch("/api/auth/tos", { method: "POST" });
+            if (res.ok) {
+                // Trigger session update to refresh tosAccepted in JWT
+                await update({ tosAccepted: true });
+                router.push("/");
+                router.refresh();
+            } else {
+                console.error("Failed to accept ToS");
+                alert("エラーが発生しました。もう一度お試しください。");
+            }
+        } catch (error) {
+            console.error("Error accepting ToS:", error);
+            alert("通信エラーが発生しました。");
+        } finally {
+            setIsPending(false);
+        }
+    };
 
-        await (prisma as any).user.update({
-            where: { id: session.user.id },
-            data: { tosAcceptedAt: new Date() },
-        });
-
-        revalidatePath("/");
-        redirect("/");
+    if (status === "loading" || (session?.user && (session.user as any).tosAccepted)) {
+        return (
+            <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+                <Loader2 className="animate-spin text-slate-400" size={32} />
+            </div>
+        );
     }
 
     return (
@@ -45,8 +62,6 @@ export default async function TosPage() {
                             <p className="text-slate-400 text-sm mt-1">サービス継続利用のため、内容の確認をお願いします</p>
                         </div>
                     </div>
-                    {/* Subtle patterns */}
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 blur-3xl rounded-full -mr-32 -mt-32"></div>
                 </div>
 
                 {/* Content */}
@@ -78,11 +93,6 @@ export default async function TosPage() {
                         </h2>
                         <p>他社のデータへの不正アクセス、システムの脆弱性を突く行為、公序良俗に反する利用は固く禁止いたします。</p>
                     </section>
-
-                    {/* Policy Placeholder */}
-                    <div className="pt-4 border-t border-slate-100">
-                        <p className="text-xs text-slate-400">※ これはデモンストレーション用の規約案です。実際の運用にあたっては法的なレビューを受けた正式な規約を掲載してください。</p>
-                    </div>
                 </div>
 
                 {/* Footer */}
@@ -91,15 +101,23 @@ export default async function TosPage() {
                         <CheckCircle2 size={16} className="text-emerald-500" />
                         同意ボタンを押すことで、上記内容を承諾したとみなされます
                     </div>
-                    <form action={acceptTos}>
-                        <button
-                            type="submit"
-                            className="bg-slate-900 text-white px-8 py-3 rounded-2xl font-bold flex items-center gap-2 hover:bg-emerald-600 transition-all active:scale-95 group shadow-lg shadow-slate-200"
-                        >
-                            同意して利用を開始する
-                            <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
-                        </button>
-                    </form>
+                    <button
+                        onClick={handleAccept}
+                        disabled={isPending}
+                        className="bg-slate-900 text-white px-8 py-3 rounded-2xl font-bold flex items-center gap-2 hover:bg-emerald-600 transition-all active:scale-95 group shadow-lg shadow-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        {isPending ? (
+                            <>
+                                <Loader2 className="animate-spin" size={18} />
+                                処理中...
+                            </>
+                        ) : (
+                            <>
+                                同意して利用を開始する
+                                <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                            </>
+                        )}
+                    </button>
                 </div>
             </div>
         </div>
