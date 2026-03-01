@@ -74,3 +74,33 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "登録に失敗しました", details: error instanceof Error ? error.message : String(error) }, { status: 500 });
   }
 }
+
+export async function DELETE(req: Request) {
+  try {
+    const context = await getTenantContext();
+    if (!context) {
+      return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
+    }
+
+    const { ids } = await req.json();
+
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return NextResponse.json({ error: "削除するIDが指定されていません" }, { status: 400 });
+    }
+
+    await (prisma as any).staff.updateMany({
+      where: {
+        id: { in: ids },
+        tenantId: context.tenantId,
+      },
+      data: {
+        deletedAt: new Date(),
+      },
+    });
+
+    return NextResponse.json({ message: `${ids.length}件の要員を削除しました` });
+  } catch (error) {
+    console.error("DELETE /api/staff bulk error:", error);
+    return NextResponse.json({ error: "一括削除に失敗しました" }, { status: 500 });
+  }
+}

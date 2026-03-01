@@ -57,19 +57,25 @@ export async function POST(req: Request) {
             const row = rows[i];
             if (!row || row.length === 0 || !row[1]) continue; // 名前がない行はスキップ
 
-            const name = row[1];
-            const clientName = row[2];
-            const manager = row[3];
-            const paymentTerms = row[4];
-            const unitPrice = parseFloat(row[5]);
-            const contractStartDate = parseExcelDate(row[6]);
-            const settlementUnit = parseInt(row[7]);
-            const minHours = parseFloat(row[8]);
-            const maxHours = parseFloat(row[9]);
-            const deductionAmount = parseFloat(row[10]);
-            const excessAmount = parseFloat(row[11]);
-            const roundingUnit = parseInt(row[12]);
-            const renewalInterval = parseInt(row[13]);
+            const name = String(row[1]).trim();
+            const typeStr = String(row[2]).trim();
+            const areaStr = String(row[3]).trim();
+            const clientName = String(row[4]).trim();
+            const manager = row[5];
+            const paymentTerms = row[6];
+            const unitPrice = parseFloat(row[7]);
+            const settlementUnit = parseInt(row[8]);
+            const minHours = parseFloat(row[9]);
+            const maxHours = parseFloat(row[10]);
+            const deductionAmount = parseFloat(row[11]);
+            const excessAmount = parseFloat(row[12]);
+            const roundingUnit = parseInt(row[13]);
+
+            // 区分とエリアのマッピング
+            const type = typeStr.includes("BP") ? "BP" : "PROPER";
+            let area = "KANTO";
+            if (areaStr.includes("関西")) area = "KANSAI";
+            else if (areaStr.includes("名古屋")) area = "NAGOYA";
 
             try {
                 // クライアントの取得または作成
@@ -96,18 +102,21 @@ export async function POST(req: Request) {
                     data: {
                         tenantId: context.tenantId,
                         name,
+                        type,
+                        area,
                         clientId,
                         manager: manager ? String(manager) : null,
                         unitPrice: isNaN(unitPrice) ? 0 : unitPrice,
                         paymentTerms: paymentTerms ? String(paymentTerms) : null,
-                        contractStartDate,
-                        settlementUnit: (isNaN(settlementUnit) || !row[7]) ? 15 : settlementUnit,
+                        // contractStartDate はExcelに列がないため、一旦 null または 45日のような文字列から推測するのは難しいため null
+                        contractStartDate: null,
+                        settlementUnit: (isNaN(settlementUnit) || !row[8]) ? 15 : settlementUnit,
                         minHours: isNaN(minHours) ? null : minHours,
                         maxHours: isNaN(maxHours) ? null : maxHours,
                         deductionAmount: isNaN(deductionAmount) ? null : deductionAmount,
                         excessAmount: isNaN(excessAmount) ? null : excessAmount,
                         roundingUnit: isNaN(roundingUnit) ? null : roundingUnit,
-                        renewalInterval: isNaN(renewalInterval) ? null : renewalInterval,
+                        renewalInterval: null, // Excelに列がないため null
                     }
                 });
                 results.push(staff);

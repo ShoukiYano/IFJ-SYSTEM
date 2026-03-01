@@ -13,6 +13,7 @@ export default function StaffListPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [editingStaff, setEditingStaff] = useState<any>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const fetchStaffs = async () => {
     setIsLoading(true);
@@ -21,6 +22,7 @@ export default function StaffListPage() {
       if (res.ok) {
         const data = await res.json();
         setStaffs(data);
+        setSelectedIds([]); // リセット
       }
     } catch (err) {
       console.error("Fetch staff error:", err);
@@ -45,10 +47,46 @@ export default function StaffListPage() {
     }
   };
 
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) return;
+    if (!confirm(`${selectedIds.length}件の要員を一括削除してもよろしいですか？`)) return;
+
+    try {
+      const res = await fetch("/api/staff", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: selectedIds }),
+      });
+
+      if (res.ok) {
+        fetchStaffs();
+      } else {
+        const data = await res.json();
+        alert(`削除に失敗しました: ${data.error}`);
+      }
+    } catch (err) {
+      alert("通信エラーが発生しました");
+    }
+  };
+
   const filteredStaffs = staffs.filter(s =>
     s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     s.client?.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.checked) {
+      setSelectedIds(filteredStaffs.map(s => s.id));
+    } else {
+      setSelectedIds([]);
+    }
+  };
+
+  const handleSelectOne = (id: string) => {
+    setSelectedIds(prev =>
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 p-4 sm:p-8">
@@ -58,7 +96,16 @@ export default function StaffListPage() {
             <h1 className="text-2xl sm:text-3xl font-black text-slate-900">要員管理</h1>
             <p className="text-slate-500 mt-1 text-sm">SES要員や自社要員の情報を管理します。</p>
           </div>
-          <div className="flex gap-3 w-full sm:w-auto">
+          <div className="flex flex-wrap gap-3 w-full sm:w-auto">
+            {selectedIds.length > 0 && (
+              <button
+                onClick={handleBulkDelete}
+                className="flex-1 sm:flex-none justify-center bg-red-50 text-red-600 border border-red-200 px-4 sm:px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-red-100 transition-all text-sm"
+              >
+                <Trash2 size={18} />
+                選択中({selectedIds.length})を削除
+              </button>
+            )}
             <button
               onClick={() => setIsImportModalOpen(true)}
               className="flex-1 sm:flex-none justify-center bg-emerald-600 text-white px-4 sm:px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-emerald-700 shadow-lg shadow-emerald-500/20 transition-all hover:-translate-y-0.5 text-sm"
@@ -97,7 +144,15 @@ export default function StaffListPage() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-slate-50/50 border-b border-slate-200">
-                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">No</th>
+                  <th className="px-6 py-4 w-10">
+                    <input
+                      type="checkbox"
+                      className="size-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500/20"
+                      checked={filteredStaffs.length > 0 && selectedIds.length === filteredStaffs.length}
+                      onChange={handleSelectAll}
+                    />
+                  </th>
+                  <th className="px-2 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">No</th>
                   <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">区分</th>
                   <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">エリア</th>
                   <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">担当者</th>
@@ -113,16 +168,24 @@ export default function StaffListPage() {
               <tbody className="divide-y divide-slate-100">
                 {isLoading ? (
                   <tr>
-                    <td colSpan={10} className="px-6 py-12 text-center text-slate-400 italic">読み込み中...</td>
+                    <td colSpan={12} className="px-6 py-12 text-center text-slate-400 italic">読み込み中...</td>
                   </tr>
                 ) : filteredStaffs.length === 0 ? (
                   <tr>
-                    <td colSpan={10} className="px-6 py-12 text-center text-slate-400 italic">該当する要員が見つかりません。</td>
+                    <td colSpan={12} className="px-6 py-12 text-center text-slate-400 italic">該当する要員が見つかりません。</td>
                   </tr>
                 ) : (
                   filteredStaffs.map((staff, index) => (
-                    <tr key={staff.id} className="hover:bg-slate-50/50 transition-colors group">
-                      <td className="px-6 py-4 text-sm text-slate-500 font-mono">{index + 1}</td>
+                    <tr key={staff.id} className={`hover:bg-slate-50/50 transition-colors group ${selectedIds.includes(staff.id) ? 'bg-blue-50/30' : ''}`}>
+                      <td className="px-6 py-4">
+                        <input
+                          type="checkbox"
+                          className="size-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500/20"
+                          checked={selectedIds.includes(staff.id)}
+                          onChange={() => handleSelectOne(staff.id)}
+                        />
+                      </td>
+                      <td className="px-2 py-4 text-sm text-slate-500 font-mono">{index + 1}</td>
                       <td className="px-6 py-4">
                         <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-black uppercase whitespace-nowrap ${staff.type === 'PROPER' ? 'bg-indigo-100 text-indigo-600' : 'bg-amber-100 text-amber-600'
                           }`}>
