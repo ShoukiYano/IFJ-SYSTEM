@@ -14,27 +14,16 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        // --- TEMPORARY TEST ACCOUNT ---
-        if (credentials?.email === "test@example.com" && credentials?.password === "test123") {
-          console.log("[AUTH] Test login successful");
-          return {
-            id: "test-user-id",
-            email: "test@example.com",
-            name: "Test User",
-            role: "SYSTEM_ADMIN",
-            tosAccepted: true,
-          };
-        }
-        // ------------------------------
-
         console.log("[AUTH] Authorize called with email:", credentials?.email);
         if (!credentials?.email || !credentials?.password) {
           console.log("[AUTH] Missing credentials");
           throw new Error("メールアドレスとパスワードを入力してください");
         }
 
+        const email = credentials.email.toLowerCase();
+
         const user = await prisma.user.findUnique({
-          where: { email: credentials.email },
+          where: { email },
           include: { tenant: true },
         });
 

@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getTenantContext } from "@/lib/tenantContext";
@@ -13,7 +15,7 @@ export async function GET() {
     }
 
     const user = await (prisma as any).user.findUnique({
-      where: { email: session.user.email! },
+      where: { email: session.user.email!.toLowerCase() },
       select: { email: true, name: true, role: true }
     });
 
@@ -35,7 +37,7 @@ export async function PATCH(req: Request) {
     const { email, name, currentPassword, newPassword } = body;
 
     const user = await (prisma as any).user.findUnique({
-      where: { email: session.user.email! },
+      where: { email: session.user.email!.toLowerCase() },
     });
 
     if (!user) {

@@ -26,7 +26,9 @@ export default function AdminProfilePage() {
       const res = await fetch("/api/admin/profile");
       if (res.ok) {
         const data = await res.json();
-        setProfile({ email: data.email, name: data.name });
+        if (data) {
+          setProfile({ email: data.email || "", name: data.name || "" });
+        }
       }
     } catch (error) {
       console.error(error);
@@ -85,9 +87,8 @@ export default function AdminProfilePage() {
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         <form onSubmit={handleUpdate} className="p-8 space-y-8">
           {message.text && (
-            <div className={`p-4 rounded-xl flex items-center gap-3 font-medium text-sm animate-in fade-in slide-in-from-top-4 ${
-              message.type === "success" ? "bg-emerald-50 text-emerald-700 border border-emerald-100" : "bg-rose-50 text-rose-700 border border-rose-100"
-            }`}>
+            <div className={`p-4 rounded-xl flex items-center gap-3 font-medium text-sm animate-in fade-in slide-in-from-top-4 ${message.type === "success" ? "bg-emerald-50 text-emerald-700 border border-emerald-100" : "bg-rose-50 text-rose-700 border border-rose-100"
+              }`}>
               {message.type === "success" ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
               {message.text}
             </div>
@@ -99,11 +100,11 @@ export default function AdminProfilePage() {
                 <Mail size={16} className="text-slate-400" />
                 メールアドレス
               </label>
-              <input 
+              <input
                 required
                 type="email"
                 value={profile.email}
-                onChange={e => setProfile({...profile, email: e.target.value})}
+                onChange={e => setProfile({ ...profile, email: e.target.value })}
                 className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-indigo-500/10 outline-none transition"
               />
             </div>
@@ -113,10 +114,10 @@ export default function AdminProfilePage() {
                 <User size={16} className="text-slate-400" />
                 氏名
               </label>
-              <input 
+              <input
                 type="text"
                 value={profile.name}
-                onChange={e => setProfile({...profile, name: e.target.value})}
+                onChange={e => setProfile({ ...profile, name: e.target.value })}
                 className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-indigo-500/10 outline-none transition"
               />
             </div>
@@ -127,13 +128,13 @@ export default function AdminProfilePage() {
               <Lock size={16} />
               パスワード変更 (変更する場合のみ入力)
             </h3>
-            
+
             <div className="space-y-2">
               <label className="text-sm font-bold text-slate-700">現在のパスワード</label>
-              <input 
+              <input
                 type="password"
                 value={passwords.currentPassword}
-                onChange={e => setPasswords({...passwords, currentPassword: e.target.value})}
+                onChange={e => setPasswords({ ...passwords, currentPassword: e.target.value })}
                 className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-indigo-500/10 outline-none transition"
               />
             </div>
@@ -141,19 +142,19 @@ export default function AdminProfilePage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <label className="text-sm font-bold text-slate-700">新しいパスワード</label>
-                <input 
+                <input
                   type="password"
                   value={passwords.newPassword}
-                  onChange={e => setPasswords({...passwords, newPassword: e.target.value})}
+                  onChange={e => setPasswords({ ...passwords, newPassword: e.target.value })}
                   className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-indigo-500/10 outline-none transition"
                 />
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-bold text-slate-700">新しいパスワード (確認用)</label>
-                <input 
+                <input
                   type="password"
                   value={passwords.confirmPassword}
-                  onChange={e => setPasswords({...passwords, confirmPassword: e.target.value})}
+                  onChange={e => setPasswords({ ...passwords, confirmPassword: e.target.value })}
                   className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-indigo-500/10 outline-none transition"
                 />
               </div>
@@ -161,7 +162,7 @@ export default function AdminProfilePage() {
           </div>
 
           <div className="pt-6 border-t border-slate-100 flex justify-end">
-            <button 
+            <button
               type="submit"
               disabled={saving}
               className="bg-indigo-600 text-white px-8 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-indigo-700 transition shadow-lg shadow-indigo-600/20 disabled:opacity-50"
