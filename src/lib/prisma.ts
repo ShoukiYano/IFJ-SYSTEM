@@ -2,7 +2,9 @@ import { PrismaClient } from "@prisma/client";
 import { getTenantId } from "./tenantStore";
 
 const prismaClientSingleton = () => {
-  return new PrismaClient().$extends({
+  return new PrismaClient({
+    log: ['error', 'warn'],
+  }).$extends({
     query: {
       $allModels: {
         async $allOperations({ model, operation, args, query }) {
