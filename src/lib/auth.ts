@@ -21,11 +21,14 @@ export const authOptions: NextAuthOptions = {
         }
 
         const email = credentials.email.trim().toLowerCase();
+        console.log("[AUTH] Normalizing email to:", email);
 
+        console.log("[AUTH] START: prisma.user.findUnique");
         const user = await prisma.user.findUnique({
           where: { email },
           include: { tenant: true },
         });
+        console.log("[AUTH] END: prisma.user.findUnique, user found:", !!user);
 
         if (!user) {
           console.log("[AUTH] User not found in DB:", email);
