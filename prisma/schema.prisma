@@ -298,6 +298,7 @@ model User {
   emailVerified  DateTime?
   image          String?
   password       String?   // Hashed password for Credentials provider
+  tosAcceptedAt  DateTime? // 利用規約同意日時
   accounts       Account[]
   sessions       Session[]
   createdAt      DateTime  @default(now())

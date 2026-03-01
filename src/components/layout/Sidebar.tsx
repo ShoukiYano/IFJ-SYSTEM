@@ -22,10 +22,13 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
     { label: "要員管理", icon: Users, href: "/staff" },
     { label: "取引先管理", icon: Users, href: "/clients" },
     { label: "操作マニュアル", icon: Book, href: "/manual" },
+    { label: "ユーザー管理", icon: Users, href: "/settings/users" },
+    { label: "操作ログ", icon: FileText, href: "/settings/audit-logs" },
     { label: "システム設定", icon: Settings, href: "/settings" },
   ];
 
   const adminItems = [
+    { label: "システム管理", icon: LayoutDashboard, href: "/admin/dashboard" },
     { label: "テナント管理", icon: Building2, href: "/admin/tenants" },
     { label: "プロフィール設定", icon: Settings, href: "/admin/profile" },
   ];

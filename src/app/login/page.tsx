@@ -54,7 +54,7 @@ export default function LoginPage() {
               <label className="text-xs font-black text-slate-700 uppercase tracking-wider ml-1">メールアドレス</label>
               <div className="relative">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                <input 
+                <input
                   type="email" required
                   className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all font-medium"
                   placeholder="name@company.com"
@@ -68,7 +68,7 @@ export default function LoginPage() {
               <label className="text-xs font-black text-slate-700 uppercase tracking-wider ml-1">パスワード</label>
               <div className="relative">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                <input 
+                <input
                   type="password" required
                   className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all font-medium"
                   placeholder="••••••••"
@@ -85,7 +85,7 @@ export default function LoginPage() {
               </div>
             )}
 
-            <button 
+            <button
               type="submit" disabled={loading}
               className="w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-lg shadow-lg shadow-blue-200 hover:bg-blue-700 transition-all hover:-translate-y-1 active:translate-y-0 disabled:opacity-50 disabled:translate-y-0"
             >
@@ -94,8 +94,9 @@ export default function LoginPage() {
           </form>
         </div>
 
-        <p className="text-center mt-8 text-slate-400 text-sm font-medium">
-          パスワードをお忘れの場合は管理者にお問い合わせください。
+        <p className="text-center mt-8 text-slate-400 text-sm font-medium flex flex-col gap-2">
+          <span>パスワードをお忘れの場合は管理者にお問い合わせください。</span>
+          <a href="/register" className="text-blue-600 hover:underline font-black">新規テナント（会社）の作成はこちら</a>
         </p>
       </div>
     </div>
