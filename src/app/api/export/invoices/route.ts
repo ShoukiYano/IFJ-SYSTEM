@@ -35,7 +35,7 @@ export async function GET(req: Request) {
       "合計金額(税込)",
     ];
 
-    const rows = invoices.map((inv) => [
+    const rows = invoices.map((inv: any) => [
       inv.invoiceNumber,
       inv.subject || "",
       inv.client.name,

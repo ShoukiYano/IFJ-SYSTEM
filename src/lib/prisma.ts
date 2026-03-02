@@ -20,6 +20,8 @@ const prismaClientSingleton = () => {
             "InvoiceSequence",
             "AuditLog",
             "TenantBackup",
+            "GoogleOAuthToken",
+            "EmailTemplate",
           ];
 
           if (tenantId && tenantModels.includes(model)) {
@@ -64,14 +66,14 @@ const prismaClientSingleton = () => {
   });
 };
 
-type PrismaClientExtended = ReturnType<typeof prismaClientSingleton>;
+export type PrismaClientExtended = ReturnType<typeof prismaClientSingleton>;
 
 declare global {
-  var prisma: undefined | PrismaClientExtended;
+  var prisma: (PrismaClientExtended & PrismaClient) | undefined;
 }
 
 const prisma = globalThis.prisma ?? prismaClientSingleton();
 
-export default prisma as PrismaClientExtended;
+export default prisma as unknown as PrismaClientExtended & PrismaClient;
 
-if (process.env.NODE_ENV !== "production") globalThis.prisma = prisma;
+if (process.env.NODE_ENV !== "production") globalThis.prisma = prisma as any;

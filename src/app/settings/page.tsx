@@ -6,6 +6,7 @@ import Link from "next/link";
 
 export default function SettingsPage() {
   const [formData, setFormData] = useState<any>(null);
+  const [googleAccount, setGoogleAccount] = useState<any>(null);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
 
@@ -13,6 +14,10 @@ export default function SettingsPage() {
     fetch("/api/company")
       .then(res => res.json())
       .then(data => setFormData(data || {}));
+
+    fetch("/api/auth/google/status")
+      .then(res => res.json())
+      .then(data => setGoogleAccount(data.connected ? data : null));
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -49,6 +54,56 @@ export default function SettingsPage() {
           </Link>
         </div>
       </div>
+
+      {/* Google連携セクション */}
+      <section className="bg-white p-8 rounded-xl shadow-sm border border-slate-200 mb-8">
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <div className={`p-3 rounded-xl ${googleAccount ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
+              <Mail size={24} />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-slate-800">メール送信設定 (Gmail連携)</h2>
+              {googleAccount ? (
+                <p className="text-sm text-emerald-600 font-medium">連携済み: {googleAccount.email}</p>
+              ) : (
+                <p className="text-sm text-slate-500">Googleアカウントを連携すると、自身のGmailアドレスで請求書を送信できます。</p>
+              )}
+            </div>
+          </div>
+          {googleAccount ? (
+            <button
+              type="button"
+              onClick={async () => {
+                if (!confirm("Googleアカウントの連携を解除しますか？")) return;
+                const res = await fetch("/api/auth/google/status", { method: "DELETE" });
+                if (res.ok) setGoogleAccount(null);
+              }}
+              className="text-slate-400 hover:text-rose-600 text-sm font-bold transition-colors"
+            >
+              連携を解除する
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  const res = await fetch("/api/auth/google/connect");
+                  const data = await res.json();
+                  if (data.url) window.location.href = data.url;
+                  else alert("連携URLの取得に失敗しました");
+                } catch (e) {
+                  alert("通信エラーが発生しました");
+                }
+              }}
+              className="bg-white border-2 border-slate-200 text-slate-700 px-6 py-3 rounded-xl font-bold hover:bg-slate-50 transition-all flex items-center gap-2 shadow-sm hover:shadow-md active:scale-95"
+            >
+              <img src="https://www.google.com/favicon.ico" alt="Google" className="size-4" />
+              Google連携を開始する
+            </button>
+          )}
+        </div>
+      </section>
 
       <form onSubmit={handleSubmit} className="space-y-8">
         {/* 自社基本情報 */}

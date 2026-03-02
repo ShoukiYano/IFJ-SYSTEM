@@ -68,6 +68,21 @@ model Tenant {
   backups            TenantBackup[]
   auditLogs          AuditLog[]
   emailTemplates     EmailTemplate[]
+  googleOAuthToken   GoogleOAuthToken?
+}
+
+model GoogleOAuthToken {
+  id           String   @id @default(uuid())
+  tenantId     String   @unique
+  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  accessToken  String   @db.Text
+  refreshToken String   @db.Text
+  expiryDate   DateTime
+  email        String?  // Associated Gmail address
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([tenantId])
 }
 
 model EmailTemplate {

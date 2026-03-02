@@ -207,7 +207,7 @@ export default function EmailTemplatesPage() {
                                         value={editForm.content}
                                         onChange={e => setEditForm({ ...editForm, content: e.target.value })}
                                         className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-4 focus:ring-indigo-500/10 outline-none transition font-mono text-sm leading-relaxed"
-                                        placeholder={`{{clientName}} 様\n\nお世話になっております...\n請求書番号：{{invoiceNumber}}`}
+                                        placeholder={`{{clientName}} 様\n\nお世話になっております...\n自社名：{{companyName}}\n請求書番号：{{invoiceNumber}}`}
                                     />
                                 </div>
                             </div>
@@ -215,7 +215,7 @@ export default function EmailTemplatesPage() {
                             <div className="bg-amber-50 rounded-xl p-4 border border-amber-100">
                                 <h4 className="text-xs font-bold text-amber-800 uppercase mb-2">利用可能な変数</h4>
                                 <div className="flex flex-wrap gap-2">
-                                    {["{{clientName}}", "{{invoiceNumber}}", "{{totalAmount}}", "{{dueDate}}", "{{issueDate}}"].map(v => (
+                                    {["{{clientName}}", "{{companyName}}", "{{invoiceNumber}}", "{{totalAmount}}", "{{dueDate}}", "{{issueDate}}"].map(v => (
                                         <code key={v} className="bg-white px-2 py-0.5 rounded border border-amber-200 text-xs text-amber-900">{v}</code>
                                     ))}
                                 </div>

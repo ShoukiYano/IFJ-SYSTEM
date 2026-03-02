@@ -44,14 +44,15 @@ export async function GET(
     }
 
     const invoice = await prisma.invoice.findUnique({
-      where: { 
+      where: {
         tenantId_id: {
           id: params.id,
-          tenantId: context.tenantId 
+          tenantId: context.tenantId
         }
       },
-      include: { 
+      include: {
         client: true,
+        tenant: true,
         items: {
           orderBy: { order: "asc" }
         }
@@ -88,9 +89,9 @@ export async function PUT(
 
     // Check ownership before updating
     const existing = await prisma.invoice.findFirst({
-      where: { 
+      where: {
         id: params.id,
-        tenantId: context.tenantId 
+        tenantId: context.tenantId
       }
     });
 
@@ -106,10 +107,10 @@ export async function PUT(
 
       // Update invoice
       return tx.invoice.update({
-        where: { 
+        where: {
           tenantId_id: {
             id: params.id,
-            tenantId: context.tenantId 
+            tenantId: context.tenantId
           }
         },
         data: {

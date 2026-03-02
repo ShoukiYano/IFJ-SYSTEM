@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { X, Mail, Send, Loader2, FileText, CheckCircle2 } from "lucide-react";
-import { renderTemplate } from "@/lib/mail";
+import { renderTemplate } from "@/lib/template";
 import { formatCurrency } from "@/lib/utils";
 
 type Props = {
@@ -53,6 +53,7 @@ export function SendInvoiceEmailModal({ isOpen, onClose, invoice }: Props) {
         if (template) {
             const variables = {
                 clientName: invoice.client.name,
+                companyName: invoice.tenant?.name || "自社名未設定",
                 invoiceNumber: invoice.invoiceNumber,
                 totalAmount: formatCurrency(Number(invoice.totalAmount)),
                 dueDate: invoice.dueDate ? invoice.dueDate.split('T')[0] : "指定なし",
