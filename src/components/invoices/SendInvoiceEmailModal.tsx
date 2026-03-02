@@ -18,6 +18,7 @@ export function SendInvoiceEmailModal({ isOpen, onClose, invoice }: Props) {
     const [sending, setSending] = useState(false);
     const [sent, setSent] = useState(false);
     const [company, setCompany] = useState<any>(null);
+    const [branches, setBranches] = useState<any[]>([]);
     const [contactPerson, setContactPerson] = useState("");
 
     const [emailData, setEmailData] = useState({
@@ -52,29 +53,47 @@ export function SendInvoiceEmailModal({ isOpen, onClose, invoice }: Props) {
 
     const fetchCompany = async () => {
         try {
-            const res = await fetch("/api/company");
-            if (res.ok) {
-                const data = await res.json();
-                setCompany(data);
+            const [companyRes, branchRes] = await Promise.all([
+                fetch("/api/company"),
+                fetch("/api/branches"),
+            ]);
+            if (companyRes.ok) setCompany(await companyRes.json());
+            if (branchRes.ok) {
+                const bd = await branchRes.json();
+                setBranches(Array.isArray(bd) ? bd : []);
             }
         } catch (error) {
             console.error(error);
         }
     };
 
-    // 名刺署名ブロックを生成
+    // 名刺署名ブロックを生成（支社あり/なし対応）
     const buildSignature = () => {
         if (!company) return "";
-        const lines = [
-            "━━━━━━━━━━━━━━━━━━━━━━━━━━",
-            `会社名：${company.name || ""}`,
-            `住所：〒${company.zipCode || ""}`,
-            `　　　${company.address || ""}`,
-            contactPerson ? `担当者：${contactPerson}` : null,
-            `連絡先：${company.tel || ""}`,
-            "━━━━━━━━━━━━━━━━━━━━━━━━━━",
-        ].filter(Boolean).join("\n");
-        return "\n\n" + lines;
+        const lines: string[] = ["━━━━━━━━━━━━━━━━━━━━━━━━━━"];
+
+        if (branches.length > 0) {
+            // 支社あり: 本社 + 各支社
+            lines.push(`本社：${company.name || ""}`);
+            lines.push(`住所：〒${company.zipCode || ""}`);
+            lines.push(`　　　${company.address || ""}`);
+            branches.forEach(b => {
+                lines.push(`支社：${b.name}`);
+                if (b.zipCode) lines.push(`住所：〒${b.zipCode}`);
+                if (b.address) lines.push(`　　　${b.address}`);
+            });
+        } else {
+            // 支社なし: 会社名のみ
+            lines.push(`会社名：${company.name || ""}`);
+            lines.push(`住所：〒${company.zipCode || ""}`);
+            lines.push(`　　　${company.address || ""}`);
+        }
+
+        if (contactPerson) lines.push(`担当者：${contactPerson}`);
+        if (company.tel) lines.push(`連絡先：${company.tel}`);
+        lines.push("━━━━━━━━━━━━━━━━━━━━━━━━━━");
+
+        return "\n\n" + lines.join("\n");
     };
 
     const handleTemplateChange = (id: string) => {

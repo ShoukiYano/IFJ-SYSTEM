@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Save, Building2, Landmark, CheckCircle2, Mail } from "lucide-react";
+import { Save, Building2, Landmark, CheckCircle2, Mail, GitBranch, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 
 export default function SettingsPage() {
@@ -9,6 +9,9 @@ export default function SettingsPage() {
   const [googleAccount, setGoogleAccount] = useState<any>(null);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
+  const [branches, setBranches] = useState<any[]>([]);
+  const [newBranch, setNewBranch] = useState({ name: "", zipCode: "", address: "" });
+  const [addingBranch, setAddingBranch] = useState(false);
 
   useEffect(() => {
     fetch("/api/company")
@@ -18,7 +21,42 @@ export default function SettingsPage() {
     fetch("/api/auth/google/status")
       .then(res => res.json())
       .then(data => setGoogleAccount(data.connected ? data : null));
+
+    fetch("/api/branches")
+      .then(res => res.json())
+      .then(data => setBranches(Array.isArray(data) ? data : []));
   }, []);
+
+  const fetchBranches = () =>
+    fetch("/api/branches").then(r => r.json()).then(d => setBranches(Array.isArray(d) ? d : []));
+
+  const handleAddBranch = async () => {
+    if (!newBranch.name) return;
+    setAddingBranch(true);
+    await fetch("/api/branches", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...newBranch, order: branches.length }),
+    });
+    setNewBranch({ name: "", zipCode: "", address: "" });
+    await fetchBranches();
+    setAddingBranch(false);
+  };
+
+  const handleDeleteBranch = async (id: string) => {
+    if (!confirm("この支社を削除しますか？")) return;
+    await fetch(`/api/branches/${id}`, { method: "DELETE" });
+    await fetchBranches();
+  };
+
+  const handleUpdateBranch = async (branch: any) => {
+    await fetch(`/api/branches/${branch.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(branch),
+    });
+    await fetchBranches();
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -246,6 +284,74 @@ export default function SettingsPage() {
                 onChange={e => setFormData({ ...formData, bankAccountName: e.target.value })}
               />
             </div>
+          </div>
+        </section>
+
+        {/* 支社情報 */}
+        <section className="bg-white p-8 rounded-xl shadow-sm border border-slate-200">
+          <h2 className="text-lg font-bold mb-2 flex items-center gap-2 border-b pb-2">
+            <GitBranch className="text-blue-600" size={20} /> 支社情報（メール署名に表示）
+          </h2>
+          <p className="text-sm text-slate-500 mb-4">支社を登録すると、メール署名に「本社」「支社」形式で住所がまとめて表示されます。</p>
+
+          {/* 支社一覧 */}
+          <div className="space-y-3 mb-4">
+            {branches.map((branch: any, idx: number) => (
+              <div key={branch.id} className="border border-slate-200 rounded-xl p-4 space-y-2 bg-slate-50">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-500 uppercase">支社 {idx + 1}</span>
+                  <button type="button" onClick={() => handleDeleteBranch(branch.id)} className="text-rose-400 hover:text-rose-600 transition-colors">
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase">支社名</label>
+                    <input
+                      type="text"
+                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg outline-none text-sm"
+                      value={branch.name}
+                      onChange={e => setBranches(branches.map((b: any, i: number) => i === idx ? { ...b, name: e.target.value } : b))}
+                      onBlur={() => handleUpdateBranch(branch)}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase">郵便番号</label>
+                    <input
+                      type="text"
+                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg outline-none text-sm"
+                      value={branch.zipCode || ""}
+                      onChange={e => setBranches(branches.map((b: any, i: number) => i === idx ? { ...b, zipCode: e.target.value } : b))}
+                      onBlur={() => handleUpdateBranch(branch)}
+                      placeholder="100-0001"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase">住所</label>
+                    <input
+                      type="text"
+                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg outline-none text-sm"
+                      value={branch.address || ""}
+                      onChange={e => setBranches(branches.map((b: any, i: number) => i === idx ? { ...b, address: e.target.value } : b))}
+                      onBlur={() => handleUpdateBranch(branch)}
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* 新規追加フォーム */}
+          <div className="border border-dashed border-blue-200 rounded-xl p-4 bg-blue-50/30 space-y-3">
+            <p className="text-xs font-bold text-blue-700">+ 支社を追加</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <input type="text" className="px-3 py-2 bg-white border border-slate-200 rounded-lg outline-none text-sm" placeholder="支社名 例）関東支店" value={newBranch.name} onChange={e => setNewBranch({ ...newBranch, name: e.target.value })} />
+              <input type="text" className="px-3 py-2 bg-white border border-slate-200 rounded-lg outline-none text-sm" placeholder="郵便番号" value={newBranch.zipCode} onChange={e => setNewBranch({ ...newBranch, zipCode: e.target.value })} />
+              <input type="text" className="px-3 py-2 bg-white border border-slate-200 rounded-lg outline-none text-sm" placeholder="住所" value={newBranch.address} onChange={e => setNewBranch({ ...newBranch, address: e.target.value })} />
+            </div>
+            <button type="button" disabled={!newBranch.name || addingBranch} onClick={handleAddBranch} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-bold rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50">
+              <Plus size={16} /> 追加する
+            </button>
           </div>
         </section>
 
