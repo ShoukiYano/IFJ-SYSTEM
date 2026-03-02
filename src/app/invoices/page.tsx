@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Plus, Search, Filter, CheckCircle, Clock as ClockIcon, Download, ListChecks } from "lucide-react";
+import { Plus, Search, Filter, CheckCircle, Clock as ClockIcon, Download, ListChecks, Trash2 } from "lucide-react";
 import { InvoiceTable } from "@/components/invoices/InvoiceTable";
 import BatchGenerateModal from "@/components/invoices/BatchGenerateModal";
 
@@ -54,6 +54,24 @@ export default function InvoicesPage() {
     if (res.ok) {
       setSelectedIds([]);
       fetchInvoices();
+    }
+  };
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) return;
+    const confirmed = window.confirm(`選択した${selectedIds.length}件の請求書を削除しますか？\nこの操作は元に戻せません。`);
+    if (!confirmed) return;
+
+    const res = await fetch("/api/invoices/bulk-delete", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids: selectedIds }),
+    });
+
+    if (res.ok) {
+      setSelectedIds([]);
+      fetchInvoices();
+    } else {
+      alert("削除に失敗しました。もう一度お試しください。");
     }
   };
 
@@ -123,6 +141,12 @@ export default function InvoicesPage() {
                   className="flex-1 sm:flex-none justify-center px-3 py-1.5 bg-blue-600 text-white text-[10px] font-bold rounded-md hover:bg-blue-700 transition-colors flex items-center gap-1"
                 >
                   <ClockIcon size={14} /> 発行済
+                </button>
+                <button
+                  onClick={handleBulkDelete}
+                  className="flex-1 sm:flex-none justify-center px-3 py-1.5 bg-red-600 text-white text-[10px] font-bold rounded-md hover:bg-red-700 transition-colors flex items-center gap-1"
+                >
+                  <Trash2 size={14} /> 削除
                 </button>
               </div>
             </div>
