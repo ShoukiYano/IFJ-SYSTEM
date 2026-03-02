@@ -37,39 +37,79 @@ async function sendGmailOAuth2(options: SendMailOptions, tenantId: string) {
     });
 
     // Manually refresh to be 100% sure
-    console.log("[mail] Manually refreshing access token...");
+    console.log("[mail] Manually refreshing access token via Google API...");
     const { token: accessToken } = await oauth2Client.getAccessToken();
 
     if (!accessToken) {
         throw new Error("Failed to refresh access token");
     }
+    oauth2Client.setCredentials({ access_token: accessToken });
     console.log("[mail] Access token refreshed successfully.");
 
-    const transporter = nodemailer.createTransport({
-        service: "gmail",
-        auth: {
-            type: "OAuth2",
-            user: token.email,
-            clientId: process.env.GOOGLE_CLIENT_ID,
-            clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-            refreshToken: token.refreshToken,
-            accessToken: accessToken,
-        },
-    } as any);
+    const gmail = google.gmail({ version: "v1", auth: oauth2Client });
 
-    console.log(`[mail] Sending via Nodemailer/Gmail (User: ${token.email})...`);
-    return transporter.sendMail({
-        from: `"${options.fromName || "請求書管理システム"}" <${token.email}>`,
-        to: Array.isArray(options.to) ? options.to.join(", ") : options.to,
-        subject: options.subject,
-        text: options.body,
-        replyTo: options.replyTo,
-        attachments: options.attachments?.map(a => ({
-            filename: a.filename,
-            content: a.content,
-            contentType: a.contentType || 'application/pdf',
-        })),
-    });
+    console.log(`[mail] Sending via direct Gmail API (User: ${token.email})...`);
+
+    // Construct MIME message
+    const boundary = "foo_bar_baz";
+    const subject = options.subject;
+    const to = Array.isArray(options.to) ? options.to.join(", ") : options.to;
+    const fromName = options.fromName || "請求書管理システム";
+
+    let messageParts = [
+        `From: "${fromName}" <${token.email}>`,
+        `To: ${to}`,
+        `Subject: =?utf-8?B?${Buffer.from(subject).toString('base64')}?=`,
+        'MIME-Version: 1.0',
+        `Content-Type: multipart/mixed; boundary="${boundary}"`,
+        '',
+        `--${boundary}`,
+        'Content-Type: text/plain; charset="UTF-8"',
+        'Content-Transfer-Encoding: 7bit',
+        '',
+        options.body,
+        '',
+    ];
+
+    // Add attachments if any (though we are moving to links, keep logic for flexibility)
+    if (options.attachments && options.attachments.length > 0) {
+        for (const attachment of options.attachments) {
+            const content = typeof attachment.content === 'string'
+                ? Buffer.from(attachment.content).toString('base64')
+                : attachment.content.toString('base64');
+
+            messageParts.push(`--${boundary}`);
+            messageParts.push(`Content-Type: ${attachment.contentType || 'application/octet-stream'}`);
+            messageParts.push('Content-Transfer-Encoding: base64');
+            messageParts.push(`Content-Disposition: attachment; filename="=?utf-8?B?${Buffer.from(attachment.filename).toString('base64')}?="`);
+            messageParts.push('');
+            messageParts.push(content);
+            messageParts.push('');
+        }
+    }
+
+    messageParts.push(`--${boundary}--`);
+
+    const rawMessage = messageParts.join('\r\n');
+    const encodedMessage = Buffer.from(rawMessage)
+        .toString('base64')
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '');
+
+    try {
+        await gmail.users.messages.send({
+            userId: "me",
+            requestBody: {
+                raw: encodedMessage,
+            },
+        });
+        console.log("[mail] Email sent successfully via Gmail API");
+        return { success: true };
+    } catch (apiError: any) {
+        console.error("[mail] Gmail API Send Error:", apiError);
+        throw apiError;
+    }
 }
 
 export async function sendMail(options: SendMailOptions) {

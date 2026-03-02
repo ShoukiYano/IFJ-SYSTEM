@@ -272,6 +272,8 @@ model Invoice {
   items              InvoiceItem[]
   quotation          Quotation?
   deletedAt          DateTime?
+  accessId           String?        @unique // 公開用ダウンロードID
+  downloadPassword   String?        // ダウンロードパスワード
   createdAt          DateTime       @default(now())
   updatedAt          DateTime       @updatedAt
 

@@ -7,7 +7,7 @@ import { OrderDocument } from "@/components/pdf/OrderDocument";
 import { OrderConfirmationDocument } from "@/components/pdf/OrderConfirmationDocument";
 import { Download, FileText, Loader2 } from "lucide-react";
 
-interface PDFPreviewProps {
+export interface PDFPreviewProps {
   invoice: any;
   company: any;
   showPreview?: boolean;

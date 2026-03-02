@@ -48,58 +48,47 @@ export async function POST(
         });
         console.log(`[send-api] Google Token Check: found=${!!googleToken}, hasRefreshToken=${!!googleToken?.refreshToken}`);
 
-        // PDF生成
-        let attachments: any[] = [];
-        try {
-            console.log(`[send-api] Generating PDF for invoice: ${invoice.invoiceNumber}`);
-            const issueDate = new Date(invoice.issueDate);
-            const month = issueDate.getMonth() + 1;
-            const filename = `${month}月度御請求書_${invoice.client.name}御中.pdf`;
+        // Generate accessId and password if missing
+        if (!(invoice as any).accessId || !(invoice as any).downloadPassword) {
+            const accessId = crypto.randomUUID();
+            const password = Math.random().toString(36).slice(-8); // Random 8 character password
 
-            let pdfBuffer;
-            try {
-                // Main rendering attempt
-                pdfBuffer = await renderToBuffer(
-                    <InvoiceDocument invoice={invoice} company={tenant} />
-                );
-                console.log(`[send-api] PDF generated successfully. Size: ${pdfBuffer.length} bytes`);
-            } catch (renderError: any) {
-                console.warn(`[send-api] InvoiceDocument render failed, trying basic PDF: ${renderError.message}`);
-                // Fallback to minimal PDF to test @react-pdf/renderer functionality
-                pdfBuffer = await renderToBuffer(
-                    <Document>
-                        <Page size="A4">
-                            <Text>PDF Generation Test - Standard Document failed</Text>
-                            <Text>Invoice: {invoice.invoiceNumber}</Text>
-                        </Page>
-                    </Document>
-                );
-                console.log(`[send-api] Basic Test PDF generated. Size: ${pdfBuffer.length} bytes`);
-            }
-
-            attachments.push({
-                filename,
-                content: pdfBuffer,
-                contentType: 'application/pdf',
+            await (prisma.invoice as any).update({
+                where: { id: invoice.id },
+                data: {
+                    accessId,
+                    downloadPassword: password,
+                },
             });
-        } catch (pdfError: any) {
-            console.error("[send-api] All PDF generation attempts failed:", pdfError);
-            // PDF生成に失敗してもメール送信は試みるか、あるいはエラーにするか
-            // 今回は必須と思われるのでエラーにする方針ですが、安全性のためログは残します
+            // Update local object for email body
+            (invoice as any).accessId = accessId;
+            (invoice as any).downloadPassword = password;
         }
 
-        console.log(`[send-api] Calling sendMail with ${attachments.length} attachments. tenantId: ${context.tenantId}`);
+        const downloadUrl = `${process.env.NEXTAUTH_URL}/public/invoices/${(invoice as any).accessId}`;
+        const updatedBody = `${body}
+
+--------------------------------------------------
+請求書の表示・ダウンロードはこちらからお願いいたします。
+URL: ${downloadUrl}
+パスワード: ${(invoice as any).downloadPassword}
+--------------------------------------------------
+
+※このURLから請求書の内容を確認いただけます。
+※ブラウザで開いた後にPDFとして保存できます。
+`;
+
+        console.log(`[send-api] Sending email with link. tenantId: ${context.tenantId}`);
         // メール送信
         const result = await sendMail({
             to,
             subject,
-            body,
+            body: updatedBody,
             fromName: tenant?.name || "請求書管理システム",
             tenantId: context.tenantId,
-            attachments,
         });
 
-        console.log(`[send-api] sendMail result: success=${result.success}, hasError=${!!result.error}`);
+        console.log(`[send-api] sendMail result: success=${result.success}`);
 
         if (!result.success) {
             return NextResponse.json({ error: result.error }, { status: 500 });
