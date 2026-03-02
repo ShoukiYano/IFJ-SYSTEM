@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Save, Building2, Landmark, CheckCircle2 } from "lucide-react";
+import { Save, Building2, Landmark, CheckCircle2, Mail } from "lucide-react";
+import Link from "next/link";
 
 export default function SettingsPage() {
   const [formData, setFormData] = useState<any>(null);
@@ -18,7 +19,7 @@ export default function SettingsPage() {
     e.preventDefault();
     setSaving(true);
     setMessage("");
-    
+
     const res = await fetch("/api/company", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -53,14 +54,14 @@ export default function SettingsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="md:col-span-2 space-y-1.5">
               <label className="text-xs font-bold text-slate-700 uppercase">会社名 / 屋号</label>
-              <input 
+              <input
                 type="text" required
                 className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20"
                 value={formData.name || ""}
                 onChange={e => setFormData({ ...formData, name: e.target.value })}
               />
             </div>
-            
+
             {/* 印影アップロード */}
             <div className="md:col-span-2 space-y-3 p-4 bg-slate-50 rounded-xl border border-dashed border-slate-300">
               <label className="text-xs font-bold text-slate-700 uppercase block">会社印 (角印) - PDF用</label>
@@ -73,8 +74,8 @@ export default function SettingsPage() {
                   )}
                 </div>
                 <div className="space-y-2">
-                  <input 
-                    type="file" 
+                  <input
+                    type="file"
                     accept="image/*"
                     onChange={(e) => {
                       const file = e.target.files?.[0];
@@ -95,7 +96,7 @@ export default function SettingsPage() {
 
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-slate-700 uppercase">郵便番号</label>
-              <input 
+              <input
                 type="text" required placeholder="100-0001"
                 className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none"
                 value={formData.zipCode || ""}
@@ -104,7 +105,7 @@ export default function SettingsPage() {
             </div>
             <div className="md:col-span-2 space-y-1.5">
               <label className="text-xs font-bold text-slate-700 uppercase">住所</label>
-              <input 
+              <input
                 type="text" required
                 className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none"
                 value={formData.address || ""}
@@ -113,7 +114,7 @@ export default function SettingsPage() {
             </div>
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-slate-700 uppercase">登録番号 (インボイス)</label>
-              <input 
+              <input
                 type="text" placeholder="T1234567890123"
                 className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none"
                 value={formData.registrationNumber || ""}
@@ -122,7 +123,7 @@ export default function SettingsPage() {
             </div>
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-slate-700 uppercase">電話番号</label>
-              <input 
+              <input
                 type="text"
                 className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none"
                 value={formData.tel || ""}
@@ -140,7 +141,7 @@ export default function SettingsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-slate-700 uppercase">銀行名</label>
-              <input 
+              <input
                 type="text"
                 className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none"
                 value={formData.bankName || ""}
@@ -149,7 +150,7 @@ export default function SettingsPage() {
             </div>
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-slate-700 uppercase">支店名</label>
-              <input 
+              <input
                 type="text"
                 className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none"
                 value={formData.bankBranch || ""}
@@ -158,7 +159,7 @@ export default function SettingsPage() {
             </div>
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-slate-700 uppercase">口座種別</label>
-              <select 
+              <select
                 className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none"
                 value={formData.bankAccountType || "普通"}
                 onChange={e => setFormData({ ...formData, bankAccountType: e.target.value })}
@@ -169,7 +170,7 @@ export default function SettingsPage() {
             </div>
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-slate-700 uppercase">口座番号</label>
-              <input 
+              <input
                 type="text"
                 className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none"
                 value={formData.bankAccountNumber || ""}
@@ -178,7 +179,7 @@ export default function SettingsPage() {
             </div>
             <div className="md:col-span-2 space-y-1.5">
               <label className="text-xs font-bold text-slate-700 uppercase">口座名義 (カナ)</label>
-              <input 
+              <input
                 type="text"
                 className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none"
                 value={formData.bankAccountName || ""}
@@ -197,7 +198,7 @@ export default function SettingsPage() {
               </>
             )}
           </div>
-          <button 
+          <button
             type="submit" disabled={saving}
             className="bg-blue-600 text-white px-10 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-blue-700 transition-all shadow-lg hover:-translate-y-0.5 disabled:opacity-50"
           >

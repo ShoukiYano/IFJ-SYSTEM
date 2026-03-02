@@ -67,6 +67,21 @@ model Tenant {
   assignees          Assignee[]
   backups            TenantBackup[]
   auditLogs          AuditLog[]
+  emailTemplates     EmailTemplate[]
+}
+
+model EmailTemplate {
+  id        String   @id @default(uuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name      String
+  subject   String
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, name])
+  @@index([tenantId])
 }
 
 model TenantBackup {

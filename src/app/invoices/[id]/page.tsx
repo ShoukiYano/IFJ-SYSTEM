@@ -2,9 +2,10 @@
 
 import React, { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
-import { ChevronLeft, Printer, Download, Eye, Loader2, Edit, Copy, FileText } from "lucide-react";
+import { ChevronLeft, Printer, Download, Eye, Loader2, Edit, Copy, FileText, Mail } from "lucide-react";
 import dynamic from "next/dynamic";
 import { formatCurrency } from "@/lib/utils";
+import { SendInvoiceEmailModal } from "@/components/invoices/SendInvoiceEmailModal";
 
 // PDFコンポーネントを動的にインポート（SSR無効）
 const PDFActionButtons = dynamic(
@@ -22,6 +23,7 @@ export default function InvoiceDetailPage() {
   const [data, setData] = useState<any>(null);
   const [company, setCompany] = useState<any>(null);
   const [showPreview, setShowPreview] = useState(false);
+  const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
   const [updating, setUpdating] = useState(false);
 
   useEffect(() => {
@@ -35,7 +37,7 @@ export default function InvoiceDetailPage() {
         console.error("Invoice fetch error:", err);
         setData({ error: true });
       });
-    
+
     fetch("/api/company")
       .then(res => res.json())
       .then(setCompany)
@@ -111,22 +113,29 @@ export default function InvoiceDetailPage() {
             <h1 className="text-3xl font-black text-slate-900">{data.invoiceNumber} の詳細</h1>
           </div>
           <div className="flex items-center gap-3">
-            <button 
+            <button
               onClick={() => setShowPreview(!showPreview)}
               className="px-4 py-2 bg-white border border-slate-200 rounded-lg font-bold flex items-center gap-2 hover:bg-slate-50 transition-colors"
             >
               <Eye size={20} /> {showPreview ? "詳細を閉じる" : "プレビュー"}
             </button>
-            
 
-            <a 
+
+            <a
               href={`/invoices/${params.id}/edit`}
               className="px-4 py-2 bg-amber-50 text-amber-700 border border-amber-200 rounded-lg font-bold flex items-center gap-2 hover:bg-amber-100 transition-colors"
             >
               <Edit size={20} /> 編集
             </a>
 
-            <button 
+            <button
+              onClick={() => setIsEmailModalOpen(true)}
+              className="px-4 py-2 bg-indigo-600 text-white rounded-lg font-bold flex items-center gap-2 hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-600/20"
+            >
+              <Mail size={20} /> メール送信
+            </button>
+
+            <button
               onClick={handleDuplicate}
               disabled={updating}
               className="px-4 py-2 bg-slate-100 text-slate-700 border border-slate-200 rounded-lg font-bold flex items-center gap-2 hover:bg-slate-200 transition-colors"
@@ -217,15 +226,14 @@ export default function InvoiceDetailPage() {
             <section className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
               <h2 className="text-xs font-bold text-slate-500 uppercase mb-4 tracking-widest">ステータス管理</h2>
               <div className="space-y-3">
-                <div className={`p-4 rounded-lg flex items-center justify-between ${
-                  data.status === 'PAID' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : 
+                <div className={`p-4 rounded-lg flex items-center justify-between ${data.status === 'PAID' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' :
                   'bg-blue-50 text-blue-700 border border-blue-100'
-                }`}>
+                  }`}>
                   <span className="font-bold">{data.status === 'PAID' ? '入金済み' : '請求済み (未入金)'}</span>
                   <div className={`size-3 rounded-full ${data.status === 'PAID' ? 'bg-emerald-500' : 'bg-blue-500'} ${updating ? 'animate-ping' : ''}`} />
                 </div>
                 {data.status !== 'PAID' ? (
-                  <button 
+                  <button
                     onClick={() => handleStatusUpdate('PAID')}
                     disabled={updating}
                     className="w-full py-2 bg-emerald-600 text-white rounded-lg font-bold text-sm hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2"
@@ -234,7 +242,7 @@ export default function InvoiceDetailPage() {
                     入金済みにする
                   </button>
                 ) : (
-                  <button 
+                  <button
                     onClick={() => handleStatusUpdate('ISSUED')}
                     disabled={updating}
                     className="w-full py-2 bg-slate-200 text-slate-700 rounded-lg font-bold text-sm hover:bg-slate-300 transition-colors flex items-center justify-center gap-2"
@@ -257,6 +265,11 @@ export default function InvoiceDetailPage() {
 
         <PDFPreviewSection invoice={data} company={company} showPreview={showPreview} />
 
+        <SendInvoiceEmailModal
+          isOpen={isEmailModalOpen}
+          onClose={() => setIsEmailModalOpen(false)}
+          invoice={data}
+        />
       </div>
     </div>
   );
