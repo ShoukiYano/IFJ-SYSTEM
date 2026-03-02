@@ -42,6 +42,12 @@ export async function POST(
             where: { id: context.tenantId }
         });
 
+        // Googleトークンの確認（デバッグ用）
+        const googleToken = await prisma.googleOAuthToken.findUnique({
+            where: { tenantId: context.tenantId }
+        });
+        console.log(`[send-api] Google Token Check: found=${!!googleToken}, hasRefreshToken=${!!googleToken?.refreshToken}`);
+
         // PDF生成
         let attachments: any[] = [];
         try {
@@ -50,8 +56,9 @@ export async function POST(
             const month = issueDate.getMonth() + 1;
             const filename = `${month}月度御請求書_${invoice.client.name}御中.pdf`;
 
+            // Use JSX for better stability in Next.js server environment
             const pdfBuffer = await renderToBuffer(
-                React.createElement(InvoiceDocument, { invoice, company: tenant })
+                <InvoiceDocument invoice={invoice} company={tenant} />
             );
 
             console.log(`[send-api] PDF generated successfully. Filename: ${filename}, Size: ${pdfBuffer.length} bytes`);

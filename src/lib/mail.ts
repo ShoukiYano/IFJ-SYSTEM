@@ -31,7 +31,7 @@ async function sendGmailOAuth2(options: SendMailOptions, tenantId: string) {
         throw new Error(`Google account not connected for tenant ${tenantId}`);
     }
 
-    console.log(`[mail] Found token for ${token.email}. Setting credentials.`);
+    console.log(`[mail] Found token for ${token.email}. Refresh token present: ${!!token.refreshToken}`);
     oauth2Client.setCredentials({
         access_token: token.accessToken,
         refresh_token: token.refreshToken,
@@ -54,9 +54,7 @@ async function sendGmailOAuth2(options: SendMailOptions, tenantId: string) {
     });
 
     const transporter = nodemailer.createTransport({
-        host: "smtp.gmail.com",
-        port: 465,
-        secure: true,
+        service: "gmail",
         auth: {
             type: "OAuth2",
             user: token.email || process.env.SMTP_USER,
@@ -65,7 +63,7 @@ async function sendGmailOAuth2(options: SendMailOptions, tenantId: string) {
             refreshToken: token.refreshToken,
             accessToken: token.accessToken,
         },
-    } as any);
+    });
 
     console.log(`[mail] Sending via Nodemailer/Gmail...`);
     return transporter.sendMail({
