@@ -43,6 +43,11 @@ export default function SettingsPage() {
       <div className="mb-8">
         <h1 className="text-3xl font-black text-slate-900 tracking-tight">システム設定</h1>
         <p className="text-slate-500">自社情報や振込先、請求書のデフォルト設定を管理します。</p>
+        <div className="mt-4">
+          <Link href="/settings/email-templates" className="text-blue-600 hover:underline flex items-center gap-2 font-bold p-3 bg-blue-50 rounded-xl border border-blue-100 w-fit">
+            <Mail size={18} /> メールテンプレート設定はこちら
+          </Link>
+        </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-8">
