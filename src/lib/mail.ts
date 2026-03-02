@@ -148,13 +148,13 @@ export async function sendMail(options: SendMailOptions) {
                 ? `${options.fromName} <onboarding@resend.dev>`
                 : "Invoice System <onboarding@resend.dev>";
 
-            // Resend attachments typically require 'content' as Buffer or string
-            // Some versions might need explicit conversion or 'path'
+            // Resend attachments format
             const resendAttachments = options.attachments?.map(a => ({
                 filename: a.filename,
-                content: a.content,
+                content: a.content, // Resend accepts Buffer, string, etc.
             }));
 
+            console.log(`[mail] Sending via Resend with ${resendAttachments?.length || 0} attachments...`);
             const result = await resend.emails.send({
                 from,
                 to: options.to,

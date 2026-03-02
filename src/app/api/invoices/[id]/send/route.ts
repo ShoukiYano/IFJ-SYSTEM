@@ -45,6 +45,7 @@ export async function POST(
         // PDF生成
         let attachments: any[] = [];
         try {
+            console.log(`[send-api] Generating PDF for invoice: ${invoice.invoiceNumber}`);
             const issueDate = new Date(invoice.issueDate);
             const month = issueDate.getMonth() + 1;
             const filename = `${month}月度御請求書_${invoice.client.name}御中.pdf`;
@@ -52,16 +53,21 @@ export async function POST(
             const pdfBuffer = await renderToBuffer(
                 React.createElement(InvoiceDocument, { invoice, company: tenant })
             );
+
+            console.log(`[send-api] PDF generated successfully. Filename: ${filename}, Size: ${pdfBuffer.length} bytes`);
+
             attachments.push({
                 filename,
                 content: pdfBuffer,
+                contentType: 'application/pdf',
             });
         } catch (pdfError) {
-            console.error("PDF generation failed:", pdfError);
+            console.error("[send-api] PDF generation failed:", pdfError);
             // PDF生成に失敗してもメール送信は試みるか、あるいはエラーにするか
             // 今回は必須と思われるのでエラーにする方針ですが、安全性のためログは残します
         }
 
+        console.log(`[send-api] Calling sendMail with ${attachments.length} attachments. tenantId: ${context.tenantId}`);
         // メール送信
         const result = await sendMail({
             to,
@@ -69,11 +75,10 @@ export async function POST(
             body,
             fromName: tenant?.name || "請求書管理システム",
             tenantId: context.tenantId,
-            attachments: attachments.map(a => ({
-                ...a,
-                contentType: 'application/pdf',
-            })),
+            attachments,
         });
+
+        console.log(`[send-api] sendMail result: success=${result.success}, hasError=${!!result.error}`);
 
         if (!result.success) {
             return NextResponse.json({ error: result.error }, { status: 500 });
