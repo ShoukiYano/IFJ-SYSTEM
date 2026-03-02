@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { getTenantContext } from "@/lib/tenantContext";
 import prisma from "@/lib/prisma";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
     try {
         const context = await getTenantContext();

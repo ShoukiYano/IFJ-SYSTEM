@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { getTenantContext } from "@/lib/tenantContext";
 import { getAuthUrl } from "@/lib/google-auth";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
     try {
         const context = await getTenantContext();

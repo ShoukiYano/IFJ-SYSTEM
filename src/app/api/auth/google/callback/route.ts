@@ -3,6 +3,8 @@ import { oauth2Client } from "@/lib/google-auth";
 import prisma from "@/lib/prisma";
 import { google } from "googleapis";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const code = searchParams.get("code");
