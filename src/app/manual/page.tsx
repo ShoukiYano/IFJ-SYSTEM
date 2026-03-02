@@ -29,6 +29,9 @@ import {
   Eye,
   Printer,
   ListChecks,
+  Mail,
+  Lock,
+  Link,
 } from "lucide-react";
 
 // -------- サブコンポーネント --------
@@ -579,6 +582,16 @@ const SECTIONS: Section[] = [
             <Step num={2}>現在の絞り込み条件でフィルタリングされた全請求書が CSV でダウンロードされます。</Step>
           </div>
         </div>
+
+        <div className="space-y-3">
+          <h3 className="font-black text-slate-700 flex items-center gap-2"><Trash2 size={16} className="text-rose-500" /> 請求書の一括削除</h3>
+          <div className="space-y-3">
+            <Step num={1}>テーブル左端のチェックボックスで削除したい請求書を選択します。</Step>
+            <Step num={2}>上部の選択バーに表示される <Badge color="rose">削除</Badge> ボタンをクリックします。</Step>
+            <Step num={3}>確認ダイアログが表示されるので「OK」を押すと削除されます。</Step>
+          </div>
+          <Warn>削除した請求書は復元できません。事前に PDF でバックアップすることをお勧めします。</Warn>
+        </div>
       </div>
     ),
   },
@@ -628,6 +641,92 @@ const SECTIONS: Section[] = [
             <Step num={2}>確認ダイアログで「削除」を選択します。</Step>
           </div>
           <Warn>削除した請求書は復元できません。誤って削除しないようご注意ください。</Warn>
+        </div>
+      </div>
+    ),
+  },
+
+  // ─── 7.5. メール送信・ダウンロードリンク ───
+  {
+    id: "email-send",
+    title: "請求書メール送信・ダウンロードリンク",
+    icon: Mail,
+    color: "blue",
+    content: (
+      <div className="space-y-6">
+        <p className="text-slate-600">
+          請求書を直接メールで送信できます。受信者はリンクにアクセスするだけで、パスワード付きZIPとして請求書PDFをダウンロードできます。
+        </p>
+
+        {/* メール送信の手順 */}
+        <div className="space-y-3">
+          <h3 className="font-black text-slate-700 flex items-center gap-2"><Mail size={18} className="text-blue-500" /> メールを送信する</h3>
+          <div className="space-y-3">
+            <Step num={1}>請求書一覧または詳細画面の <Badge color="blue">メール送信</Badge> ボタンをクリックします。</Step>
+            <Step num={2}>宛先メールアドレスを確認・入力します（取引先のメールアドレスが自動で入力されます）。</Step>
+            <Step num={3}>テンプレートを選択すると件名・本文が自動で入力されます。</Step>
+            <Step num={4}>「担当者名（署名に表示）」欄に担当者の名前を入力します（省略可）。</Step>
+            <Step num={5}><Badge color="blue">メールを送信する</Badge> をクリックします。</Step>
+          </div>
+          <Tip>本文は自由に編集できます。送信ボタンを押すと、ダウンロードリンクと署名が末尾に自動で追加されます。</Tip>
+        </div>
+
+        {/* ダウンロードリンクの仕組み */}
+        <div className="space-y-3 pt-4 border-t border-slate-100">
+          <h3 className="font-black text-slate-700 flex items-center gap-2"><Link size={18} className="text-blue-500" /> ダウンロードリンクの仕組み</h3>
+          <p className="text-sm text-slate-600">
+            送信ごとに新しいURL・パスワードが自動発行され、メール本文に記載されます。
+          </p>
+          <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 font-mono text-xs space-y-2 text-slate-600">
+            <div>--------------------------------------------------</div>
+            <div>請求書の表示・ダウンロードはこちらからお願いいたします。</div>
+            <div>URL: https://example.com/public/invoices/xxxx</div>
+            <div>パスワード: <span className="text-blue-600 font-bold">abc12345</span></div>
+            <div>--------------------------------------------------</div>
+            <div className="text-slate-400">※このURLおよびパスワードの有効期限は本日から7日間です。</div>
+          </div>
+          <Warn>リンクの有効期限は<strong>送信日から7日間</strong>です。再送すると新しいリンクと新しいパスワードが発行されます。古いリンクは無効になります。</Warn>
+        </div>
+
+        {/* 受信者のダウンロード手順 */}
+        <div className="space-y-3 pt-4 border-t border-slate-100">
+          <h3 className="font-black text-slate-700 flex items-center gap-2"><Lock size={18} className="text-emerald-500" /> 受信者のダウンロード手順</h3>
+          <div className="space-y-3">
+            <Step num={1}>メール内のURLをブラウザで開きます（ログイン不要）。</Step>
+            <Step num={2}>メールに記載のパスワードを入力して「認証する」をクリックします。</Step>
+            <Step num={3}>「請求書ZIPをダウンロード」ボタンをクリックします。</Step>
+            <Step num={4}>ZIPファイルがダウンロードされ、画面に<strong>ZIPの解凍パスワード</strong>が表示されます。</Step>
+            <Step num={5}>ZIPを解凍する際に表示されたパスワードを入力するとPDFが取り出せます。</Step>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
+              <div className="font-bold text-sm text-blue-800 mb-2">🔑 セキュリティ構造</div>
+              <ul className="text-xs text-blue-700 space-y-1 list-disc list-inside">
+                <li><strong>1段階目</strong>：URLアクセス用パスワード（メール記載）</li>
+                <li><strong>2段階目</strong>：ZIP解凍用パスワード（ダウンロード時に自動生成）</li>
+              </ul>
+            </div>
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+              <div className="font-bold text-sm text-amber-800 mb-2">⚠️ ZIPパスワードの注意</div>
+              <p className="text-xs text-amber-700">ZIPの解凍パスワードは<strong>ダウンロード時の1回のみ</strong>表示されます。受信者にメモするよう案内してください。</p>
+            </div>
+          </div>
+        </div>
+
+        {/* 名刺署名 */}
+        <div className="space-y-3 pt-4 border-t border-slate-100">
+          <h3 className="font-black text-slate-700">🪪 メール署名（名刺）の自動付加</h3>
+          <p className="text-sm text-slate-600">送信時に自社情報が名刺形式でメール末尾に自動付加されます。</p>
+          <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 font-mono text-xs text-slate-600 space-y-0.5">
+            <div>━━━━━━━━━━━━━━━━━━━━━━━━━━</div>
+            <div>会社名：<span className="text-slate-400">システム設定の会社名</span></div>
+            <div>住所：〒<span className="text-slate-400">郵便番号</span></div>
+            <div>　　　<span className="text-slate-400">住所</span></div>
+            <div>担当者：<span className="text-slate-400">入力した担当者名</span></div>
+            <div>連絡先：<span className="text-slate-400">電話番号</span></div>
+            <div>━━━━━━━━━━━━━━━━━━━━━━━━━━</div>
+          </div>
+          <Tip>担当者名は送信モーダルの「担当者名（署名に表示）」欄で都度入力します。空欄にすると担当者行が省略されます。会社名・住所・電話番号は<strong>システム設定</strong>の自社基本情報から自動で取得されます。</Tip>
         </div>
       </div>
     ),
@@ -794,8 +893,8 @@ export default function ManualPage() {
                 key={sec.id}
                 onClick={() => setActive(sec.id)}
                 className={`w-full text-left flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${isActive
-                    ? `${colorMap[sec.color]} shadow-sm`
-                    : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                  ? `${colorMap[sec.color]} shadow-sm`
+                  : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
                   }`}
               >
                 <sec.icon size={16} className="shrink-0" />
