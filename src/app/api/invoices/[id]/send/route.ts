@@ -68,7 +68,11 @@ export async function POST(
             subject,
             body,
             fromName: tenant?.name || "請求書管理システム",
-            attachments,
+            tenantId: context.tenantId,
+            attachments: attachments.map(a => ({
+                ...a,
+                contentType: 'application/pdf',
+            })),
         });
 
         if (!result.success) {
