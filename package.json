@@ -23,6 +23,7 @@
     "@react-email/render": "^0.0.15",
     "@react-pdf/renderer": "^3.4.0",
     "@supabase/supabase-js": "^2.98.0",
+    "@zip.js/zip.js": "^2.8.21",
     "bcryptjs": "^3.0.3",
     "clsx": "^2.1.0",
     "date-fns": "^3.3.1",

@@ -11,6 +11,7 @@ export default withAuth(
       pathname.startsWith("/admin-portal") ||
       pathname.startsWith("/register") ||
       pathname.startsWith("/tos") ||
+      pathname.startsWith("/public") ||
       (pathname.startsWith("/t/") && pathname.endsWith("/login"))
     ) {
       return NextResponse.next();
@@ -51,6 +52,7 @@ export default withAuth(
           pathname.startsWith("/admin-portal") ||
           pathname.startsWith("/register") ||
           pathname.startsWith("/tos") ||
+          pathname.startsWith("/public") ||
           (pathname.startsWith("/t/") && pathname.endsWith("/login"))
         ) {
           return true;

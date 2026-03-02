@@ -48,37 +48,31 @@ export async function POST(
         });
         console.log(`[send-api] Google Token Check: found=${!!googleToken}, hasRefreshToken=${!!googleToken?.refreshToken}`);
 
-        // Generate accessId and password if missing
-        if (!(invoice as any).accessId || !(invoice as any).downloadPassword) {
-            const accessId = crypto.randomUUID();
-            const password = Math.random().toString(36).slice(-8); // Random 8 character password
-            const expiresAt = new Date();
-            expiresAt.setDate(expiresAt.getDate() + 7);
+        // 送信のたびに新しいaccessId・パスワード・有効期限（7日間）を発行
+        const accessId = crypto.randomUUID();
+        const password = Math.random().toString(36).slice(-8);
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + 7);
 
-            await (prisma.invoice as any).update({
-                where: { id: invoice.id },
-                data: {
-                    accessId,
-                    downloadPassword: password,
-                    accessExpiresAt: expiresAt,
-                },
-            });
-            // Update local object for email body
-            (invoice as any).accessId = accessId;
-            (invoice as any).downloadPassword = password;
-            (invoice as any).accessExpiresAt = expiresAt;
-        }
+        await (prisma.invoice as any).update({
+            where: { id: invoice.id },
+            data: {
+                accessId,
+                downloadPassword: password,
+                accessExpiresAt: expiresAt,
+            },
+        });
 
-        const downloadUrl = `${process.env.NEXTAUTH_URL}/public/invoices/${(invoice as any).accessId}`;
+        const downloadUrl = `${process.env.NEXTAUTH_URL}/public/invoices/${accessId}`;
         const updatedBody = `${body}
 
 --------------------------------------------------
 請求書の表示・ダウンロードはこちらからお願いいたします。
 URL: ${downloadUrl}
-パスワード: ${(invoice as any).downloadPassword}
+パスワード: ${password}
 --------------------------------------------------
 
-※このURLから請求書の内容を確認いただけます。
+※このURLおよびパスワードの有効期限は本日から7日間です。
 ※ブラウザで開いた後にPDFとして保存できます。
 `;
 

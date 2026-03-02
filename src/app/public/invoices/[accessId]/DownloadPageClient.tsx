@@ -5,17 +5,17 @@ import dynamic from "next/dynamic";
 
 // Consolidated PDF rendering component to ensure stable client-side only execution
 const PDFRenderView = dynamic(
-    () => import("./PDFRenderView").then((mod) => mod.PDFRenderView),
+    () => import("./PDFRenderView").then((mod) => mod.PDFRenderView) as any,
     {
         ssr: false,
         loading: () => (
             <div className="flex flex-col items-center justify-center p-12">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
-                <p className="text-gray-500">PDFを準備しています...</p>
+                <p className="text-gray-500">読み込み中...</p>
             </div>
         )
     }
-);
+) as React.ComponentType<{ invoice: any; company: any }>;
 
 interface DownloadPageClientProps {
     invoice: any;
@@ -55,7 +55,8 @@ export default function DownloadPageClient({
             <div className="max-w-md w-full bg-white rounded-xl shadow-lg p-8 border border-gray-100">
                 <h1 className="text-2xl font-bold text-gray-800 mb-6 text-center">請求書ダウンロード</h1>
                 <p className="text-gray-600 mb-6 text-center text-sm">
-                    メールに記載されているパスワードを入力してください。
+                    メールに記載されているパスワードを入力してください。<br />
+                    認証後、パスワード付きZIPをダウンロードできます。
                 </p>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
@@ -74,7 +75,7 @@ export default function DownloadPageClient({
                         type="submit"
                         className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition-colors shadow-md active:transform active:scale-[0.98]"
                     >
-                        表示する
+                        認証する
                     </button>
                 </form>
             </div>
