@@ -151,7 +151,7 @@ export function SendInvoiceEmailModal({ isOpen, onClose, invoice }: Props) {
                                     <FileText className="shrink-0" size={20} />
                                     <div className="text-xs leading-relaxed">
                                         <p className="font-bold mb-1">添付ファイル</p>
-                                        <p>{new Date(invoice.issueDate).getMonth() + 1}月度御請求書_{invoice.client.name}.pdf</p>
+                                        <p>{new Date(invoice.issueDate).getMonth() + 1}月度御請求書_{invoice.client.name}御中.pdf</p>
                                         <p className="text-[10px] opacity-70 mt-1">※プレビューが表示されている現在の内容が送信されます。</p>
                                     </div>
                                 </div>

@@ -47,7 +47,7 @@ export async function POST(
         try {
             const issueDate = new Date(invoice.issueDate);
             const month = issueDate.getMonth() + 1;
-            const filename = `${month}月度御請求書_${invoice.client.name}.pdf`;
+            const filename = `${month}月度御請求書_${invoice.client.name}御中.pdf`;
 
             const pdfBuffer = await renderToBuffer(
                 React.createElement(InvoiceDocument, { invoice, company: tenant })

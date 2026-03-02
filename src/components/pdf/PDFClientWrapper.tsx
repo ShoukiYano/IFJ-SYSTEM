@@ -22,7 +22,7 @@ const PDFActionButtons: React.FC<PDFPreviewProps> = ({ invoice, company }) => {
     <div className="flex bg-blue-600 rounded-lg shadow-md overflow-hidden">
       <PDFDownloadLink
         document={<InvoiceDocument invoice={invoice} company={company} />}
-        fileName={`${month}月度御請求書_${clientName}.pdf`}
+        fileName={`${month}月度御請求書_${clientName}御中.pdf`}
         className="text-white px-4 py-2 font-bold flex items-center gap-2 hover:bg-blue-700 transition-all border-r border-blue-500"
       >
         {((props: any) => (
@@ -35,8 +35,8 @@ const PDFActionButtons: React.FC<PDFPreviewProps> = ({ invoice, company }) => {
 
       <PDFDownloadLink
         document={<OrderDocument invoice={invoice} company={company} />}
-        fileName={`${month}月度御注文書_${clientName}.pdf`}
-        className="text-white px-4 py-2 font-bold flex items-center gap-2 hover:bg-blue-700 transition-all border-r border-blue-500"
+        fileName={`${month}月度御注文書_${clientName}御中.pdf`}
+        className="text-white px-4 py-2 font-bold flex items-center gap-2 hover.bg-blue-700 transition-all border-r border-blue-500"
       >
         {((props: any) => (
           <span className="flex items-center gap-2">
@@ -48,7 +48,7 @@ const PDFActionButtons: React.FC<PDFPreviewProps> = ({ invoice, company }) => {
 
       <PDFDownloadLink
         document={<OrderConfirmationDocument invoice={invoice} company={company} />}
-        fileName={`${month}月度御注文請書_${clientName}.pdf`}
+        fileName={`${month}月度御注文請書_${clientName}御中.pdf`}
         className="text-white px-4 py-2 font-bold flex items-center gap-2 hover:bg-blue-700 transition-all"
       >
         {((props: any) => (
