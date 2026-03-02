@@ -17,6 +17,8 @@ export function SendInvoiceEmailModal({ isOpen, onClose, invoice }: Props) {
     const [loading, setLoading] = useState(false);
     const [sending, setSending] = useState(false);
     const [sent, setSent] = useState(false);
+    const [company, setCompany] = useState<any>(null);
+    const [contactPerson, setContactPerson] = useState("");
 
     const [emailData, setEmailData] = useState({
         to: "",
@@ -27,6 +29,7 @@ export function SendInvoiceEmailModal({ isOpen, onClose, invoice }: Props) {
     useEffect(() => {
         if (isOpen) {
             fetchTemplates();
+            fetchCompany();
             setEmailData(prev => ({ ...prev, to: invoice.client.email || "" }));
             setSent(false);
         }
@@ -45,6 +48,33 @@ export function SendInvoiceEmailModal({ isOpen, onClose, invoice }: Props) {
         } finally {
             setLoading(false);
         }
+    };
+
+    const fetchCompany = async () => {
+        try {
+            const res = await fetch("/api/company");
+            if (res.ok) {
+                const data = await res.json();
+                setCompany(data);
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
+    // 名刺署名ブロックを生成
+    const buildSignature = () => {
+        if (!company) return "";
+        const lines = [
+            "━━━━━━━━━━━━━━━━━━━━━━━━━━",
+            `会社名：${company.name || ""}`,
+            `住所：〒${company.zipCode || ""}`,
+            `　　　${company.address || ""}`,
+            contactPerson ? `担当者：${contactPerson}` : null,
+            `連絡先：${company.tel || ""}`,
+            "━━━━━━━━━━━━━━━━━━━━━━━━━━",
+        ].filter(Boolean).join("\n");
+        return "\n\n" + lines;
     };
 
     const handleTemplateChange = (id: string) => {
@@ -72,10 +102,13 @@ export function SendInvoiceEmailModal({ isOpen, onClose, invoice }: Props) {
         e.preventDefault();
         setSending(true);
         try {
+            const signature = buildSignature();
+            const bodyWithSignature = emailData.body + signature;
+
             const res = await fetch(`/api/invoices/${invoice.id}/send`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(emailData),
+                body: JSON.stringify({ ...emailData, body: bodyWithSignature }),
             });
 
             if (res.ok) {
@@ -147,6 +180,23 @@ export function SendInvoiceEmailModal({ isOpen, onClose, invoice }: Props) {
                                         ))}
                                     </select>
                                 </div>
+                                {/* 担当者入力 */}
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">担当者名（署名に表示）</label>
+                                    <input
+                                        type="text"
+                                        value={contactPerson}
+                                        onChange={e => setContactPerson(e.target.value)}
+                                        className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-indigo-500/10 outline-none transition"
+                                        placeholder="例）山田 太郎"
+                                    />
+                                </div>
+                                {/* 署名プレビュー */}
+                                {company && (
+                                    <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-500 font-mono leading-relaxed whitespace-pre-wrap">
+                                        {buildSignature().trim()}
+                                    </div>
+                                )}
                                 <div className="p-4 bg-blue-50 rounded-xl border border-blue-100 flex gap-3 text-blue-700">
                                     <FileText className="shrink-0" size={20} />
                                     <div className="text-xs leading-relaxed">
@@ -172,11 +222,12 @@ export function SendInvoiceEmailModal({ isOpen, onClose, invoice }: Props) {
                                     <label className="block text-xs font-bold text-slate-500 uppercase mb-1">本文</label>
                                     <textarea
                                         required
-                                        rows={8}
+                                        rows={10}
                                         value={emailData.body}
                                         onChange={e => setEmailData({ ...emailData, body: e.target.value })}
                                         className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-indigo-500/10 outline-none transition font-mono text-xs leading-relaxed"
                                     />
+                                    <p className="text-[10px] text-slate-400 mt-1">※送信時に末尾に署名が自動追加されます。</p>
                                 </div>
                             </div>
                         </div>
