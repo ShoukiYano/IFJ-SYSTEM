@@ -19,7 +19,11 @@ export async function GET(
       where: { id: params.id },
       include: {
         _count: {
-          select: { users: true, clients: true, invoices: true }
+          select: {
+            users: true,
+            clients: { where: { deletedAt: null } },
+            invoices: { where: { deletedAt: null } }
+          }
         }
       }
     });

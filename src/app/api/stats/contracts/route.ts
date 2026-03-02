@@ -16,6 +16,7 @@ export async function GET() {
     const expiringContracts = await prisma.assignee.findMany({
       where: {
         tenantId: context.tenantId,
+        client: { deletedAt: null },
         contractEndDate: {
           lte: twoMonthsLater,
           gte: new Date(),

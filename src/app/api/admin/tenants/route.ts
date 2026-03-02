@@ -15,7 +15,10 @@ export async function GET() {
       orderBy: { createdAt: "desc" },
       include: {
         _count: {
-          select: { users: true, clients: true }
+          select: {
+            users: true,
+            clients: { where: { deletedAt: null } }
+          }
         }
       }
     });
