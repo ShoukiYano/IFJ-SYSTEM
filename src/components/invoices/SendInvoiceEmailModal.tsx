@@ -103,12 +103,11 @@ export function SendInvoiceEmailModal({ isOpen, onClose, invoice }: Props) {
         setSending(true);
         try {
             const signature = buildSignature();
-            const bodyWithSignature = emailData.body + signature;
 
             const res = await fetch(`/api/invoices/${invoice.id}/send`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ ...emailData, body: bodyWithSignature }),
+                body: JSON.stringify({ ...emailData, signature }),
             });
 
             if (res.ok) {

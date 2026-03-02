@@ -16,7 +16,7 @@ export async function POST(
             return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
         }
 
-        const { subject, body, to } = await req.json();
+        const { subject, body, to, signature } = await req.json();
 
         if (!to || !subject || !body) {
             return NextResponse.json({ error: "宛先、件名、本文は必須です" }, { status: 400 });
@@ -73,7 +73,7 @@ URL: ${downloadUrl}
 --------------------------------------------------
 
 ※このURLおよびパスワードの有効期限は本日から7日間です。
-※ブラウザで開いた後にPDFとして保存できます。
+※ブラウザで開いた後にPDFとして保存できます。${signature ? '\n' + signature : ''}
 `;
 
         console.log(`[send-api] Sending email with link. tenantId: ${context.tenantId}`);
