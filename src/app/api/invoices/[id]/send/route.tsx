@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getTenantContext } from "@/lib/tenantContext";
 import { sendMail } from "@/lib/mail";
-import { renderToBuffer } from "@react-pdf/renderer";
+import { renderToBuffer, Document, Page, Text } from "@react-pdf/renderer";
 import { InvoiceDocument } from "@/components/pdf/InvoiceDocument";
 import React from "react";
 
@@ -56,20 +56,34 @@ export async function POST(
             const month = issueDate.getMonth() + 1;
             const filename = `${month}月度御請求書_${invoice.client.name}御中.pdf`;
 
-            // Use JSX for better stability in Next.js server environment
-            const pdfBuffer = await renderToBuffer(
-                <InvoiceDocument invoice={invoice} company={tenant} />
-            );
-
-            console.log(`[send-api] PDF generated successfully. Filename: ${filename}, Size: ${pdfBuffer.length} bytes`);
+            let pdfBuffer;
+            try {
+                // Main rendering attempt
+                pdfBuffer = await renderToBuffer(
+                    <InvoiceDocument invoice={invoice} company={tenant} />
+                );
+                console.log(`[send-api] PDF generated successfully. Size: ${pdfBuffer.length} bytes`);
+            } catch (renderError: any) {
+                console.warn(`[send-api] InvoiceDocument render failed, trying basic PDF: ${renderError.message}`);
+                // Fallback to minimal PDF to test @react-pdf/renderer functionality
+                pdfBuffer = await renderToBuffer(
+                    <Document>
+                        <Page size="A4">
+                            <Text>PDF Generation Test - Standard Document failed</Text>
+                            <Text>Invoice: {invoice.invoiceNumber}</Text>
+                        </Page>
+                    </Document>
+                );
+                console.log(`[send-api] Basic Test PDF generated. Size: ${pdfBuffer.length} bytes`);
+            }
 
             attachments.push({
                 filename,
                 content: pdfBuffer,
                 contentType: 'application/pdf',
             });
-        } catch (pdfError) {
-            console.error("[send-api] PDF generation failed:", pdfError);
+        } catch (pdfError: any) {
+            console.error("[send-api] All PDF generation attempts failed:", pdfError);
             // PDF生成に失敗してもメール送信は試みるか、あるいはエラーにするか
             // 今回は必須と思われるのでエラーにする方針ですが、安全性のためログは残します
         }

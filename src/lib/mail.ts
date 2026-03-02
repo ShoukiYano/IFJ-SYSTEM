@@ -33,41 +33,33 @@ async function sendGmailOAuth2(options: SendMailOptions, tenantId: string) {
 
     console.log(`[mail] Found token for ${token.email}. Refresh token present: ${!!token.refreshToken}`);
     oauth2Client.setCredentials({
-        access_token: token.accessToken,
         refresh_token: token.refreshToken,
-        expiry_date: token.expiryDate.getTime(),
     });
 
-    // Handle token refresh
-    oauth2Client.on('tokens', async (newTokens) => {
-        if (newTokens.access_token) {
-            console.log(`[mail] Token refreshed for tenant: ${tenantId}`);
-            await prisma.googleOAuthToken.update({
-                where: { tenantId },
-                data: {
-                    accessToken: newTokens.access_token,
-                    expiryDate: newTokens.expiry_date ? new Date(newTokens.expiry_date) : undefined,
-                    refreshToken: newTokens.refresh_token || undefined,
-                }
-            });
-        }
-    });
+    // Manually refresh to be 100% sure
+    console.log("[mail] Manually refreshing access token...");
+    const { token: accessToken } = await oauth2Client.getAccessToken();
+
+    if (!accessToken) {
+        throw new Error("Failed to refresh access token");
+    }
+    console.log("[mail] Access token refreshed successfully.");
 
     const transporter = nodemailer.createTransport({
         service: "gmail",
         auth: {
             type: "OAuth2",
-            user: token.email || process.env.SMTP_USER,
+            user: token.email,
             clientId: process.env.GOOGLE_CLIENT_ID,
             clientSecret: process.env.GOOGLE_CLIENT_SECRET,
             refreshToken: token.refreshToken,
-            accessToken: token.accessToken,
+            accessToken: accessToken,
         },
-    });
+    } as any);
 
-    console.log(`[mail] Sending via Nodemailer/Gmail...`);
+    console.log(`[mail] Sending via Nodemailer/Gmail (User: ${token.email})...`);
     return transporter.sendMail({
-        from: `"${options.fromName || "請求書管理システム"}" <${token.email || process.env.SMTP_FROM}>`,
+        from: `"${options.fromName || "請求書管理システム"}" <${token.email}>`,
         to: Array.isArray(options.to) ? options.to.join(", ") : options.to,
         subject: options.subject,
         text: options.body,
