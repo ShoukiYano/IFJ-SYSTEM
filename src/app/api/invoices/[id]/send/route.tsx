@@ -52,17 +52,21 @@ export async function POST(
         if (!(invoice as any).accessId || !(invoice as any).downloadPassword) {
             const accessId = crypto.randomUUID();
             const password = Math.random().toString(36).slice(-8); // Random 8 character password
+            const expiresAt = new Date();
+            expiresAt.setDate(expiresAt.getDate() + 7);
 
             await (prisma.invoice as any).update({
                 where: { id: invoice.id },
                 data: {
                     accessId,
                     downloadPassword: password,
+                    accessExpiresAt: expiresAt,
                 },
             });
             // Update local object for email body
             (invoice as any).accessId = accessId;
             (invoice as any).downloadPassword = password;
+            (invoice as any).accessExpiresAt = expiresAt;
         }
 
         const downloadUrl = `${process.env.NEXTAUTH_URL}/public/invoices/${(invoice as any).accessId}`;

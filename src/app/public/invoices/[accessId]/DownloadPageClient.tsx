@@ -1,23 +1,20 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
-import { PDFPreviewProps } from "@/components/pdf/PDFClientWrapper";
 
-// Dynamically import PDF components to avoid SSR issues
-const InvoiceDocument = dynamic(
-    () => import("@/components/pdf/InvoiceDocument").then((mod) => mod.InvoiceDocument),
-    { ssr: false }
-);
-
-const PDFViewer = dynamic(
-    () => import("@react-pdf/renderer").then((mod) => mod.PDFViewer),
-    { ssr: false }
-);
-
-const PDFDownloadLink = dynamic(
-    () => import("@react-pdf/renderer").then((mod) => mod.PDFDownloadLink),
-    { ssr: false }
+// Consolidated PDF rendering component to ensure stable client-side only execution
+const PDFRenderView = dynamic(
+    () => import("./PDFRenderView").then((mod) => mod.PDFRenderView),
+    {
+        ssr: false,
+        loading: () => (
+            <div className="flex flex-col items-center justify-center p-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+                <p className="text-gray-500">PDFを準備しています...</p>
+            </div>
+        )
+    }
 );
 
 interface DownloadPageClientProps {
@@ -34,16 +31,24 @@ export default function DownloadPageClient({
     const [password, setPassword] = useState("");
     const [isAuthorized, setIsAuthorized] = useState(false);
     const [error, setError] = useState("");
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (password === correctPassword) {
+        // Force trimmed comparison just in case
+        if (password.trim() === correctPassword.trim()) {
             setIsAuthorized(true);
             setError("");
         } else {
             setError("パスワードが正しくありません。");
         }
     };
+
+    if (!mounted) return null;
 
     if (!isAuthorized) {
         return (
@@ -61,6 +66,7 @@ export default function DownloadPageClient({
                             placeholder="パスワードを入力"
                             className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
                             required
+                            autoFocus
                         />
                     </div>
                     {error && <p className="text-red-500 text-sm text-center">{error}</p>}
@@ -75,30 +81,7 @@ export default function DownloadPageClient({
         );
     }
 
-    const filename = `請求書_${invoice.invoiceNumber}.pdf`;
-
     return (
-        <div className="w-full max-w-5xl bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col h-[90vh]">
-            <div className="bg-gray-800 p-4 flex items-center justify-between text-white">
-                <h2 className="font-semibold truncate mr-4">
-                    {invoice.invoiceNumber} - {invoice.client.name}
-                </h2>
-                <PDFDownloadLink
-                    document={<InvoiceDocument invoice={invoice} company={company} />}
-                    fileName={filename}
-                    className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg font-medium transition-colors flex items-center gap-2"
-                >
-                    {((props: any) =>
-                        props.loading ? "準備中..." : "PDFを保存する"
-                    ) as any}
-                </PDFDownloadLink>
-            </div>
-
-            <div className="flex-1 bg-gray-200">
-                <PDFViewer width="100%" height="100%" showToolbar={false} className="border-none">
-                    <InvoiceDocument invoice={invoice} company={company} />
-                </PDFViewer>
-            </div>
-        </div>
+        <PDFRenderView invoice={invoice} company={company} />
     );
 }
