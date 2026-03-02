@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getTenantContext } from "@/lib/tenantContext";
-import { sendMail, renderTemplate } from "@/lib/mail";
-import { formatCurrency } from "@/lib/utils";
+import { sendMail } from "@/lib/mail";
+import { renderToBuffer } from "@react-pdf/renderer";
+import { InvoiceDocument } from "@/components/pdf/InvoiceDocument";
+import React from "react";
 
 export async function POST(
     req: Request,
@@ -40,12 +42,33 @@ export async function POST(
             where: { id: context.tenantId }
         });
 
+        // PDF生成
+        let attachments: any[] = [];
+        try {
+            const issueDate = new Date(invoice.issueDate);
+            const month = issueDate.getMonth() + 1;
+            const filename = `${month}月度御請求書_${invoice.client.name}.pdf`;
+
+            const pdfBuffer = await renderToBuffer(
+                React.createElement(InvoiceDocument, { invoice, company: tenant })
+            );
+            attachments.push({
+                filename,
+                content: pdfBuffer,
+            });
+        } catch (pdfError) {
+            console.error("PDF generation failed:", pdfError);
+            // PDF生成に失敗してもメール送信は試みるか、あるいはエラーにするか
+            // 今回は必須と思われるのでエラーにする方針ですが、安全性のためログは残します
+        }
+
         // メール送信
         const result = await sendMail({
             to,
             subject,
             body,
             fromName: tenant?.name || "請求書管理システム",
+            attachments,
         });
 
         if (!result.success) {

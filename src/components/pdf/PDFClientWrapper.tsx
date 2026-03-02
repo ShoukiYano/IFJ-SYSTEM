@@ -14,14 +14,15 @@ interface PDFPreviewProps {
 }
 
 const PDFActionButtons: React.FC<PDFPreviewProps> = ({ invoice, company }) => {
-  const dateStr = invoice.issueDate.split('-').slice(0, 2).join('');
+  const issueDate = new Date(invoice.issueDate);
+  const month = issueDate.getMonth() + 1;
   const clientName = invoice.client?.name || "Unknown";
 
   return (
     <div className="flex bg-blue-600 rounded-lg shadow-md overflow-hidden">
-      <PDFDownloadLink 
-        document={<InvoiceDocument invoice={invoice} company={company} />} 
-        fileName={`${dateStr}_${clientName}_請求書_${invoice.invoiceNumber}.pdf`}
+      <PDFDownloadLink
+        document={<InvoiceDocument invoice={invoice} company={company} />}
+        fileName={`${month}月度御請求書_${clientName}.pdf`}
         className="text-white px-4 py-2 font-bold flex items-center gap-2 hover:bg-blue-700 transition-all border-r border-blue-500"
       >
         {((props: any) => (
@@ -32,9 +33,9 @@ const PDFActionButtons: React.FC<PDFPreviewProps> = ({ invoice, company }) => {
         )) as any}
       </PDFDownloadLink>
 
-      <PDFDownloadLink 
-        document={<OrderDocument invoice={invoice} company={company} />} 
-        fileName={`${dateStr}_${clientName}_注文書_${invoice.invoiceNumber}.pdf`}
+      <PDFDownloadLink
+        document={<OrderDocument invoice={invoice} company={company} />}
+        fileName={`${month}月度御注文書_${clientName}.pdf`}
         className="text-white px-4 py-2 font-bold flex items-center gap-2 hover:bg-blue-700 transition-all border-r border-blue-500"
       >
         {((props: any) => (
@@ -45,9 +46,9 @@ const PDFActionButtons: React.FC<PDFPreviewProps> = ({ invoice, company }) => {
         )) as any}
       </PDFDownloadLink>
 
-      <PDFDownloadLink 
-        document={<OrderConfirmationDocument invoice={invoice} company={company} />} 
-        fileName={`${dateStr}_${clientName}_注文請書_${invoice.invoiceNumber}.pdf`}
+      <PDFDownloadLink
+        document={<OrderConfirmationDocument invoice={invoice} company={company} />}
+        fileName={`${month}月度御注文請書_${clientName}.pdf`}
         className="text-white px-4 py-2 font-bold flex items-center gap-2 hover:bg-blue-700 transition-all"
       >
         {((props: any) => (
