@@ -43,6 +43,7 @@ export default function TenantLoginPage({ params }: { params: { subdomain: strin
       const res = await signIn("credentials", {
         email,
         password,
+        subdomain: params.subdomain,
         redirect: false,
       });
 

@@ -12,6 +12,7 @@ export const authOptions: NextAuthOptions = {
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
+        subdomain: { label: "Subdomain", type: "text" },
       },
       async authorize(credentials) {
         console.log("[AUTH] Authorize called with email:", credentials?.email);
@@ -33,6 +34,17 @@ export const authOptions: NextAuthOptions = {
         if (!user) {
           console.log("[AUTH] User not found in DB:", email);
           throw new Error("ERR_USER_NOT_FOUND");
+        }
+
+        // テナント検証: ログインページのサブドメインとユーザーのテナントが一致するか確認
+        if (credentials.subdomain) {
+          const loginSubdomain = credentials.subdomain.trim().toLowerCase();
+          const userSubdomain = user.tenant?.subdomain?.toLowerCase();
+          console.log("[AUTH] Tenant check - login subdomain:", loginSubdomain, "user's subdomain:", userSubdomain);
+          if (loginSubdomain !== userSubdomain) {
+            console.log("[AUTH] Tenant mismatch! Blocking login.");
+            throw new Error("ERR_USER_NOT_FOUND");
+          }
         }
 
         console.log("[AUTH] User found, comparing password...");
