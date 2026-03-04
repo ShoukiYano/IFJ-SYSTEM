@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { LayoutDashboard, FileText, Users, Settings, PlusCircle, HelpCircle, LogOut, Book, Building2, X } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -14,6 +14,20 @@ interface SidebarProps {
 const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
   const pathname = usePathname();
   const { data: session } = useSession();
+  const [isImpersonating, setIsImpersonating] = useState(false);
+
+  useEffect(() => {
+    const checkImpersonation = async () => {
+      try {
+        const res = await fetch("/api/admin/impersonate/status");
+        if (res.ok) {
+          const data = await res.json();
+          setIsImpersonating(data.isImpersonating);
+        }
+      } catch (e) { }
+    };
+    if (session) checkImpersonation();
+  }, [session]);
 
   const menuItems = [
     { label: "ダッシュボード", icon: LayoutDashboard, href: "/" },
@@ -34,6 +48,10 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
   ];
 
   const role = (session?.user as any)?.role;
+
+  // 代理ログイン中はテナントメニューを表示、それ以外は role で判定
+  const showTenantMenu = isImpersonating || role !== "SYSTEM_ADMIN";
+  const showAdminMenu = !isImpersonating && role === "SYSTEM_ADMIN";
 
   if (!session) return null;
 
@@ -62,7 +80,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
         </div>
 
         <nav className="flex-1 space-y-1 overflow-y-auto pr-2 custom-scrollbar">
-          {role !== "SYSTEM_ADMIN" && menuItems.map((item) => (
+          {showTenantMenu && menuItems.map((item) => (
             <a
               key={item.href}
               href={item.href}
@@ -78,7 +96,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
             </a>
           ))}
 
-          {role === "SYSTEM_ADMIN" && (
+          {showAdminMenu && (
             <div className="pt-4 mt-4 border-t border-slate-800">
               <p className="px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">システム管理</p>
               {adminItems.map((item) => (
