@@ -81,58 +81,77 @@ export default function AnnouncementPanel() {
                     />
 
                     {/* Panel */}
-                    <div className="fixed top-0 right-0 h-full w-full max-w-md bg-white shadow-2xl z-[101] flex flex-col animate-in slide-in-from-right duration-500 ease-out border-l border-slate-200">
+                    <div className="fixed top-0 left-0 md:left-64 h-full w-full md:w-[400px] bg-white shadow-[0_0_50px_-12px_rgba(0,0,0,0.3)] z-[101] flex flex-col animate-in slide-in-from-left duration-500 ease-out border-r border-slate-200">
                         {/* Header */}
-                        <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-                            <div>
-                                <h2 className="text-xl font-black text-slate-800 flex items-center gap-2">
-                                    <Megaphone className="text-blue-600" /> システムお知らせ
-                                </h2>
-                                <p className="text-xs text-slate-500 mt-0.5">アップデート情報・重要なお知らせ</p>
+                        <div className="p-8 border-b border-white/10 bg-gradient-to-br from-indigo-700 via-blue-700 to-blue-600 text-white relative overflow-hidden">
+                            {/* Decorative Background Elements */}
+                            <div className="absolute top-0 right-0 -mt-4 -mr-4 size-32 bg-white/10 rounded-full blur-3xl" />
+                            <div className="absolute bottom-0 left-0 -mb-8 -ml-8 size-48 bg-blue-400/20 rounded-full blur-3xl" />
+
+                            <div className="relative flex justify-between items-start">
+                                <div className="space-y-1">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2 bg-white/20 backdrop-blur-md rounded-xl">
+                                            <Megaphone size={20} className="text-white" />
+                                        </div>
+                                        <h2 className="text-2xl font-black tracking-tight whitespace-nowrap">
+                                            システムお知らせ
+                                        </h2>
+                                    </div>
+                                    <p className="text-xs text-blue-100 font-medium pl-12 opacity-90">
+                                        アップデート情報 & 重要なお知らせ
+                                    </p>
+                                </div>
+                                <button
+                                    onClick={() => setIsOpen(false)}
+                                    className="p-2 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-full text-white transition-all border border-white/10 active:scale-95"
+                                >
+                                    <X size={20} />
+                                </button>
                             </div>
-                            <button
-                                onClick={() => setIsOpen(false)}
-                                className="p-2 hover:bg-white rounded-full text-slate-400 hover:text-slate-600 transition-colors border border-transparent hover:border-slate-100"
-                            >
-                                <X size={20} />
-                            </button>
                         </div>
 
                         {/* List */}
-                        <div className="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-4">
+                        <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-5 bg-slate-50/50">
                             {loading ? (
-                                <div className="flex flex-col items-center justify-center h-40 space-y-3">
-                                    <Loader2 className="animate-spin text-blue-600" size={32} />
-                                    <p className="text-sm font-bold text-slate-400">取得中...</p>
+                                <div className="flex flex-col items-center justify-center h-40 space-y-4">
+                                    <div className="relative">
+                                        <div className="size-12 border-4 border-blue-600/20 border-t-blue-600 rounded-full animate-spin" />
+                                        <Bell size={16} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-blue-600" />
+                                    </div>
+                                    <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Loading...</p>
                                 </div>
                             ) : announcements.length === 0 ? (
-                                <div className="flex flex-col items-center justify-center h-60 text-center space-y-4">
-                                    <div className="size-16 bg-slate-50 rounded-full flex items-center justify-center text-slate-300 border border-slate-100">
-                                        <Bell size={32} />
+                                <div className="flex flex-col items-center justify-center h-64 text-center space-y-5">
+                                    <div className="size-20 bg-white rounded-3xl flex items-center justify-center text-slate-200 border border-slate-100 shadow-sm">
+                                        <Bell size={36} strokeWidth={1.5} />
                                     </div>
-                                    <div>
-                                        <p className="font-bold text-slate-800">お知らせはありません</p>
-                                        <p className="text-xs text-slate-400 mt-1">最新情報を楽しみにお待ちください</p>
+                                    <div className="space-y-1">
+                                        <p className="font-black text-slate-800">お知らせはありません</p>
+                                        <p className="text-xs text-slate-400 font-medium">最新情報を楽しみにお待ちください</p>
                                     </div>
                                 </div>
                             ) : (
                                 announcements.map((a) => (
                                     <div
                                         key={a.id}
-                                        className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm hover:shadow-md hover:border-blue-100 transition-all group"
+                                        className="bg-white border border-slate-200 rounded-[2rem] p-6 shadow-sm hover:shadow-xl hover:shadow-blue-900/5 hover:-translate-y-1 transition-all duration-300 group"
                                     >
-                                        <div className="flex justify-between items-start mb-2">
-                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2 py-0.5 bg-slate-50 rounded border border-slate-100">
+                                        <div className="flex justify-between items-center mb-4">
+                                            <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest px-3 py-1 bg-blue-50 rounded-full border border-blue-100/50">
                                                 {format(new Date(a.createdAt), 'yyyy.MM.dd', { locale: ja })}
                                             </span>
                                             {!a.isRead && (
-                                                <span className="flex h-2 w-2 rounded-full bg-blue-600 ring-4 ring-blue-50" />
+                                                <span className="flex items-center gap-1.5 px-2 py-0.5 bg-rose-50 text-rose-600 text-[10px] font-bold rounded-full border border-rose-100">
+                                                    <span className="size-1.5 rounded-full bg-rose-600 animate-pulse" />
+                                                    NEW
+                                                </span>
                                             )}
                                         </div>
-                                        <h3 className="font-bold text-slate-900 leading-tight group-hover:text-blue-600 transition-colors mb-3">
+                                        <h3 className="font-black text-slate-900 leading-snug group-hover:text-blue-700 transition-colors mb-4 text-lg">
                                             {a.title}
                                         </h3>
-                                        <div className="text-sm text-slate-600 whitespace-pre-wrap leading-relaxed border-t border-slate-50 pt-3">
+                                        <div className="text-sm text-slate-600 whitespace-pre-wrap leading-relaxed bg-slate-50/80 rounded-2xl p-4 border border-slate-100/50">
                                             {a.content}
                                         </div>
                                     </div>
@@ -141,9 +160,11 @@ export default function AnnouncementPanel() {
                         </div>
 
                         {/* Footer */}
-                        <div className="p-6 border-t border-slate-100 bg-slate-50 text-center">
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center justify-center gap-1">
-                                IFJ-SYSTEM Version 1.2.0 <ChevronRight size={10} />
+                        <div className="p-6 border-t border-slate-100 bg-white text-center">
+                            <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] flex items-center justify-center gap-2">
+                                <span className="w-8 h-[1px] bg-slate-100" />
+                                IFJ-SYSTEM VERSION 1.2.0
+                                <span className="w-8 h-[1px] bg-slate-100" />
                             </p>
                         </div>
                     </div>
