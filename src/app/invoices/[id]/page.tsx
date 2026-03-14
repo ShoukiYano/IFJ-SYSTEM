@@ -103,16 +103,16 @@ export default function InvoiceDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 p-8">
+    <div className="min-h-screen bg-slate-50 p-4 sm:p-8">
       <div className="max-w-5xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-4">
-            <a href="/" className="p-2 hover:bg-slate-200 rounded-full transition-colors">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6 sm:mb-8">
+          <div className="flex items-center gap-2 min-w-0">
+            <a href="/" className="p-2 hover:bg-slate-200 rounded-full transition-colors shrink-0">
               <ChevronLeft size={24} />
             </a>
-            <h1 className="text-3xl font-black text-slate-900">{data.invoiceNumber} の詳細</h1>
+            <h1 className="text-xl sm:text-3xl font-black text-slate-900 truncate">{data.invoiceNumber} の詳細</h1>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={() => setShowPreview(!showPreview)}
               className="px-4 py-2 bg-white border border-slate-200 rounded-lg font-bold flex items-center gap-2 hover:bg-slate-50 transition-colors"
@@ -171,8 +171,8 @@ export default function InvoiceDetailPage() {
               </div>
             </section>
 
-            <section className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-              <table className="w-full text-left">
+            <section className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-x-auto">
+              <table className="w-full text-left min-w-[500px]">
                 <thead>
                   <tr className="bg-slate-50 border-b border-slate-100 text-xs font-bold text-slate-500 uppercase">
                     {data.templateType === "SES" ? (
