@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { LayoutDashboard, FileText, Users, Settings, PlusCircle, HelpCircle, LogOut, Book, Building2, X, Bell, Megaphone } from "lucide-react";
+import { LayoutDashboard, FileText, Users, Settings, PlusCircle, HelpCircle, LogOut, Book, Building2, X, Bell, Megaphone, HardDrive, History } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useSession, signOut } from "next-auth/react";
@@ -46,6 +46,8 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
     { label: "システム管理", icon: LayoutDashboard, href: "/admin/dashboard" },
     { label: "テナント管理", icon: Building2, href: "/admin/tenants" },
     { label: "お知らせ管理", icon: Megaphone, href: "/admin/announcements" },
+    { label: "バックアップ管理", icon: HardDrive, href: "/admin/backups" },
+    { label: "システム監査ログ", icon: History, href: "/admin/audit-logs" },
     { label: "プロフィール設定", icon: Settings, href: "/admin/profile" },
   ];
 
