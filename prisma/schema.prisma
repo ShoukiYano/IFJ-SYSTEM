@@ -70,6 +70,7 @@ model Tenant {
   emailTemplates     EmailTemplate[]
   googleOAuthToken   GoogleOAuthToken?
   branchOffices      BranchOffice[]
+  announcementReads  AnnouncementRead[]
 }
 
 model GoogleOAuthToken {
@@ -400,5 +401,31 @@ model AuditLog {
   payload   String?  @db.Text
   createdAt DateTime @default(now())
 
+  @@index([tenantId])
+}
+
+// -----------------------------------------------
+// お知らせ機能
+// -----------------------------------------------
+
+model Announcement {
+  id          String             @id @default(uuid())
+  title       String
+  content     String             @db.Text
+  isPublished Boolean            @default(true)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  reads       AnnouncementRead[]
+}
+
+model AnnouncementRead {
+  id             String       @id @default(uuid())
+  announcementId String
+  announcement   Announcement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+  tenantId       String
+  tenant         Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  readAt         DateTime     @default(now())
+
+  @@unique([announcementId, tenantId])
   @@index([tenantId])
 }

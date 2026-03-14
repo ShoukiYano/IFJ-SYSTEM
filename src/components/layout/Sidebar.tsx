@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { LayoutDashboard, FileText, Users, Settings, PlusCircle, HelpCircle, LogOut, Book, Building2, X } from "lucide-react";
+import { LayoutDashboard, FileText, Users, Settings, PlusCircle, HelpCircle, LogOut, Book, Building2, X, Bell, Megaphone } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useSession, signOut } from "next-auth/react";
+import AnnouncementPanel from "@/components/announcements/AnnouncementPanel";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -44,6 +45,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
   const adminItems = [
     { label: "システム管理", icon: LayoutDashboard, href: "/admin/dashboard" },
     { label: "テナント管理", icon: Building2, href: "/admin/tenants" },
+    { label: "お知らせ管理", icon: Megaphone, href: "/admin/announcements" },
     { label: "プロフィール設定", icon: Settings, href: "/admin/profile" },
   ];
 
@@ -69,8 +71,11 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
         "w-64 bg-[#1a1c23] h-screen fixed left-0 top-0 text-slate-400 flex flex-col p-4 z-50 transition-transform duration-300 md:translate-x-0",
         isOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full"
       )}>
-        <div className="p-4 mb-8 flex justify-between items-center">
-          <h1 className="text-white text-xl font-black tracking-tighter">IFJ-SYSTEM</h1>
+        <div className="p-4 mb-4 flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <h1 className="text-white text-xl font-black tracking-tighter">IFJ-SYSTEM</h1>
+            {showTenantMenu && <AnnouncementPanel />}
+          </div>
           <button
             onClick={onClose}
             className="md:hidden p-2 text-slate-400 hover:text-white"
