@@ -23,7 +23,7 @@ export default function QuotationsPage() {
 
   const handleConvert = async (id: string) => {
     if (!confirm("この見積書を請求書に変換しますか？")) return;
-    
+
     const res = await fetch(`/api/quotations/${id}/convert`, { method: "POST" });
     if (res.ok) {
       const invoice = await res.json();
@@ -36,7 +36,7 @@ export default function QuotationsPage() {
 
   const handleBulkUpdate = async (status: string) => {
     if (selectedIds.length === 0) return;
-    
+
     const res = await fetch("/api/quotations/bulk-update", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -50,20 +50,20 @@ export default function QuotationsPage() {
   };
 
   return (
-    <div className="p-10 max-w-7xl mx-auto space-y-8">
-      <div className="flex items-center justify-between">
+    <div className="p-4 sm:p-8 max-w-7xl mx-auto space-y-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-4xl font-black text-slate-900 tracking-tight flex items-center gap-3">
-            <FileText className="text-blue-600" size={36} />
+          <h1 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight flex items-center gap-3">
+            <FileText className="text-blue-600" size={28} />
             見積書管理
           </h1>
-          <p className="text-slate-500 mt-1 font-medium italic">作成した見積書の管理と請求書への変換が可能です。</p>
+          <p className="text-slate-500 mt-1 text-sm font-medium">作成した見積書の管理と請求書への変換が可能です。</p>
         </div>
-        <a 
-          href="/quotations/new" 
-          className="bg-blue-600 text-white px-8 py-3.5 rounded-2xl font-black flex items-center gap-2 hover:bg-blue-700 transition-all shadow-xl hover:-translate-y-1 active:translate-y-0"
+        <a
+          href="/quotations/new"
+          className="w-full sm:w-auto bg-blue-600 text-white px-6 sm:px-8 py-3.5 rounded-2xl font-black flex items-center justify-center gap-2 hover:bg-blue-700 transition-all shadow-xl hover:-translate-y-1 active:translate-y-0"
         >
-          <Plus size={24} strokeWidth={3} />
+          <Plus size={20} strokeWidth={3} />
           新規作成
         </a>
       </div>
@@ -72,7 +72,7 @@ export default function QuotationsPage() {
         <div className="flex items-center gap-4 w-full md:w-auto">
           <div className="relative flex-1 md:w-64">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
-            <input 
+            <input
               type="text"
               placeholder="見積番号や取引先で検索..."
               className="w-full pl-12 pr-4 py-2.5 bg-slate-50 border-none rounded-xl outline-none ring-1 ring-slate-200 focus:ring-2 focus:ring-blue-500/20"
@@ -87,13 +87,13 @@ export default function QuotationsPage() {
           <div className="flex items-center gap-2 w-full md:w-auto p-2 bg-blue-50 rounded-xl border border-blue-100 animate-in fade-in slide-in-from-top-2">
             <span className="text-sm font-bold text-blue-700 px-2">{selectedIds.length}件を選択中</span>
             <div className="h-4 w-px bg-blue-200 mx-1"></div>
-            <button 
+            <button
               onClick={() => handleBulkUpdate('SENT')}
               className="px-3 py-1.5 bg-blue-600 text-white text-xs font-bold rounded-lg hover:bg-blue-700 transition-colors"
             >
               送付済みにする
             </button>
-            <button 
+            <button
               onClick={() => handleBulkUpdate('ACCEPTED')}
               className="px-3 py-1.5 bg-emerald-600 text-white text-xs font-bold rounded-lg hover:bg-emerald-700 transition-colors"
             >
@@ -108,8 +108,8 @@ export default function QuotationsPage() {
           <Loader2 className="animate-spin text-blue-600" size={48} />
         </div>
       ) : (
-        <QuotationTable 
-          quotations={quotations} 
+        <QuotationTable
+          quotations={quotations}
           selectedIds={selectedIds}
           onSelectionChange={setSelectedIds}
           onEdit={(id: string) => window.location.href = `/quotations/${id}/edit`}

@@ -140,7 +140,66 @@ export default function StaffListPage() {
             </div>
           </div>
 
-          <div className="overflow-x-auto">
+          {/* モバイル: カード表示 */}
+          <div className="md:hidden divide-y divide-slate-100">
+            {isLoading ? (
+              <div className="px-6 py-12 text-center text-slate-400 italic">読み込み中...</div>
+            ) : filteredStaffs.length === 0 ? (
+              <div className="px-6 py-12 text-center text-slate-400 italic">該当する要員が見つかりません。</div>
+            ) : (
+              filteredStaffs.map((staff, index) => (
+                <div key={staff.id} className={`p-4 ${selectedIds.includes(staff.id) ? 'bg-blue-50/30' : 'bg-white'}`}>
+                  <div className="flex items-start gap-3">
+                    <input
+                      type="checkbox"
+                      className="size-4 mt-1 rounded border-slate-300 text-blue-600 focus:ring-blue-500/20"
+                      checked={selectedIds.includes(staff.id)}
+                      onChange={() => handleSelectOne(staff.id)}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2 mb-2">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-xs font-mono text-slate-400">#{index + 1}</span>
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black ${staff.type === 'PROPER' ? 'bg-indigo-100 text-indigo-600' : 'bg-amber-100 text-amber-600'}`}>
+                            {staff.type === 'PROPER' ? 'プロパー' : 'BP'}
+                          </span>
+                          <span className={`inline-flex items-center text-[10px] font-bold px-2 py-0.5 rounded ${staff.area === 'KANSAI' ? 'bg-orange-100 text-orange-600' : staff.area === 'NAGOYA' ? 'bg-emerald-100 text-emerald-600' : 'bg-sky-100 text-sky-600'}`}>
+                            {staff.area === 'KANSAI' ? '関西' : staff.area === 'NAGOYA' ? '名古屋' : '関東'}
+                          </span>
+                        </div>
+                        <div className="flex gap-1 shrink-0">
+                          <button onClick={() => { setEditingStaff(staff); setIsModalOpen(true); }} className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all">
+                            <Edit2 size={15} />
+                          </button>
+                          <button onClick={() => handleDelete(staff.id)} className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all">
+                            <Trash2 size={15} />
+                          </button>
+                        </div>
+                      </div>
+                      <div className="font-bold text-slate-800 mb-1">{staff.name}</div>
+                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
+                        {staff.client?.name && (
+                          <span className="flex items-center gap-1"><Building2 size={11} />{staff.client.name}</span>
+                        )}
+                        {staff.manager && <span>担当: {staff.manager}</span>}
+                        <span className="font-bold text-slate-700">{formatCurrency(Number(staff.unitPrice))}</span>
+                      </div>
+                      <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1 text-xs text-slate-400">
+                        <span className="font-mono bg-slate-100 px-1.5 py-0.5 rounded">{staff.minHours || "-"}-{staff.maxHours || "-"}h</span>
+                        {staff.paymentTerms && <span>サイト: {staff.paymentTerms}</span>}
+                        {staff.contractStartDate && (
+                          <span>{new Date(staff.contractStartDate).getFullYear()}年{new Date(staff.contractStartDate).getMonth() + 1}月開始</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* デスクトップ: テーブル表示 */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-slate-50/50 border-b border-slate-200">
@@ -187,25 +246,19 @@ export default function StaffListPage() {
                       </td>
                       <td className="px-2 py-4 text-sm text-slate-500 font-mono">{index + 1}</td>
                       <td className="px-6 py-4">
-                        <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-black uppercase whitespace-nowrap ${staff.type === 'PROPER' ? 'bg-indigo-100 text-indigo-600' : 'bg-amber-100 text-amber-600'
-                          }`}>
+                        <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-black uppercase whitespace-nowrap ${staff.type === 'PROPER' ? 'bg-indigo-100 text-indigo-600' : 'bg-amber-100 text-amber-600'}`}>
                           {staff.type === 'PROPER' ? 'プロパー' : 'BP'}
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        <span className={`inline-flex items-center text-[10px] font-bold px-2.5 py-1 rounded-lg whitespace-nowrap ${staff.area === 'KANSAI' ? 'bg-orange-100 text-orange-600' :
-                          staff.area === 'NAGOYA' ? 'bg-emerald-100 text-emerald-600' :
-                            'bg-sky-100 text-sky-600'
-                          }`}>
+                        <span className={`inline-flex items-center text-[10px] font-bold px-2.5 py-1 rounded-lg whitespace-nowrap ${staff.area === 'KANSAI' ? 'bg-orange-100 text-orange-600' : staff.area === 'NAGOYA' ? 'bg-emerald-100 text-emerald-600' : 'bg-sky-100 text-sky-600'}`}>
                           {staff.area === 'KANSAI' ? '関西' : staff.area === 'NAGOYA' ? '名古屋' : '関東'}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-sm text-slate-600">{staff.manager || "-"}</td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-2">
-                          <div className="size-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
-                            <User size={16} />
-                          </div>
+                          <div className="size-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400"><User size={16} /></div>
                           <span className="text-sm font-bold text-slate-800">{staff.name}</span>
                         </div>
                       </td>
@@ -215,18 +268,12 @@ export default function StaffListPage() {
                           {staff.client?.name || "未設定"}
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-sm font-bold text-slate-800 text-right tabular-nums">
-                        {formatCurrency(Number(staff.unitPrice))}
+                      <td className="px-6 py-4 text-sm font-bold text-slate-800 text-right tabular-nums">{formatCurrency(Number(staff.unitPrice))}</td>
+                      <td className="px-6 py-4 text-center">
+                        <span className="text-xs font-mono text-slate-500 bg-slate-100 px-2 py-1 rounded">{staff.minHours || "-"}-{staff.maxHours || "-"}h</span>
                       </td>
                       <td className="px-6 py-4 text-center">
-                        <span className="text-xs font-mono text-slate-500 bg-slate-100 px-2 py-1 rounded">
-                          {staff.minHours || "-"}-{staff.maxHours || "-"}h
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        <span className="text-xs font-bold text-slate-600">
-                          {staff.paymentTerms || "-"}
-                        </span>
+                        <span className="text-xs font-bold text-slate-600">{staff.paymentTerms || "-"}</span>
                       </td>
                       <td className="px-6 py-4 text-center">
                         <div className="flex flex-col items-center">
@@ -234,9 +281,7 @@ export default function StaffListPage() {
                             <>
                               <span className="text-sm font-bold text-slate-700 flex items-center gap-1 whitespace-nowrap">
                                 <Calendar size={12} className="text-slate-400" />
-                                {new Date(staff.contractStartDate).getFullYear()}年
-                                {new Date(staff.contractStartDate).getMonth() + 1}月
-                                開始
+                                {new Date(staff.contractStartDate).getFullYear()}年{new Date(staff.contractStartDate).getMonth() + 1}月開始
                               </span>
                               <span className="text-[10px] text-slate-400 font-medium whitespace-nowrap">
                                 {staff.renewalInterval === 1 ? '毎月更新' : staff.renewalInterval ? `${staff.renewalInterval}ヶ月毎` : '期間未設定'}
@@ -249,21 +294,10 @@ export default function StaffListPage() {
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button
-                            onClick={() => {
-                              setEditingStaff(staff);
-                              setIsModalOpen(true);
-                            }}
-                            className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
-                            title="編集"
-                          >
+                          <button onClick={() => { setEditingStaff(staff); setIsModalOpen(true); }} className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all" title="編集">
                             <Edit2 size={16} />
                           </button>
-                          <button
-                            onClick={() => handleDelete(staff.id)}
-                            className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
-                            title="削除"
-                          >
+                          <button onClick={() => handleDelete(staff.id)} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all" title="削除">
                             <Trash2 size={16} />
                           </button>
                         </div>

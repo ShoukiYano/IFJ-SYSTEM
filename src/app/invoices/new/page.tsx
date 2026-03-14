@@ -19,9 +19,9 @@ export default function NewInvoicePage() {
     templateType: "STANDARD",
     notes: "振込手数料は貴社にてご負担願います。",
     taxRate: 0.1,
-    items: [{ 
-      description: "", serviceMonth: "", personName: "", 
-      quantity: 1, unit: "h", 
+    items: [{
+      description: "", serviceMonth: "", personName: "",
+      quantity: 1, unit: "h",
       unitPrice: 0, amount: 0,
       minHours: 140, maxHours: 180, overtimeRate: 0, deductionRate: 0,
       overtimeAmount: 0, deductionAmount: 0,
@@ -101,9 +101,9 @@ export default function NewInvoicePage() {
   const handleAddItem = () => {
     setInvoice({
       ...invoice,
-      items: [...invoice.items, { 
-        description: "", serviceMonth: "", personName: "", 
-        quantity: 1, unit: invoice.templateType === "SES" ? "h" : "式", 
+      items: [...invoice.items, {
+        description: "", serviceMonth: "", personName: "",
+        quantity: 1, unit: invoice.templateType === "SES" ? "h" : "式",
         unitPrice: 0, amount: 0,
         minHours: 140, maxHours: 180, overtimeRate: 0, deductionRate: 0,
         overtimeAmount: 0, deductionAmount: 0,
@@ -144,7 +144,7 @@ export default function NewInvoicePage() {
     const newItems = [...invoice.items];
     const currentItem = newItems[index];
     let updatedItem = { ...currentItem, [field]: value };
-    
+
     // SESの場合、年月変更時に内容（稼働分）も同期させる
     if (invoice.templateType === "SES" && field === "serviceMonth") {
       const match = value.match(/(\d+)月/);
@@ -157,10 +157,10 @@ export default function NewInvoicePage() {
     // SES: unitPrice / minHours / maxHours が変わったら自動で rate を再計算
     if (invoice.templateType === "SES" && ["unitPrice", "minHours", "maxHours"].includes(field)) {
       const unitPrice = Number(field === "unitPrice" ? value : updatedItem.unitPrice) || 0;
-      const min      = Number(field === "minHours"  ? value : updatedItem.minHours)  || 0;
-      const max      = Number(field === "maxHours"  ? value : updatedItem.maxHours)  || 0;
+      const min = Number(field === "minHours" ? value : updatedItem.minHours) || 0;
+      const max = Number(field === "maxHours" ? value : updatedItem.maxHours) || 0;
       if (unitPrice > 0 && min > 0 && max > 0) {
-        updatedItem.overtimeRate  = Math.floor(unitPrice / max);
+        updatedItem.overtimeRate = Math.floor(unitPrice / max);
         updatedItem.deductionRate = Math.floor(unitPrice / min);
       }
     }
@@ -173,7 +173,7 @@ export default function NewInvoicePage() {
         updatedItem.unitPrice = Number(selectedStaff.unitPrice);
         updatedItem.minHours = selectedStaff.minHours ?? 140;
         updatedItem.maxHours = selectedStaff.maxHours ?? 180;
-        
+
         // 追加: 控除・超過単価の初期設定（マスタにあればそれを使用、なければ計算）
         const unitPrice = Number(selectedStaff.unitPrice) || 0;
         const min = Number(selectedStaff.minHours) || 140;
@@ -181,7 +181,7 @@ export default function NewInvoicePage() {
 
         updatedItem.overtimeRate = selectedStaff.excessAmount ? Number(selectedStaff.excessAmount) : Math.floor(unitPrice / max);
         updatedItem.deductionRate = selectedStaff.deductionAmount ? Number(selectedStaff.deductionAmount) : Math.floor(unitPrice / min);
-        
+
         // 支払サイトなどの情報があれば活用（将来的な拡張用）
         if (selectedStaff.paymentTerms) {
           // メモ欄に追加するなどの処理も検討可能
@@ -190,7 +190,7 @@ export default function NewInvoicePage() {
     }
 
     newItems[index] = calculateItemAmount(updatedItem, invoice.templateType);
-    
+
     // バリデーションチェック (サービス月の不整合)
     if (field === "serviceMonth" || field === "issueDate") {
       const isMismatch = checkServiceMonthMismatch(new Date(invoice.issueDate), updatedItem.serviceMonth);
@@ -237,7 +237,7 @@ export default function NewInvoicePage() {
     importedItems.forEach(imported => {
       // インポートされた名前の空白を除去して比較用に使用
       const cleanImportedName = (imported.name || "").replace(/\s/g, '');
-      
+
       // マスタから一致する要員を探す（空白除去して比較）
       const matchedStaff = staffs.find(s => (s.name || "").replace(/\s/g, '') === cleanImportedName);
 
@@ -245,12 +245,12 @@ export default function NewInvoicePage() {
         const cleanItemName = (item.personName || "").replace(/\s/g, '');
         return cleanItemName === cleanImportedName;
       });
-      
+
       // 価格や精算幅の決定（インポートデータ優先、なければマスタ、それもなければデフォルト）
       const priceValue = imported.price ?? (matchedStaff ? Number(matchedStaff.unitPrice) : (existingIdx !== -1 ? newItems[existingIdx].unitPrice : 0));
       const minHours = imported.minHours ?? (matchedStaff?.minHours ? Number(matchedStaff.minHours) : (existingIdx !== -1 ? newItems[existingIdx].minHours : 140));
       const maxHours = imported.maxHours ?? (matchedStaff?.maxHours ? Number(matchedStaff.maxHours) : (existingIdx !== -1 ? newItems[existingIdx].maxHours : 180));
-      
+
       const overtimeRate = matchedStaff?.excessAmount ? Number(matchedStaff.excessAmount) : Math.floor(priceValue / (maxHours || 1));
       const deductionRate = matchedStaff?.deductionAmount ? Number(matchedStaff.deductionAmount) : Math.floor(priceValue / (minHours || 1));
 
@@ -274,8 +274,8 @@ export default function NewInvoicePage() {
         const sm = imported.month || invoice.items[0]?.serviceMonth || "";
         const match = sm.match(/(\d+)月/);
         const desc = match ? `${match[1]}月度稼働分` : "システムエンジニアリングサービス";
-        
-        const newItem = { 
+
+        const newItem = {
           ...baseItem,
           description: desc,
           serviceMonth: sm,
@@ -383,7 +383,7 @@ export default function NewInvoicePage() {
   const mapRowToItem = (cols: string[], nameIdx: number, timeIdx: number, monthIdx: number, priceIdx: number, rangeIdx: number) => {
     const name = cols[nameIdx];
     const hours = Number(cols[timeIdx].replace(/[^\d.]/g, ''));
-    
+
     let month = monthIdx !== -1 ? cols[monthIdx] : null;
     // Excelの日付数値（例: 45000〜）をチェック
     if (month && /^\d+(\.\d+)?$/.test(month) && Number(month) > 40000) {
@@ -410,26 +410,28 @@ export default function NewInvoicePage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 p-8">
+    <div className="min-h-screen bg-slate-50 p-4 sm:p-8">
       <div className="max-w-5xl mx-auto">
-        <div className="flex items-center gap-4 mb-8">
-          <a href="/" className="p-2 hover:bg-slate-200 rounded-full transition-colors">
-            <ChevronLeft size={24} />
-          </a>
-          <h1 className="text-3xl font-black text-slate-900">請求書作成</h1>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6 sm:mb-8">
+          <div className="flex items-center gap-3">
+            <a href="/" className="p-2 hover:bg-slate-200 rounded-full transition-colors">
+              <ChevronLeft size={24} />
+            </a>
+            <h1 className="text-2xl sm:text-3xl font-black text-slate-900">請求書作成</h1>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-8">
+        <div className="grid grid-cols-1 gap-6 sm:gap-8">
           {/* 基本設定 */}
-          <section className="bg-white p-8 rounded-xl shadow-sm border border-slate-200">
+          <section className="bg-white p-4 sm:p-8 rounded-xl shadow-sm border border-slate-200">
             <h2 className="text-lg font-bold mb-6 flex items-center gap-2 border-b pb-2">
               <FileText size={20} className="text-blue-600" /> 基本情報
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">請求書番号 (空欄で自動採番)</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20"
                   placeholder="INV-..."
                   value={invoice.invoiceNumber}
@@ -438,8 +440,8 @@ export default function NewInvoicePage() {
               </div>
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">登録番号</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20"
                   placeholder="T..."
                   value={invoice.registrationNumber}
@@ -448,7 +450,7 @@ export default function NewInvoicePage() {
               </div>
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">請求先</label>
-                <select 
+                <select
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20"
                   value={invoice.clientId}
                   onChange={e => setInvoice({ ...invoice, clientId: e.target.value })}
@@ -461,8 +463,8 @@ export default function NewInvoicePage() {
               </div>
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">件名 (任意)</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none"
                   placeholder="例：2024年8月分 業務委託費用"
                   value={invoice.subject}
@@ -471,8 +473,8 @@ export default function NewInvoicePage() {
               </div>
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">請求日</label>
-                <input 
-                  type="date" 
+                <input
+                  type="date"
                   value={invoice.issueDate}
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none"
                   onChange={e => setInvoice({ ...invoice, issueDate: e.target.value })}
@@ -481,13 +483,12 @@ export default function NewInvoicePage() {
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">支払期限</label>
                 <div className="relative">
-                  <input 
-                    type="date" 
-                    className={`w-full px-3 py-2 border rounded-lg outline-none ${
-                      invoice.dueDate && isHolidayOrWeekend(new Date(invoice.dueDate)).isHoliday 
-                        ? "bg-amber-50 border-amber-200 text-amber-800" 
+                  <input
+                    type="date"
+                    className={`w-full px-3 py-2 border rounded-lg outline-none ${invoice.dueDate && isHolidayOrWeekend(new Date(invoice.dueDate)).isHoliday
+                        ? "bg-amber-50 border-amber-200 text-amber-800"
                         : "bg-slate-50 border-slate-200"
-                    }`}
+                      }`}
                     value={invoice.dueDate}
                     onChange={e => setInvoice({ ...invoice, dueDate: e.target.value })}
                   />
@@ -501,7 +502,7 @@ export default function NewInvoicePage() {
               </div>
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">テンプレート</label>
-                <select 
+                <select
                   className="w-full px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-blue-800"
                   value={invoice.templateType}
                   onChange={e => setInvoice({ ...invoice, templateType: e.target.value })}
@@ -514,17 +515,17 @@ export default function NewInvoicePage() {
           </section>
 
           {/* 明細 */}
-          <section className="bg-white p-8 rounded-xl shadow-sm border border-slate-200">
-            <div className="flex justify-between items-center mb-6 border-b pb-2">
+          <section className="bg-white p-4 sm:p-8 rounded-xl shadow-sm border border-slate-200">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 border-b pb-2 gap-3">
               <h2 className="text-lg font-bold flex items-center gap-2">
                 <Plus size={20} className="text-blue-600" /> 明細項目
               </h2>
               <div className="flex gap-2">
-                <input 
-                  type="file" id="csv-import" accept=".csv, .xlsx, .xls" className="hidden" 
+                <input
+                  type="file" id="csv-import" accept=".csv, .xlsx, .xls" className="hidden"
                   onChange={handleImportFile}
                 />
-                <button 
+                <button
                   onClick={() => document.getElementById('csv-import')?.click()}
                   className="px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg text-xs font-bold flex items-center gap-2 hover:bg-slate-200 transition-colors border border-slate-200 shadow-sm outline-none focus:ring-2 focus:ring-slate-400/20"
                 >
@@ -533,7 +534,8 @@ export default function NewInvoicePage() {
               </div>
             </div>
             <div className="space-y-4">
-              <div className="grid grid-cols-12 gap-4 text-xs font-bold text-slate-500 uppercase px-2">
+              {/* デスクトップ: グリッドヘッダー (md以上のみ表示) */}
+              <div className="hidden md:grid grid-cols-12 gap-4 text-xs font-bold text-slate-500 uppercase px-2">
                 {invoice.templateType === "SES" ? (
                   <>
                     <div className="col-span-2">年月</div>
@@ -555,236 +557,328 @@ export default function NewInvoicePage() {
                 )}
               </div>
               {invoice.items.map((item, index) => (
-                <div key={index} className="space-y-2 pb-4 border-b border-slate-50 last:border-0 group">
-                  <div className="grid grid-cols-12 gap-4 items-center">
+                <div key={index} className="space-y-2 pb-4 border-b border-slate-100 last:border-0 group">
+                  {/* モバイル: カード形式 (md未満) */}
+                  <div className="md:hidden bg-slate-50 rounded-lg p-3 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-500">明細 #{index + 1}</span>
+                      <button onClick={() => { const newItems = invoice.items.filter((_, i) => i !== index); setInvoice({ ...invoice, items: newItems }); }} className="p-1 text-slate-300 hover:text-rose-500 transition-colors">
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
                     {invoice.templateType === "SES" ? (
                       <>
-                        <div className="col-span-2">
-                          <input 
-                            type="text" placeholder="2024年8月"
-                            className="w-full px-3 py-1.5 bg-slate-50 border border-slate-100 rounded text-sm"
-                            value={item.serviceMonth || ""}
-                            onChange={e => handleItemChange(index, "serviceMonth", e.target.value)}
-                          />
-                        </div>
-                        <div className="col-span-2">
-                          <div className="relative">
-                            <select 
-                              className="w-full px-3 py-1.5 bg-blue-50 border border-blue-200 rounded text-sm font-bold text-blue-800"
-                              value={item.staffId || ""}
-                              onChange={e => handleItemChange(index, "staffId", e.target.value)}
-                            >
-                              <option value="">要員を選択</option>
-                              {staffs.map((s: any) => (
-                                <option key={s.id} value={s.id}>{s.name} ({s.type === 'PROPER' ? 'プ' : 'BP'})</option>
-                              ))}
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="text-[10px] font-bold text-slate-400 uppercase">年月</label>
+                            <input type="text" placeholder="2024年8月" className="w-full mt-0.5 px-2 py-1.5 bg-white border border-slate-200 rounded text-sm" value={item.serviceMonth || ""} onChange={e => handleItemChange(index, "serviceMonth", e.target.value)} />
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-bold text-slate-400 uppercase">要員</label>
+                            <select className="w-full mt-0.5 px-2 py-1.5 bg-blue-50 border border-blue-200 rounded text-sm font-bold text-blue-800" value={item.staffId || ""} onChange={e => handleItemChange(index, "staffId", e.target.value)}>
+                              <option value="">選択</option>
+                              {staffs.map((s: any) => (<option key={s.id} value={s.id}>{s.name}</option>))}
                             </select>
                           </div>
                         </div>
-                        <div className="col-span-2">
-                          <input 
-                            type="text" placeholder="システムエンジニアリング"
-                            className="w-full px-3 py-1.5 bg-slate-50 border border-slate-100 rounded text-sm"
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-400 uppercase">内容</label>
+                          <input type="text" placeholder="システムエンジニアリング" className="w-full mt-0.5 px-2 py-1.5 bg-white border border-slate-200 rounded text-sm" value={item.description} onChange={e => handleItemChange(index, "description", e.target.value)} />
+                        </div>
+                        <div className="grid grid-cols-3 gap-2">
+                          <div>
+                            <label className="text-[10px] font-bold text-slate-400 uppercase">時間</label>
+                            <input type="number" className="w-full mt-0.5 px-2 py-1.5 bg-white border border-slate-200 rounded text-sm text-center" value={item.quantity} onChange={e => handleItemChange(index, "quantity", e.target.value)} />
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-bold text-slate-400 uppercase">単価</label>
+                            <input type="number" className="w-full mt-0.5 px-2 py-1.5 bg-white border border-slate-200 rounded text-sm" value={item.unitPrice} onChange={e => handleItemChange(index, "unitPrice", e.target.value)} />
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-bold text-slate-400 uppercase">金額</label>
+                            <div className="mt-0.5 px-2 py-1.5 font-bold text-slate-800 tabular-nums text-sm">{formatCurrency(Number(item.amount) || 0)}</div>
+                          </div>
+                        </div>
+                        <div className="bg-blue-50/50 rounded p-2 text-xs space-y-1">
+                          <div className="flex gap-2 items-center">
+                            <span className="text-blue-600 font-bold shrink-0">精算幅:</span>
+                            <input type="number" className="w-16 px-1 py-0.5 bg-white border border-blue-100 rounded text-center text-xs" value={item.minHours} onChange={e => handleItemChange(index, "minHours", e.target.value)} />
+                            <span>-</span>
+                            <input type="number" className="w-16 px-1 py-0.5 bg-white border border-blue-100 rounded text-center text-xs" value={item.maxHours} onChange={e => handleItemChange(index, "maxHours", e.target.value)} />
+                            <span>h</span>
+                          </div>
+                          <div className="flex gap-3">
+                            <div className="flex items-center gap-1">
+                              <span className="text-blue-600">超過:</span>
+                              <input type="number" className="w-20 px-1 py-0.5 bg-white border border-blue-100 rounded text-right text-xs" value={item.overtimeRate} onChange={e => handleItemChange(index, "overtimeRate", e.target.value)} />
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <span className="text-rose-600">控除:</span>
+                              <input type="number" className="w-20 px-1 py-0.5 bg-white border border-rose-100 rounded text-right text-xs" value={item.deductionRate} onChange={e => handleItemChange(index, "deductionRate", e.target.value)} />
+                            </div>
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-400 uppercase">内容 / 項目</label>
+                          <input type="text" placeholder="UIデザイン制作" className="w-full mt-0.5 px-2 py-1.5 bg-white border border-slate-200 rounded text-sm" value={item.description} onChange={e => handleItemChange(index, "description", e.target.value)} />
+                        </div>
+                        <div className="grid grid-cols-4 gap-2">
+                          <div className="col-span-2">
+                            <label className="text-[10px] font-bold text-slate-400 uppercase">単価</label>
+                            <input type="number" className="w-full mt-0.5 px-2 py-1.5 bg-white border border-slate-200 rounded text-sm" value={item.unitPrice} onChange={e => handleItemChange(index, "unitPrice", e.target.value)} />
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-bold text-slate-400 uppercase">数量</label>
+                            <input type="number" className="w-full mt-0.5 px-2 py-1.5 bg-white border border-slate-200 rounded text-sm text-center" value={item.quantity} onChange={e => handleItemChange(index, "quantity", e.target.value)} />
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-bold text-slate-400 uppercase">単位</label>
+                            <input type="text" className="w-full mt-0.5 px-2 py-1.5 bg-white border border-slate-200 rounded text-sm text-center" value={item.unit} onChange={e => handleItemChange(index, "unit", e.target.value)} />
+                          </div>
+                        </div>
+                        <div className="flex justify-end">
+                          <span className="font-bold text-slate-800 tabular-nums">{formatCurrency(Number(item.amount) || 0)}</span>
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  {/* デスクトップ: グリッド形式 (md以上) */}
+                  <div className="hidden md:block">
+                    <div className="grid grid-cols-12 gap-4 items-center">
+                      {invoice.templateType === "SES" ? (
+                        <>
+                          <div className="col-span-2">
+                            <input
+                              type="text" placeholder="2024年8月"
+                              className="w-full px-3 py-1.5 bg-slate-50 border border-slate-100 rounded text-sm"
+                              value={item.serviceMonth || ""}
+                              onChange={e => handleItemChange(index, "serviceMonth", e.target.value)}
+                            />
+                          </div>
+                          <div className="col-span-2">
+                            <div className="relative">
+                              <select
+                                className="w-full px-3 py-1.5 bg-blue-50 border border-blue-200 rounded text-sm font-bold text-blue-800"
+                                value={item.staffId || ""}
+                                onChange={e => handleItemChange(index, "staffId", e.target.value)}
+                              >
+                                <option value="">要員を選択</option>
+                                {staffs.map((s: any) => (
+                                  <option key={s.id} value={s.id}>{s.name} ({s.type === 'PROPER' ? 'プ' : 'BP'})</option>
+                                ))}
+                              </select>
+                            </div>
+                          </div>
+                          <div className="col-span-2">
+                            <input
+                              type="text" placeholder="システムエンジニアリング"
+                              className="w-full px-3 py-1.5 bg-slate-50 border border-slate-100 rounded text-sm"
+                              value={item.description}
+                              onChange={e => handleItemChange(index, "description", e.target.value)}
+                            />
+                          </div>
+                        </>
+                      ) : (
+                        <div className="col-span-6">
+                          <input
+                            type="text" placeholder="UIデザイン制作"
+                            className="w-full px-3 py-1.5 bg-slate-50 border border-slate-100 rounded focus:border-blue-500 outline-none text-sm"
                             value={item.description}
                             onChange={e => handleItemChange(index, "description", e.target.value)}
                           />
                         </div>
-                      </>
-                    ) : (
-                      <div className="col-span-6">
-                        <input 
-                          type="text" placeholder="UIデザイン制作"
-                          className="w-full px-3 py-1.5 bg-slate-50 border border-slate-100 rounded focus:border-blue-500 outline-none text-sm"
-                          value={item.description}
-                          onChange={e => handleItemChange(index, "description", e.target.value)}
+                      )}
+                      <div className="col-span-1">
+                        <input
+                          type="number"
+                          className="w-full px-2 py-1.5 bg-slate-50 border border-slate-100 rounded text-sm text-center"
+                          value={item.quantity}
+                          onChange={e => handleItemChange(index, "quantity", e.target.value)}
                         />
                       </div>
+                      <div className="col-span-1">
+                        <input
+                          type="text"
+                          className="w-full px-2 py-1.5 bg-slate-50 border border-slate-100 rounded text-sm text-center"
+                          value={item.unit}
+                          onChange={e => handleItemChange(index, "unit", e.target.value)}
+                        />
+                      </div>
+                      <div className="col-span-2">
+                        <input
+                          type="number"
+                          className="w-full px-2 py-1.5 bg-slate-50 border border-slate-100 rounded text-sm text-right"
+                          value={item.unitPrice}
+                          onChange={e => handleItemChange(index, "unitPrice", e.target.value)}
+                        />
+                      </div>
+                      <div className="col-span-2 text-right font-bold text-slate-800 tabular-nums px-2">
+                        {formatCurrency(Number(item.amount) || 0)}
+                      </div>
+                    </div>
+
+                    {invoice.templateType === "SES" && (
+                      <div className="space-y-2 ml-2">
+                        {/* 精算幅 */}
+                        <div className="grid grid-cols-12 gap-2 items-center bg-blue-50/30 p-2 rounded-lg border border-blue-100/50">
+                          <div className="col-span-5 flex items-center gap-2 text-[10px] font-bold text-blue-600 uppercase">
+                            <span className="shrink-0">精算幅:</span>
+                            <input
+                              type="number" className="w-16 px-1 py-0.5 bg-white border border-blue-100 rounded text-center"
+                              value={item.minHours} onChange={e => handleItemChange(index, "minHours", e.target.value)}
+                            />
+                            <span>-</span>
+                            <input
+                              type="number" className="w-16 px-1 py-0.5 bg-white border border-blue-100 rounded text-center"
+                              value={item.maxHours} onChange={e => handleItemChange(index, "maxHours", e.target.value)}
+                            />
+                            <span>h</span>
+                          </div>
+                          <div className="col-span-7 flex justify-end">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const unitPrice = Number(item.unitPrice) || 0;
+                                const min = Number(item.minHours) || 1;
+                                const max = Number(item.maxHours) || 1;
+                                if (unitPrice > 0 && min > 0 && max > 0) {
+                                  const newItems = [...invoice.items];
+                                  newItems[index] = calculateItemAmount({
+                                    ...newItems[index],
+                                    overtimeRate: Math.floor(unitPrice / max),
+                                    deductionRate: Math.floor(unitPrice / min),
+                                  }, invoice.templateType);
+                                  setInvoice({ ...invoice, items: newItems });
+                                }
+                              }}
+                              className="px-2 py-0.5 bg-blue-600 text-white text-[10px] font-bold rounded hover:bg-blue-700 transition-colors whitespace-nowrap"
+                            >
+                              精算幅から自動計算
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* 超過・控除単価 + 切り捨てボタン */}
+                        <div className="grid grid-cols-12 gap-2 items-start bg-blue-50/20 p-2 rounded-lg border border-blue-100/50">
+                          {/* 超過単価 */}
+                          <div className="col-span-6 space-y-1">
+                            <div className="flex items-center gap-1.5 text-[10px] font-bold text-blue-600">
+                              <span>超過単価:</span>
+                              <input
+                                type="number" className="w-20 px-1 py-0.5 bg-white border border-blue-100 rounded text-right text-[10px]"
+                                value={item.overtimeRate} onChange={e => handleItemChange(index, "overtimeRate", e.target.value)}
+                              />
+                              <span className="text-slate-400">円</span>
+                            </div>
+                            <div className="flex gap-1">
+                              {[1, 10, 100].map(unit => (
+                                <button
+                                  key={unit}
+                                  type="button"
+                                  onClick={() => {
+                                    const newItems = [...invoice.items];
+                                    newItems[index] = calculateItemAmount({
+                                      ...newItems[index],
+                                      overtimeRate: Math.floor(Number(newItems[index].overtimeRate) / unit) * unit,
+                                    }, invoice.templateType);
+                                    setInvoice({ ...invoice, items: newItems });
+                                  }}
+                                  className="px-1.5 py-0.5 bg-slate-100 text-slate-600 text-[9px] font-bold rounded hover:bg-slate-200 transition-colors border border-slate-200"
+                                >
+                                  {unit}円未満
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                          {/* 控除単価 */}
+                          <div className="col-span-6 space-y-1">
+                            <div className="flex items-center gap-1.5 text-[10px] font-bold text-rose-600">
+                              <span>控除単価:</span>
+                              <input
+                                type="number" className="w-20 px-1 py-0.5 bg-white border border-rose-100 rounded text-right text-[10px]"
+                                value={item.deductionRate} onChange={e => handleItemChange(index, "deductionRate", e.target.value)}
+                              />
+                              <span className="text-slate-400">円</span>
+                            </div>
+                            <div className="flex gap-1">
+                              {[1, 10, 100].map(unit => (
+                                <button
+                                  key={unit}
+                                  type="button"
+                                  onClick={() => {
+                                    const newItems = [...invoice.items];
+                                    newItems[index] = calculateItemAmount({
+                                      ...newItems[index],
+                                      deductionRate: Math.floor(Number(newItems[index].deductionRate) / unit) * unit,
+                                    }, invoice.templateType);
+                                    setInvoice({ ...invoice, items: newItems });
+                                  }}
+                                  className="px-1.5 py-0.5 bg-slate-100 text-slate-600 text-[9px] font-bold rounded hover:bg-slate-200 transition-colors border border-slate-200"
+                                >
+                                  {unit}円未満
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* 超過・控除金額リアルタイム表示 */}
+                          {(() => {
+                            const hours = Number(item.quantity) || 0;
+                            const min = Number(item.minHours) || 0;
+                            const max = Number(item.maxHours) || 0;
+                            const otAmt = Number(item.overtimeAmount) || 0;
+                            const deAmt = Number(item.deductionAmount) || 0;
+                            const hasRate = Number(item.overtimeRate) > 0 || Number(item.deductionRate) > 0;
+                            const inRange = hours > 0 && hours >= min && hours <= max;
+                            return (
+                              <div className="col-span-12 pt-1.5 border-t border-blue-100/50 flex items-center justify-between gap-2 flex-wrap">
+                                {/* 左側: 稼働ステータス */}
+                                <div className="text-[10px] font-bold">
+                                  {hours === 0 ? (
+                                    <span className="text-slate-400">稼働時間を入力してください</span>
+                                  ) : !hasRate ? (
+                                    <span className="text-slate-400">単価を入力すると超過・控除が自動計算されます</span>
+                                  ) : inRange ? (
+                                    <span className="inline-flex items-center gap-1 text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                                      ✓ 精算範囲内（{hours}h）
+                                    </span>
+                                  ) : hours > max ? (
+                                    <span className="inline-flex items-center gap-1 text-blue-600 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full">
+                                      ▲ 超過 {(hours - max).toFixed(2)}h
+                                    </span>
+                                  ) : (
+                                    <span className="inline-flex items-center gap-1 text-amber-600 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
+                                      ▼ 控除 {(min - hours).toFixed(2)}h
+                                    </span>
+                                  )}
+                                </div>
+                                {/* 右側: 金額 */}
+                                <div className="flex items-center gap-3 text-[10px] font-bold tabular-nums">
+                                  {otAmt > 0 && (
+                                    <span className="text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                                      超過 +{formatCurrency(otAmt)}
+                                    </span>
+                                  )}
+                                  {deAmt > 0 && (
+                                    <span className="text-rose-600 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded-full">
+                                      控除 −{formatCurrency(deAmt)}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })()}
+                        </div>
+                      </div>
                     )}
-                    <div className="col-span-1">
-                      <input 
-                        type="number" 
-                        className="w-full px-2 py-1.5 bg-slate-50 border border-slate-100 rounded text-sm text-center"
-                        value={item.quantity}
-                        onChange={e => handleItemChange(index, "quantity", e.target.value)}
-                      />
-                    </div>
-                    <div className="col-span-1">
-                      <input 
-                        type="text" 
-                        className="w-full px-2 py-1.5 bg-slate-50 border border-slate-100 rounded text-sm text-center"
-                        value={item.unit}
-                        onChange={e => handleItemChange(index, "unit", e.target.value)}
-                      />
-                    </div>
-                    <div className="col-span-2">
-                      <input 
-                        type="number" 
-                        className="w-full px-2 py-1.5 bg-slate-50 border border-slate-100 rounded text-sm text-right"
-                        value={item.unitPrice}
-                        onChange={e => handleItemChange(index, "unitPrice", e.target.value)}
-                      />
-                    </div>
-                    <div className="col-span-2 text-right font-bold text-slate-800 tabular-nums px-2">
-                      {formatCurrency(Number(item.amount) || 0)}
-                    </div>
+
                   </div>
 
-                  {invoice.templateType === "SES" && (
-                    <div className="space-y-2 ml-2">
-                      {/* 精算幅 */}
-                      <div className="grid grid-cols-12 gap-2 items-center bg-blue-50/30 p-2 rounded-lg border border-blue-100/50">
-                        <div className="col-span-5 flex items-center gap-2 text-[10px] font-bold text-blue-600 uppercase">
-                          <span className="shrink-0">精算幅:</span>
-                          <input 
-                            type="number" className="w-16 px-1 py-0.5 bg-white border border-blue-100 rounded text-center"
-                            value={item.minHours} onChange={e => handleItemChange(index, "minHours", e.target.value)}
-                          />
-                          <span>-</span>
-                          <input 
-                            type="number" className="w-16 px-1 py-0.5 bg-white border border-blue-100 rounded text-center"
-                            value={item.maxHours} onChange={e => handleItemChange(index, "maxHours", e.target.value)}
-                          />
-                          <span>h</span>
-                        </div>
-                        <div className="col-span-7 flex justify-end">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const unitPrice = Number(item.unitPrice) || 0;
-                              const min = Number(item.minHours) || 1;
-                              const max = Number(item.maxHours) || 1;
-                              if (unitPrice > 0 && min > 0 && max > 0) {
-                                const newItems = [...invoice.items];
-                                newItems[index] = calculateItemAmount({
-                                  ...newItems[index],
-                                  overtimeRate: Math.floor(unitPrice / max),
-                                  deductionRate: Math.floor(unitPrice / min),
-                                }, invoice.templateType);
-                                setInvoice({ ...invoice, items: newItems });
-                              }
-                            }}
-                            className="px-2 py-0.5 bg-blue-600 text-white text-[10px] font-bold rounded hover:bg-blue-700 transition-colors whitespace-nowrap"
-                          >
-                            精算幅から自動計算
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* 超過・控除単価 + 切り捨てボタン */}
-                      <div className="grid grid-cols-12 gap-2 items-start bg-blue-50/20 p-2 rounded-lg border border-blue-100/50">
-                        {/* 超過単価 */}
-                        <div className="col-span-6 space-y-1">
-                          <div className="flex items-center gap-1.5 text-[10px] font-bold text-blue-600">
-                            <span>超過単価:</span>
-                            <input 
-                              type="number" className="w-20 px-1 py-0.5 bg-white border border-blue-100 rounded text-right text-[10px]"
-                              value={item.overtimeRate} onChange={e => handleItemChange(index, "overtimeRate", e.target.value)}
-                            />
-                            <span className="text-slate-400">円</span>
-                          </div>
-                          <div className="flex gap-1">
-                            {[1, 10, 100].map(unit => (
-                              <button
-                                key={unit}
-                                type="button"
-                                onClick={() => {
-                                  const newItems = [...invoice.items];
-                                  newItems[index] = calculateItemAmount({
-                                    ...newItems[index],
-                                    overtimeRate: Math.floor(Number(newItems[index].overtimeRate) / unit) * unit,
-                                  }, invoice.templateType);
-                                  setInvoice({ ...invoice, items: newItems });
-                                }}
-                                className="px-1.5 py-0.5 bg-slate-100 text-slate-600 text-[9px] font-bold rounded hover:bg-slate-200 transition-colors border border-slate-200"
-                              >
-                                {unit}円未満
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                        {/* 控除単価 */}
-                        <div className="col-span-6 space-y-1">
-                          <div className="flex items-center gap-1.5 text-[10px] font-bold text-rose-600">
-                            <span>控除単価:</span>
-                            <input 
-                              type="number" className="w-20 px-1 py-0.5 bg-white border border-rose-100 rounded text-right text-[10px]"
-                              value={item.deductionRate} onChange={e => handleItemChange(index, "deductionRate", e.target.value)}
-                            />
-                            <span className="text-slate-400">円</span>
-                          </div>
-                          <div className="flex gap-1">
-                            {[1, 10, 100].map(unit => (
-                              <button
-                                key={unit}
-                                type="button"
-                                onClick={() => {
-                                  const newItems = [...invoice.items];
-                                  newItems[index] = calculateItemAmount({
-                                    ...newItems[index],
-                                    deductionRate: Math.floor(Number(newItems[index].deductionRate) / unit) * unit,
-                                  }, invoice.templateType);
-                                  setInvoice({ ...invoice, items: newItems });
-                                }}
-                                className="px-1.5 py-0.5 bg-slate-100 text-slate-600 text-[9px] font-bold rounded hover:bg-slate-200 transition-colors border border-slate-200"
-                              >
-                                {unit}円未満
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* 超過・控除金額リアルタイム表示 */}
-                        {(() => {
-                          const hours  = Number(item.quantity)  || 0;
-                          const min    = Number(item.minHours)  || 0;
-                          const max    = Number(item.maxHours)  || 0;
-                          const otAmt  = Number(item.overtimeAmount)  || 0;
-                          const deAmt  = Number(item.deductionAmount) || 0;
-                          const hasRate = Number(item.overtimeRate) > 0 || Number(item.deductionRate) > 0;
-                          const inRange = hours > 0 && hours >= min && hours <= max;
-                          return (
-                            <div className="col-span-12 pt-1.5 border-t border-blue-100/50 flex items-center justify-between gap-2 flex-wrap">
-                              {/* 左側: 稼働ステータス */}
-                              <div className="text-[10px] font-bold">
-                                {hours === 0 ? (
-                                  <span className="text-slate-400">稼働時間を入力してください</span>
-                                ) : !hasRate ? (
-                                  <span className="text-slate-400">単価を入力すると超過・控除が自動計算されます</span>
-                                ) : inRange ? (
-                                  <span className="inline-flex items-center gap-1 text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
-                                    ✓ 精算範囲内（{hours}h）
-                                  </span>
-                                ) : hours > max ? (
-                                  <span className="inline-flex items-center gap-1 text-blue-600 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full">
-                                    ▲ 超過 {(hours - max).toFixed(2)}h
-                                  </span>
-                                ) : (
-                                  <span className="inline-flex items-center gap-1 text-amber-600 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
-                                    ▼ 控除 {(min - hours).toFixed(2)}h
-                                  </span>
-                                )}
-                              </div>
-                              {/* 右側: 金額 */}
-                              <div className="flex items-center gap-3 text-[10px] font-bold tabular-nums">
-                                {otAmt > 0 && (
-                                  <span className="text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
-                                    超過 +{formatCurrency(otAmt)}
-                                  </span>
-                                )}
-                                {deAmt > 0 && (
-                                  <span className="text-rose-600 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded-full">
-                                    控除 −{formatCurrency(deAmt)}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          );
-                        })()}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* 警告表示 */}
+                  {/* 警告表示 (共通) */}
                   {item.warnings && item.warnings.length > 0 && (
                     <div className="mt-1 flex items-center gap-1.5 text-[10px] text-amber-600 font-bold bg-amber-50 p-1.5 rounded-lg border border-amber-100 mx-2">
                       <AlertTriangle size={14} />
@@ -793,7 +887,7 @@ export default function NewInvoicePage() {
                   )}
                 </div>
               ))}
-              <button 
+              <button
                 onClick={handleAddItem}
                 className="mt-4 flex items-center gap-2 text-blue-600 font-bold text-sm hover:translate-x-1 transition-transform"
               >
@@ -834,15 +928,15 @@ export default function NewInvoicePage() {
           <div className="flex flex-col md:flex-row gap-8 items-start">
             <section className="bg-white p-8 rounded-xl shadow-sm border border-slate-200 flex-1 w-full">
               <h2 className="text-xs font-bold text-slate-700 uppercase mb-4 tracking-wider">備考欄</h2>
-              <textarea 
+              <textarea
                 className="w-full h-32 p-4 bg-slate-50 border border-slate-100 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20 text-sm"
                 value={invoice.notes}
                 onChange={e => setInvoice({ ...invoice, notes: e.target.value })}
               />
             </section>
-            
+
             <div className="w-full md:w-64 space-y-4">
-              <button 
+              <button
                 onClick={handleSubmit}
                 className="w-full bg-blue-600 text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-blue-700 shadow-xl shadow-blue-500/20 transition-all hover:-translate-y-1"
               >
@@ -868,7 +962,7 @@ export default function NewInvoicePage() {
                 Excelファイルから複数のシートが検出されました。
               </p>
             </div>
-            
+
             <div className="p-4 max-h-[400px] overflow-y-auto">
               <div className="grid grid-cols-1 gap-2">
                 {workbookSheets.map((sheet) => (
@@ -889,9 +983,9 @@ export default function NewInvoicePage() {
                 ))}
               </div>
             </div>
-            
+
             <div className="p-4 bg-slate-50 border-t border-slate-100">
-              <button 
+              <button
                 onClick={() => {
                   setIsSheetModalOpen(false);
                   setPendingWorkbook(null);

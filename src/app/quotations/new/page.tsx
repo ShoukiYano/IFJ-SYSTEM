@@ -8,7 +8,7 @@ export default function NewQuotationPage() {
   const [clients, setClients] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [assignees, setAssignees] = useState<any[]>([]);
-  
+
   const [quotation, setQuotation] = useState({
     clientId: "",
     quotationNumber: "", // 手動指定用
@@ -20,8 +20,8 @@ export default function NewQuotationPage() {
     notes: "",
     taxRate: 0.10,
     items: [
-      { 
-        description: "", serviceMonth: "", personName: "", 
+      {
+        description: "", serviceMonth: "", personName: "",
         quantity: 1, unit: "式", unitPrice: 0, amount: 0,
         minHours: 140, maxHours: 180, overtimeRate: 0, deductionRate: 0,
         overtimeAmount: 0, deductionAmount: 0
@@ -54,8 +54,8 @@ export default function NewQuotationPage() {
   const handleAddItem = () => {
     setQuotation({
       ...quotation,
-      items: [...quotation.items, { 
-        description: "", serviceMonth: "", personName: "", 
+      items: [...quotation.items, {
+        description: "", serviceMonth: "", personName: "",
         quantity: 1, unit: "h", unitPrice: 0, amount: 0,
         minHours: 140, maxHours: 180, overtimeRate: 0, deductionRate: 0,
         overtimeAmount: 0, deductionAmount: 0
@@ -107,7 +107,7 @@ export default function NewQuotationPage() {
 
   const handleSubmit = async () => {
     if (!quotation.clientId) return alert("取引先を選択してください");
-    
+
     setLoading(true);
     const res = await fetch("/api/quotations", {
       method: "POST",
@@ -124,31 +124,31 @@ export default function NewQuotationPage() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto p-8">
-      <div className="flex items-center justify-between mb-8">
+    <div className="max-w-5xl mx-auto p-4 sm:p-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
         <div className="flex items-center gap-4">
           <a href="/quotations" className="p-2 hover:bg-slate-200 rounded-full transition-colors font-bold">
             <ChevronLeft size={24} />
           </a>
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight">見積書を新規作成</h1>
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">見積書を新規作成</h1>
         </div>
-        <button 
+        <button
           onClick={handleSubmit} disabled={loading}
-          className="bg-blue-600 text-white px-8 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-blue-700 transition-all shadow-lg disabled:opacity-50"
+          className="w-full sm:w-auto bg-blue-600 text-white px-8 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-blue-700 transition-all shadow-lg disabled:opacity-50"
         >
           {loading ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
           見積書を保存
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <div className="md:col-span-2 space-y-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
+        <div className="md:col-span-2 space-y-6 sm:space-y-8">
           {/* 基本情報 */}
-          <section className="bg-white p-8 rounded-xl shadow-sm border border-slate-200">
+          <section className="bg-white p-4 sm:p-8 rounded-xl shadow-sm border border-slate-200">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">見積書番号 (空欄で自動採番)</label>
-                <input 
+                <input
                   type="text" placeholder="EST-..."
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20"
                   value={quotation.quotationNumber}
@@ -157,7 +157,7 @@ export default function NewQuotationPage() {
               </div>
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">登録番号</label>
-                <input 
+                <input
                   type="text" placeholder="T..."
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20"
                   value={quotation.registrationNumber}
@@ -166,7 +166,7 @@ export default function NewQuotationPage() {
               </div>
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">取引先</label>
-                <select 
+                <select
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20"
                   value={quotation.clientId}
                   onChange={e => setQuotation({ ...quotation, clientId: e.target.value })}
@@ -179,7 +179,7 @@ export default function NewQuotationPage() {
               </div>
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">件名 (任意)</label>
-                <input 
+                <input
                   type="text" placeholder="プロジェクト名など"
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none"
                   value={quotation.subject}
@@ -188,7 +188,7 @@ export default function NewQuotationPage() {
               </div>
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">発行日</label>
-                <input 
+                <input
                   type="date"
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none"
                   value={quotation.issueDate}
@@ -197,7 +197,7 @@ export default function NewQuotationPage() {
               </div>
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">有効期限</label>
-                <input 
+                <input
                   type="date"
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none"
                   value={quotation.expiryDate}
@@ -206,7 +206,7 @@ export default function NewQuotationPage() {
               </div>
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">テンプレート</label>
-                <select 
+                <select
                   className="w-full px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-blue-800"
                   value={quotation.templateType}
                   onChange={e => setQuotation({ ...quotation, templateType: e.target.value })}
@@ -220,7 +220,60 @@ export default function NewQuotationPage() {
 
           {/* 明細 */}
           <section className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-            <table className="w-full text-left">
+            {/* モバイル: カード形式 */}
+            <div className="md:hidden divide-y divide-slate-100">
+              {quotation.items.map((item, index) => (
+                <div key={index} className="p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-500">明細 #{index + 1}</span>
+                    <button onClick={() => handleRemoveItem(index)} className="p-1 text-slate-300 hover:text-rose-500 transition-colors"><Trash2 size={16} /></button>
+                  </div>
+                  {quotation.templateType === "SES" ? (
+                    <>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div><label className="text-[10px] font-bold text-slate-400 uppercase">年月</label><input type="text" placeholder="2024年8月" className="w-full mt-0.5 px-2 py-1.5 bg-white border border-slate-200 rounded text-sm" value={item.serviceMonth || ""} onChange={e => handleItemChange(index, "serviceMonth", e.target.value)} /></div>
+                        <div><label className="text-[10px] font-bold text-slate-400 uppercase">該当者</label><input type="text" list={`assignees-${index}`} placeholder="山田太郎" className="w-full mt-0.5 px-2 py-1.5 bg-white border border-slate-200 rounded text-sm" value={item.personName || ""} onChange={e => handleItemChange(index, "personName", e.target.value)} /><datalist id={`assignees-${index}`}>{assignees.map((a: any) => (<option key={a.id} value={a.name} />))}</datalist></div>
+                      </div>
+                      <div><label className="text-[10px] font-bold text-slate-400 uppercase">内容</label><input type="text" placeholder="粿算" className="w-full mt-0.5 px-2 py-1.5 bg-white border border-slate-200 rounded text-sm" value={item.description} onChange={e => handleItemChange(index, "description", e.target.value)} /></div>
+                      <div className="grid grid-cols-3 gap-2">
+                        <div><label className="text-[10px] font-bold text-slate-400 uppercase">時間</label><input type="number" className="w-full mt-0.5 px-2 py-1.5 bg-white border border-slate-200 rounded text-sm text-center" value={item.quantity} onChange={e => handleItemChange(index, "quantity", Number(e.target.value))} /></div>
+                        <div><label className="text-[10px] font-bold text-slate-400 uppercase">単価</label><input type="number" className="w-full mt-0.5 px-2 py-1.5 bg-white border border-slate-200 rounded text-sm" value={item.unitPrice} onChange={e => handleItemChange(index, "unitPrice", Number(e.target.value))} /></div>
+                        <div><label className="text-[10px] font-bold text-slate-400 uppercase">金額</label><div className="mt-0.5 px-2 py-1.5 font-bold text-slate-800 tabular-nums text-sm">{formatCurrency(Number(item.amount) || 0)}</div></div>
+                      </div>
+                      <div className="bg-blue-50/50 rounded p-2 text-xs space-y-1">
+                        <div className="flex gap-2 items-center">
+                          <span className="text-blue-600 font-bold shrink-0">精算幅:</span>
+                          <input type="number" className="w-16 px-1 py-0.5 bg-white border border-blue-100 rounded text-center text-xs" value={item.minHours} onChange={e => handleItemChange(index, "minHours", e.target.value)} />
+                          <span>-</span>
+                          <input type="number" className="w-16 px-1 py-0.5 bg-white border border-blue-100 rounded text-center text-xs" value={item.maxHours} onChange={e => handleItemChange(index, "maxHours", e.target.value)} />
+                          <span>h</span>
+                        </div>
+                        <div className="flex gap-3">
+                          <div className="flex items-center gap-1"><span className="text-blue-600">超過:</span><input type="number" className="w-20 px-1 py-0.5 bg-white border border-blue-100 rounded text-right text-xs" value={item.overtimeRate} onChange={e => handleItemChange(index, "overtimeRate", e.target.value)} /></div>
+                          <div className="flex items-center gap-1"><span className="text-rose-600">控除:</span><input type="number" className="w-20 px-1 py-0.5 bg-white border border-rose-100 rounded text-right text-xs" value={item.deductionRate} onChange={e => handleItemChange(index, "deductionRate", e.target.value)} /></div>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div><label className="text-[10px] font-bold text-slate-400 uppercase">作業内容</label><input type="text" placeholder="作業内容など" className="w-full mt-0.5 px-2 py-1.5 bg-white border border-slate-200 rounded text-sm" value={item.description} onChange={e => handleItemChange(index, "description", e.target.value)} /></div>
+                      <div className="grid grid-cols-4 gap-2">
+                        <div className="col-span-2"><label className="text-[10px] font-bold text-slate-400 uppercase">単価</label><input type="number" className="w-full mt-0.5 px-2 py-1.5 bg-white border border-slate-200 rounded text-sm" value={item.unitPrice} onChange={e => handleItemChange(index, "unitPrice", Number(e.target.value))} /></div>
+                        <div><label className="text-[10px] font-bold text-slate-400 uppercase">数量</label><input type="number" className="w-full mt-0.5 px-2 py-1.5 bg-white border border-slate-200 rounded text-sm text-center" value={item.quantity} onChange={e => handleItemChange(index, "quantity", Number(e.target.value))} /></div>
+                        <div><label className="text-[10px] font-bold text-slate-400 uppercase">単位</label><input type="text" className="w-full mt-0.5 px-2 py-1.5 bg-white border border-slate-200 rounded text-sm text-center" value={item.unit} onChange={e => handleItemChange(index, "unit", e.target.value)} /></div>
+                      </div>
+                      <div className="flex justify-end"><span className="font-bold text-slate-800 tabular-nums">{formatCurrency(Number(item.amount) || 0)}</span></div>
+                    </>
+                  )}
+                </div>
+              ))}
+              <button onClick={handleAddItem} className="w-full py-4 text-sm font-bold text-blue-600 hover:bg-blue-50 transition-colors border-t border-slate-100 flex items-center justify-center gap-2">
+                <Plus size={16} /> 明細行を追加
+              </button>
+            </div>
+
+            {/* デスクトップ: テーブル形式 */}
+            <table className="w-full text-left hidden md:table">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-100 text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
                   {quotation.templateType === "SES" ? (
@@ -252,7 +305,7 @@ export default function NewQuotationPage() {
                       {quotation.templateType === "SES" ? (
                         <>
                           <td className="px-6 py-3">
-                            <input 
+                            <input
                               type="text" placeholder="2024年8月"
                               className="w-full border-none bg-transparent focus:ring-0 text-sm p-0"
                               value={item.serviceMonth || ""}
@@ -261,7 +314,7 @@ export default function NewQuotationPage() {
                           </td>
                           <td className="px-3 py-3">
                             <div className="relative">
-                              <input 
+                              <input
                                 type="text" list={`assignees-${index}`} placeholder="山田太郎"
                                 className="w-full border-none bg-transparent focus:ring-0 text-sm p-0"
                                 value={item.personName || ""}
@@ -275,7 +328,7 @@ export default function NewQuotationPage() {
                             </div>
                           </td>
                           <td className="px-3 py-3">
-                            <input 
+                            <input
                               type="text" placeholder="精算"
                               className="w-full border-none bg-transparent focus:ring-0 text-sm p-0"
                               value={item.description}
@@ -285,7 +338,7 @@ export default function NewQuotationPage() {
                         </>
                       ) : (
                         <td className="px-6 py-3">
-                          <input 
+                          <input
                             type="text" placeholder="作業内容など"
                             className="w-full border-none bg-transparent focus:ring-0 text-sm p-0"
                             value={item.description}
@@ -294,7 +347,7 @@ export default function NewQuotationPage() {
                         </td>
                       )}
                       <td className="px-3 py-3">
-                        <input 
+                        <input
                           type="number"
                           className="w-full border-none bg-transparent focus:ring-0 text-sm p-0 text-center"
                           value={item.quantity}
@@ -302,7 +355,7 @@ export default function NewQuotationPage() {
                         />
                       </td>
                       <td className="px-3 py-3">
-                        <input 
+                        <input
                           type="text"
                           className="w-full border-none bg-transparent focus:ring-0 text-sm p-0 text-center"
                           value={item.unit}
@@ -310,7 +363,7 @@ export default function NewQuotationPage() {
                         />
                       </td>
                       <td className="px-3 py-3">
-                        <input 
+                        <input
                           type="number"
                           className="w-full border-none bg-transparent focus:ring-0 text-sm p-0 text-right"
                           value={item.unitPrice}
@@ -332,12 +385,12 @@ export default function NewQuotationPage() {
                           <div className="flex items-center gap-8 text-[10px] font-bold text-blue-600/70 uppercase">
                             <div className="flex items-center gap-2">
                               <span>精算幅:</span>
-                              <input 
+                              <input
                                 type="number" className="w-16 bg-white border border-blue-100 rounded px-1"
                                 value={item.minHours} onChange={e => handleItemChange(index, "minHours", e.target.value)}
                               />
                               <span>-</span>
-                              <input 
+                              <input
                                 type="number" className="w-16 bg-white border border-blue-100 rounded px-1"
                                 value={item.maxHours} onChange={e => handleItemChange(index, "maxHours", e.target.value)}
                               />
@@ -347,14 +400,14 @@ export default function NewQuotationPage() {
                               <span>単価:</span>
                               <div className="flex items-center gap-1">
                                 <label>超過</label>
-                                <input 
+                                <input
                                   type="number" className="w-20 bg-white border border-blue-100 rounded px-1 text-right"
                                   value={item.overtimeRate} onChange={e => handleItemChange(index, "overtimeRate", e.target.value)}
                                 />
                               </div>
                               <div className="flex items-center gap-1">
                                 <label>控除</label>
-                                <input 
+                                <input
                                   type="number" className="w-20 bg-white border border-blue-100 rounded px-1 text-right"
                                   value={item.deductionRate} onChange={e => handleItemChange(index, "deductionRate", e.target.value)}
                                 />
@@ -372,7 +425,7 @@ export default function NewQuotationPage() {
                 ))}
               </tbody>
             </table>
-            <button 
+            <button
               onClick={handleAddItem}
               className="w-full py-4 text-sm font-bold text-blue-600 hover:bg-blue-50 transition-colors border-t border-slate-50 flex items-center justify-center gap-2"
             >
@@ -403,7 +456,7 @@ export default function NewQuotationPage() {
 
           <section className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
             <h2 className="text-xs font-bold text-slate-500 uppercase mb-4 tracking-widest">備考</h2>
-            <textarea 
+            <textarea
               rows={4} placeholder="見積の条件や有効期限など"
               className="w-full p-3 bg-slate-50 border border-slate-100 rounded-lg outline-none text-sm resize-none"
               value={quotation.notes}

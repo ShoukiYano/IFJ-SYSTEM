@@ -22,7 +22,7 @@ export default function EditQuotationPage() {
         ]);
         const clientsData = await clientsRes.json();
         const quotationData = await quotationRes.json();
-        
+
         setClients(clientsData);
         setQuotation({
           ...quotationData,
@@ -30,12 +30,10 @@ export default function EditQuotationPage() {
           expiryDate: quotationData.expiryDate ? quotationData.expiryDate.split("T")[0] : "",
         });
 
-        // Fetch initial assignees
         if (quotationData.clientId) {
           const assigneesRes = await fetch(`/api/assignees?clientId=${quotationData.clientId}`);
           if (assigneesRes.ok) {
-            const assigneesData = await assigneesRes.json();
-            setAssignees(assigneesData);
+            setAssignees(await assigneesRes.json());
           }
         }
       } catch (error) {
@@ -61,9 +59,9 @@ export default function EditQuotationPage() {
   const handleAddItem = () => {
     setQuotation({
       ...quotation,
-      items: [...quotation.items, { 
-        description: "", serviceMonth: "", personName: "", 
-        quantity: 1, unit: quotation.templateType === "SES" ? "h" : "式", 
+      items: [...quotation.items, {
+        description: "", serviceMonth: "", personName: "",
+        quantity: 1, unit: quotation.templateType === "SES" ? "h" : "式",
         unitPrice: 0, amount: 0,
         minHours: 140, maxHours: 180, overtimeRate: 0, deductionRate: 0,
         overtimeAmount: 0, deductionAmount: 0
@@ -78,7 +76,6 @@ export default function EditQuotationPage() {
       const max = Number(item.maxHours) || 0;
       const otRate = Number(item.overtimeRate) || 0;
       const deRate = Number(item.deductionRate) || 0;
-
       const overtimeAmount = hours > max ? (hours - max) * otRate : 0;
       const deductionAmount = hours < min ? (min - hours) * deRate : 0;
       const amount = Number(item.unitPrice) + overtimeAmount - deductionAmount;
@@ -102,8 +99,7 @@ export default function EditQuotationPage() {
     setQuotation({ ...quotation, items: newItems });
   };
 
-  const calculateSubtotal = () => quotation?.items.reduce((acc: number, item: any) => acc + (Number(item.amount) || 0), 0) || 0;
-  const subtotal = calculateSubtotal();
+  const subtotal = quotation?.items.reduce((acc: number, item: any) => acc + (Number(item.amount) || 0), 0) || 0;
   const tax = Math.floor(subtotal * (quotation?.taxRate || 0.1));
 
   const handleSubmit = async () => {
@@ -129,48 +125,35 @@ export default function EditQuotationPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 p-8">
+    <div className="min-h-screen bg-slate-50 p-4 sm:p-8">
       <div className="max-w-5xl mx-auto">
-        <div className="flex items-center gap-4 mb-8">
-          <button onClick={() => router.back()} className="p-2 hover:bg-slate-200 rounded-full transition-colors">
-            <ChevronLeft size={24} />
-          </button>
-          <h1 className="text-3xl font-black text-slate-900">見積書の編集</h1>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6 sm:mb-8">
+          <div className="flex items-center gap-3">
+            <button onClick={() => router.back()} className="p-2 hover:bg-slate-200 rounded-full transition-colors">
+              <ChevronLeft size={24} />
+            </button>
+            <h1 className="text-2xl sm:text-3xl font-black text-slate-900">見積書の編集</h1>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-8">
+        <div className="grid grid-cols-1 gap-6 sm:gap-8">
           {/* 基本設定 */}
-          <section className="bg-white p-8 rounded-xl shadow-sm border border-slate-200">
+          <section className="bg-white p-4 sm:p-8 rounded-xl shadow-sm border border-slate-200">
             <h2 className="text-lg font-bold mb-6 flex items-center gap-2 border-b pb-2">
               <FileText size={20} className="text-blue-600" /> 基本情報
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">見積書番号</label>
-                <input 
-                  type="text" 
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20"
-                  value={quotation.quotationNumber}
-                  onChange={e => setQuotation({ ...quotation, quotationNumber: e.target.value })}
-                />
+                <input type="text" className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20" value={quotation.quotationNumber} onChange={e => setQuotation({ ...quotation, quotationNumber: e.target.value })} />
               </div>
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">登録番号</label>
-                <input 
-                  type="text" 
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20"
-                  placeholder="T..."
-                  value={quotation.registrationNumber || ""}
-                  onChange={e => setQuotation({ ...quotation, registrationNumber: e.target.value })}
-                />
+                <input type="text" className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20" placeholder="T..." value={quotation.registrationNumber || ""} onChange={e => setQuotation({ ...quotation, registrationNumber: e.target.value })} />
               </div>
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">見積先</label>
-                <select 
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20"
-                  value={quotation.clientId}
-                  onChange={e => setQuotation({ ...quotation, clientId: e.target.value })}
-                >
+                <select className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20" value={quotation.clientId} onChange={e => setQuotation({ ...quotation, clientId: e.target.value })}>
                   <option value="">選択してください</option>
                   {Array.isArray(clients) && clients.map((c: any) => (
                     <option key={c.id} value={c.id}>{c.name}</option>
@@ -179,39 +162,19 @@ export default function EditQuotationPage() {
               </div>
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">件名 (任意)</label>
-                <input 
-                  type="text" 
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none"
-                  placeholder="例：2024年8月分 業務委託費用"
-                  value={quotation.subject || ""}
-                  onChange={e => setQuotation({ ...quotation, subject: e.target.value })}
-                />
+                <input type="text" className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none" placeholder="例：2024年8月分 業務委託費用" value={quotation.subject || ""} onChange={e => setQuotation({ ...quotation, subject: e.target.value })} />
               </div>
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">発行日</label>
-                <input 
-                  type="date" 
-                  value={quotation.issueDate}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none"
-                  onChange={e => setQuotation({ ...quotation, issueDate: e.target.value })}
-                />
+                <input type="date" value={quotation.issueDate} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none" onChange={e => setQuotation({ ...quotation, issueDate: e.target.value })} />
               </div>
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">有効期限</label>
-                <input 
-                  type="date" 
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none"
-                  value={quotation.expiryDate || ""}
-                  onChange={e => setQuotation({ ...quotation, expiryDate: e.target.value })}
-                />
+                <input type="date" className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none" value={quotation.expiryDate || ""} onChange={e => setQuotation({ ...quotation, expiryDate: e.target.value })} />
               </div>
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">テンプレート</label>
-                <select 
-                  className="w-full px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-blue-800"
-                  value={quotation.templateType}
-                  onChange={e => setQuotation({ ...quotation, templateType: e.target.value })}
-                >
+                <select className="w-full px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-blue-800" value={quotation.templateType} onChange={e => setQuotation({ ...quotation, templateType: e.target.value })}>
                   <option value="STANDARD">標準テンプレート</option>
                   <option value="SES">SES用テンプレート</option>
                 </select>
@@ -220,166 +183,139 @@ export default function EditQuotationPage() {
           </section>
 
           {/* 明細 */}
-          <section className="bg-white p-8 rounded-xl shadow-sm border border-slate-200">
+          <section className="bg-white p-4 sm:p-8 rounded-xl shadow-sm border border-slate-200">
             <h2 className="text-lg font-bold mb-6 flex items-center gap-2 border-b pb-2">
               <Plus size={20} className="text-blue-600" /> 明細項目
             </h2>
             <div className="space-y-4">
-              <div className="grid grid-cols-12 gap-4 text-xs font-bold text-slate-500 uppercase px-2">
-                {quotation.templateType === "SES" ? (
-                  <>
-                    <div className="col-span-2">年月</div>
-                    <div className="col-span-2">内容 (該当者等)</div>
-                    <div className="col-span-2">備考</div>
-                    <div className="col-span-1 text-center">時間</div>
-                    <div className="col-span-1 text-center">単位</div>
-                    <div className="col-span-2 text-right">単価</div>
-                    <div className="col-span-2 text-right px-2">金額</div>
-                  </>
-                ) : (
-                  <>
-                    <div className="col-span-6">内容 / 項目</div>
-                    <div className="col-span-1">数量</div>
-                    <div className="col-span-1">単位</div>
-                    <div className="col-span-2 text-right">単価</div>
-                    <div className="col-span-2 text-right px-2">金額</div>
-                  </>
-                )}
-              </div>
-              {quotation.items.map((item: any, index: number) => (
-                <div key={index} className="space-y-2 pb-4 border-b border-slate-50 last:border-0 group relative">
-                  <div className="grid grid-cols-12 gap-4 items-center">
+
+              {/* モバイル: カード形式 */}
+              <div className="md:hidden divide-y divide-slate-100 -mx-4">
+                {quotation.items.map((item: any, index: number) => (
+                  <div key={index} className="p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-500">明細 #{index + 1}</span>
+                      <button onClick={() => handleRemoveItem(index)} className="p-1 text-slate-300 hover:text-rose-500 transition-colors"><Trash2 size={16} /></button>
+                    </div>
                     {quotation.templateType === "SES" ? (
                       <>
-                        <div className="col-span-2">
-                          <input 
-                            type="text" placeholder="2024年8月"
-                            className="w-full px-3 py-1.5 bg-slate-50 border border-slate-100 rounded text-sm"
-                            value={item.serviceMonth || ""}
-                            onChange={e => handleItemChange(index, "serviceMonth", e.target.value)}
-                          />
+                        <div className="grid grid-cols-2 gap-2">
+                          <div><label className="text-[10px] font-bold text-slate-400 uppercase">年月</label><input type="text" placeholder="2024年8月" className="w-full mt-0.5 px-2 py-1.5 bg-white border border-slate-200 rounded text-sm" value={item.serviceMonth || ""} onChange={e => handleItemChange(index, "serviceMonth", e.target.value)} /></div>
+                          <div><label className="text-[10px] font-bold text-slate-400 uppercase">該当者</label><input type="text" list={`assignees-${index}`} className="w-full mt-0.5 px-2 py-1.5 bg-white border border-slate-200 rounded text-sm" value={item.personName || ""} onChange={e => handleItemChange(index, "personName", e.target.value)} /><datalist id={`assignees-${index}`}>{assignees.map((a: any) => (<option key={a.id} value={a.name} />))}</datalist></div>
                         </div>
-                        <div className="col-span-2">
-                          <div className="relative">
-                            <input 
-                              type="text" list={`assignees-${index}`} placeholder="該当者：山田太郎"
-                              className="w-full px-3 py-1.5 bg-slate-50 border border-slate-100 rounded text-sm"
-                              value={item.personName || ""}
-                              onChange={e => handleItemChange(index, "personName", e.target.value)}
-                            />
-                            <datalist id={`assignees-${index}`}>
-                              {assignees.map((a: any) => (
-                                <option key={a.id} value={a.name} />
-                              ))}
-                            </datalist>
-                          </div>
+                        <div><label className="text-[10px] font-bold text-slate-400 uppercase">内容</label><input type="text" className="w-full mt-0.5 px-2 py-1.5 bg-white border border-slate-200 rounded text-sm" value={item.description} onChange={e => handleItemChange(index, "description", e.target.value)} /></div>
+                        <div className="grid grid-cols-3 gap-2">
+                          <div><label className="text-[10px] font-bold text-slate-400 uppercase">時間</label><input type="number" className="w-full mt-0.5 px-2 py-1.5 bg-white border border-slate-200 rounded text-sm text-center" value={item.quantity} onChange={e => handleItemChange(index, "quantity", e.target.value)} /></div>
+                          <div><label className="text-[10px] font-bold text-slate-400 uppercase">単価</label><input type="number" className="w-full mt-0.5 px-2 py-1.5 bg-white border border-slate-200 rounded text-sm" value={item.unitPrice} onChange={e => handleItemChange(index, "unitPrice", e.target.value)} /></div>
+                          <div><label className="text-[10px] font-bold text-slate-400 uppercase">金額</label><div className="mt-0.5 px-2 py-1.5 font-bold text-slate-800 tabular-nums text-sm">{formatCurrency(Number(item.amount) || 0)}</div></div>
                         </div>
-                        <div className="col-span-2">
-                          <input 
-                            type="text" placeholder="システムエンジニアリング"
-                            className="w-full px-3 py-1.5 bg-slate-50 border border-slate-100 rounded text-sm"
-                            value={item.description}
-                            onChange={e => handleItemChange(index, "description", e.target.value)}
-                          />
+                        <div className="bg-blue-50/50 rounded p-2 text-xs space-y-1">
+                          <div className="flex gap-2 items-center"><span className="text-blue-600 font-bold">精算幅:</span><input type="number" className="w-16 px-1 py-0.5 bg-white border border-blue-100 rounded text-center text-xs" value={item.minHours} onChange={e => handleItemChange(index, "minHours", e.target.value)} /><span>-</span><input type="number" className="w-16 px-1 py-0.5 bg-white border border-blue-100 rounded text-center text-xs" value={item.maxHours} onChange={e => handleItemChange(index, "maxHours", e.target.value)} /><span>h</span></div>
+                          <div className="flex gap-3"><div className="flex items-center gap-1"><span className="text-blue-600">超過:</span><input type="number" className="w-20 px-1 py-0.5 bg-white border border-blue-100 rounded text-right text-xs" value={item.overtimeRate} onChange={e => handleItemChange(index, "overtimeRate", e.target.value)} /></div><div className="flex items-center gap-1"><span className="text-rose-600">控除:</span><input type="number" className="w-20 px-1 py-0.5 bg-white border border-rose-100 rounded text-right text-xs" value={item.deductionRate} onChange={e => handleItemChange(index, "deductionRate", e.target.value)} /></div></div>
                         </div>
                       </>
                     ) : (
-                      <div className="col-span-6">
-                        <input 
-                          type="text" placeholder="UIデザイン制作"
-                          className="w-full px-3 py-1.5 bg-slate-50 border border-slate-100 rounded focus:border-blue-500 outline-none text-sm"
-                          value={item.description}
-                          onChange={e => handleItemChange(index, "description", e.target.value)}
-                        />
-                      </div>
+                      <>
+                        <div><label className="text-[10px] font-bold text-slate-400 uppercase">内容 / 項目</label><input type="text" className="w-full mt-0.5 px-2 py-1.5 bg-white border border-slate-200 rounded text-sm" value={item.description} onChange={e => handleItemChange(index, "description", e.target.value)} /></div>
+                        <div className="grid grid-cols-4 gap-2">
+                          <div className="col-span-2"><label className="text-[10px] font-bold text-slate-400 uppercase">単価</label><input type="number" className="w-full mt-0.5 px-2 py-1.5 bg-white border border-slate-200 rounded text-sm" value={item.unitPrice} onChange={e => handleItemChange(index, "unitPrice", e.target.value)} /></div>
+                          <div><label className="text-[10px] font-bold text-slate-400 uppercase">数量</label><input type="number" className="w-full mt-0.5 px-2 py-1.5 bg-white border border-slate-200 rounded text-sm text-center" value={item.quantity} onChange={e => handleItemChange(index, "quantity", e.target.value)} /></div>
+                          <div><label className="text-[10px] font-bold text-slate-400 uppercase">単位</label><input type="text" className="w-full mt-0.5 px-2 py-1.5 bg-white border border-slate-200 rounded text-sm text-center" value={item.unit || "式"} onChange={e => handleItemChange(index, "unit", e.target.value)} /></div>
+                        </div>
+                        <div className="flex justify-end"><span className="font-bold text-slate-800 tabular-nums">{formatCurrency(Number(item.amount) || 0)}</span></div>
+                      </>
                     )}
-                    <div className="col-span-1">
-                      <input 
-                        type="number" 
-                        className="w-full px-2 py-1.5 bg-slate-50 border border-slate-100 rounded text-sm text-center"
-                        value={item.quantity}
-                        onChange={e => handleItemChange(index, "quantity", e.target.value)}
-                      />
-                    </div>
-                    <div className="col-span-1">
-                      <input 
-                        type="text" 
-                        className="w-full px-2 py-1.5 bg-slate-50 border border-slate-100 rounded text-sm text-center"
-                        value={item.unit || "式"}
-                        onChange={e => handleItemChange(index, "unit", e.target.value)}
-                      />
-                    </div>
-                    <div className="col-span-2">
-                      <input 
-                        type="number" 
-                        className="w-full px-2 py-1.5 bg-slate-50 border border-slate-100 rounded text-sm text-right"
-                        value={item.unitPrice}
-                        onChange={e => handleItemChange(index, "unitPrice", e.target.value)}
-                      />
-                    </div>
-                    <div className="col-span-2 text-right font-bold text-slate-800 tabular-nums px-2 pr-10">
-                      {formatCurrency(Number(item.amount) || 0)}
-                    </div>
-                    
-                    <button 
-                      onClick={() => handleRemoveItem(index)}
-                      className="absolute right-0 top-1.5 p-1 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
-                    >
-                      <Trash2 size={16} />
-                    </button>
                   </div>
+                ))}
+                <button onClick={handleAddItem} className="w-full py-4 text-sm font-bold text-blue-600 hover:bg-blue-50 transition-colors border-t border-slate-100 flex items-center justify-center gap-2">
+                  <Plus size={16} /> 明細行を追加
+                </button>
+              </div>
 
-                  {quotation.templateType === "SES" && (
-                    <div className="grid grid-cols-12 gap-4 items-center bg-blue-50/30 p-2 rounded-lg ml-2 border border-blue-100/50">
-                      <div className="col-span-4 flex items-center gap-2 text-[10px] font-bold text-blue-600 uppercase">
-                        <span>精算幅:</span>
-                        <input 
-                          type="number" className="w-16 px-1 py-0.5 bg-white border border-blue-100 rounded text-center"
-                          value={item.minHours} onChange={e => handleItemChange(index, "minHours", e.target.value)}
-                        />
-                        <span>-</span>
-                        <input 
-                          type="number" className="w-16 px-1 py-0.5 bg-white border border-blue-100 rounded text-center"
-                          value={item.maxHours} onChange={e => handleItemChange(index, "maxHours", e.target.value)}
-                        />
-                        <span>h</span>
-                      </div>
-                      <div className="col-span-4 flex items-center gap-2 text-[10px] font-bold text-blue-600 uppercase">
-                        <span>単価:</span>
-                        <label>超過</label>
-                        <input 
-                          type="number" className="w-16 px-1 py-0.5 bg-white border border-blue-100 rounded text-right"
-                          value={item.overtimeRate} onChange={e => handleItemChange(index, "overtimeRate", e.target.value)}
-                        />
-                        <label>控除</label>
-                        <input 
-                          type="number" className="w-16 px-1 py-0.5 bg-white border border-blue-100 rounded text-right"
-                          value={item.deductionRate} onChange={e => handleItemChange(index, "deductionRate", e.target.value)}
-                        />
-                      </div>
-                      <div className="col-span-4 text-right text-[10px] font-bold space-x-4">
-                        {(Number(item.overtimeAmount) || 0) > 0 && (
-                          <span className="text-emerald-600">超過: +{formatCurrency(Number(item.overtimeAmount) || 0)}</span>
-                        )}
-                        {(Number(item.deductionAmount) || 0) > 0 && (
-                          <span className="text-rose-600">控除: -{formatCurrency(Number(item.deductionAmount) || 0)}</span>
-                        )}
-                      </div>
-                    </div>
+              {/* デスクトップ: グリッド形式 */}
+              <div className="hidden md:block">
+                <div className="grid grid-cols-12 gap-4 text-xs font-bold text-slate-500 uppercase px-2 mb-2">
+                  {quotation.templateType === "SES" ? (
+                    <>
+                      <div className="col-span-2">年月</div>
+                      <div className="col-span-2">内容 (該当者等)</div>
+                      <div className="col-span-2">備考</div>
+                      <div className="col-span-1 text-center">時間</div>
+                      <div className="col-span-1 text-center">単位</div>
+                      <div className="col-span-2 text-right">単価</div>
+                      <div className="col-span-2 text-right px-2">金額</div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="col-span-6">内容 / 項目</div>
+                      <div className="col-span-1">数量</div>
+                      <div className="col-span-1">単位</div>
+                      <div className="col-span-2 text-right">単価</div>
+                      <div className="col-span-2 text-right px-2">金額</div>
+                    </>
                   )}
                 </div>
-              ))}
-              <button 
-                onClick={handleAddItem}
-                className="mt-4 flex items-center gap-2 text-blue-600 font-bold text-sm hover:translate-x-1 transition-transform"
-              >
-                <Plus size={16} /> 行を追加する
-              </button>
+                {quotation.items.map((item: any, index: number) => (
+                  <div key={index} className="space-y-2 pb-4 border-b border-slate-50 last:border-0 group relative">
+                    <div className="grid grid-cols-12 gap-4 items-center">
+                      {quotation.templateType === "SES" ? (
+                        <>
+                          <div className="col-span-2">
+                            <input type="text" placeholder="2024年8月" className="w-full px-3 py-1.5 bg-slate-50 border border-slate-100 rounded text-sm" value={item.serviceMonth || ""} onChange={e => handleItemChange(index, "serviceMonth", e.target.value)} />
+                          </div>
+                          <div className="col-span-2">
+                            <div className="relative">
+                              <input type="text" list={`assignees-${index}`} placeholder="該当者：山田太郎" className="w-full px-3 py-1.5 bg-slate-50 border border-slate-100 rounded text-sm" value={item.personName || ""} onChange={e => handleItemChange(index, "personName", e.target.value)} />
+                              <datalist id={`assignees-${index}`}>{assignees.map((a: any) => (<option key={a.id} value={a.name} />))}</datalist>
+                            </div>
+                          </div>
+                          <div className="col-span-2">
+                            <input type="text" placeholder="システムエンジニアリング" className="w-full px-3 py-1.5 bg-slate-50 border border-slate-100 rounded text-sm" value={item.description} onChange={e => handleItemChange(index, "description", e.target.value)} />
+                          </div>
+                        </>
+                      ) : (
+                        <div className="col-span-6">
+                          <input type="text" placeholder="UIデザイン制作" className="w-full px-3 py-1.5 bg-slate-50 border border-slate-100 rounded focus:border-blue-500 outline-none text-sm" value={item.description} onChange={e => handleItemChange(index, "description", e.target.value)} />
+                        </div>
+                      )}
+                      <div className="col-span-1"><input type="number" className="w-full px-2 py-1.5 bg-slate-50 border border-slate-100 rounded text-sm text-center" value={item.quantity} onChange={e => handleItemChange(index, "quantity", e.target.value)} /></div>
+                      <div className="col-span-1"><input type="text" className="w-full px-2 py-1.5 bg-slate-50 border border-slate-100 rounded text-sm text-center" value={item.unit || "式"} onChange={e => handleItemChange(index, "unit", e.target.value)} /></div>
+                      <div className="col-span-2"><input type="number" className="w-full px-2 py-1.5 bg-slate-50 border border-slate-100 rounded text-sm text-right" value={item.unitPrice} onChange={e => handleItemChange(index, "unitPrice", e.target.value)} /></div>
+                      <div className="col-span-2 text-right font-bold text-slate-800 tabular-nums px-2 pr-10">{formatCurrency(Number(item.amount) || 0)}</div>
+                      <button onClick={() => handleRemoveItem(index)} className="absolute right-0 top-1.5 p-1 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"><Trash2 size={16} /></button>
+                    </div>
+                    {quotation.templateType === "SES" && (
+                      <div className="grid grid-cols-12 gap-4 items-center bg-blue-50/30 p-2 rounded-lg ml-2 border border-blue-100/50">
+                        <div className="col-span-4 flex items-center gap-2 text-[10px] font-bold text-blue-600 uppercase">
+                          <span>精算幅:</span>
+                          <input type="number" className="w-16 px-1 py-0.5 bg-white border border-blue-100 rounded text-center" value={item.minHours} onChange={e => handleItemChange(index, "minHours", e.target.value)} />
+                          <span>-</span>
+                          <input type="number" className="w-16 px-1 py-0.5 bg-white border border-blue-100 rounded text-center" value={item.maxHours} onChange={e => handleItemChange(index, "maxHours", e.target.value)} />
+                          <span>h</span>
+                        </div>
+                        <div className="col-span-4 flex items-center gap-2 text-[10px] font-bold text-blue-600 uppercase">
+                          <span>単価:</span><label>超過</label>
+                          <input type="number" className="w-16 px-1 py-0.5 bg-white border border-blue-100 rounded text-right" value={item.overtimeRate} onChange={e => handleItemChange(index, "overtimeRate", e.target.value)} />
+                          <label>控除</label>
+                          <input type="number" className="w-16 px-1 py-0.5 bg-white border border-blue-100 rounded text-right" value={item.deductionRate} onChange={e => handleItemChange(index, "deductionRate", e.target.value)} />
+                        </div>
+                        <div className="col-span-4 text-right text-[10px] font-bold space-x-4">
+                          {(Number(item.overtimeAmount) || 0) > 0 && (<span className="text-emerald-600">超過: +{formatCurrency(Number(item.overtimeAmount) || 0)}</span>)}
+                          {(Number(item.deductionAmount) || 0) > 0 && (<span className="text-rose-600">控除: -{formatCurrency(Number(item.deductionAmount) || 0)}</span>)}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+                <button onClick={handleAddItem} className="mt-4 flex items-center gap-2 text-blue-600 font-bold text-sm hover:translate-x-1 transition-transform">
+                  <Plus size={16} /> 行を追加する
+                </button>
+              </div>
             </div>
 
             {/* 合計 */}
-            <div className="mt-12 flex justify-end">
-              <div className="w-64 space-y-3">
+            <div className="mt-8 sm:mt-12 flex justify-end">
+              <div className="w-full max-w-xs space-y-3">
                 <div className="flex justify-between text-slate-500 text-sm">
                   <span>小計</span>
                   <span className="tabular-nums font-bold">{formatCurrency(subtotal)}</span>
@@ -400,17 +336,16 @@ export default function EditQuotationPage() {
 
           {/* 備考 & 保存 */}
           <div className="flex flex-col md:flex-row gap-8 items-start">
-            <section className="bg-white p-8 rounded-xl shadow-sm border border-slate-200 flex-1 w-full">
+            <section className="bg-white p-4 sm:p-8 rounded-xl shadow-sm border border-slate-200 flex-1 w-full">
               <h2 className="text-xs font-bold text-slate-700 uppercase mb-4 tracking-wider">備考欄</h2>
-              <textarea 
+              <textarea
                 className="w-full h-32 p-4 bg-slate-50 border border-slate-100 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20 text-sm"
                 value={quotation.notes || ""}
                 onChange={e => setQuotation({ ...quotation, notes: e.target.value })}
               />
             </section>
-            
             <div className="w-full md:w-64 space-y-4">
-              <button 
+              <button
                 onClick={handleSubmit}
                 className="w-full bg-blue-600 text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-blue-700 shadow-xl shadow-blue-500/20 transition-all hover:-translate-y-1"
               >

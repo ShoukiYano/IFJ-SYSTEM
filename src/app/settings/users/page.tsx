@@ -39,21 +39,21 @@ export default function UserManagementPage() {
     };
 
     return (
-        <div className="max-w-5xl mx-auto p-8 space-y-8">
-            <div className="flex items-center justify-between">
+        <div className="max-w-5xl mx-auto p-4 sm:p-8 space-y-8">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
-                        <Users className="text-slate-400" size={32} />
+                    <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
+                        <Users className="text-slate-400" size={28} />
                         ユーザー管理
                     </h1>
-                    <p className="text-slate-500 mt-1">テナント内のスタッフと権限を管理します</p>
+                    <p className="text-slate-500 mt-1 text-sm">テナント内のスタッフと権限を管理します</p>
                 </div>
                 <button
                     onClick={() => {
                         setSelectedUser(null);
                         setIsModalOpen(true);
                     }}
-                    className="bg-slate-900 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 hover:bg-emerald-600 transition-all shadow-xl shadow-slate-200/50 active:scale-95"
+                    className="w-full sm:w-auto bg-slate-900 text-white px-6 py-3 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-emerald-600 transition-all shadow-xl shadow-slate-200/50 active:scale-95"
                 >
                     <UserPlus size={20} />
                     ユーザーを招待
@@ -61,65 +61,67 @@ export default function UserManagementPage() {
             </div>
 
             <div className="bg-white rounded-[32px] shadow-sm border border-slate-200 overflow-hidden">
-                <table className="w-full text-left">
-                    <thead>
-                        <tr className="bg-slate-50/50 border-b border-slate-200">
-                            <th className="px-8 py-5 text-[11px] font-black uppercase tracking-wider text-slate-400">名前</th>
-                            <th className="px-8 py-5 text-[11px] font-black uppercase tracking-wider text-slate-400">権限</th>
-                            <th className="px-8 py-5 text-[11px] font-black uppercase tracking-wider text-slate-400">メールアドレス</th>
-                            <th className="px-8 py-5 text-[11px] font-black uppercase tracking-wider text-slate-400">登録日</th>
-                            <th className="px-8 py-5 text-right text-[11px] font-black uppercase tracking-wider text-slate-400">操作</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 italic">
-                        {loading ? (
-                            <tr><td colSpan={5} className="p-12 text-center text-slate-400">読み込み中...</td></tr>
-                        ) : users.map(u => (
-                            <tr key={u.id} className="hover:bg-slate-50/50 transition-colors">
-                                <td className="px-8 py-6">
-                                    <div className="font-bold text-slate-900">{u.name || "未設定"}</div>
-                                </td>
-                                <td className="px-8 py-6">
-                                    <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black border ${u.role === "TENANT_ADMIN"
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left">
+                        <thead>
+                            <tr className="bg-slate-50/50 border-b border-slate-200">
+                                <th className="px-8 py-5 text-[11px] font-black uppercase tracking-wider text-slate-400">名前</th>
+                                <th className="px-8 py-5 text-[11px] font-black uppercase tracking-wider text-slate-400">権限</th>
+                                <th className="px-8 py-5 text-[11px] font-black uppercase tracking-wider text-slate-400">メールアドレス</th>
+                                <th className="px-8 py-5 text-[11px] font-black uppercase tracking-wider text-slate-400">登録日</th>
+                                <th className="px-8 py-5 text-right text-[11px] font-black uppercase tracking-wider text-slate-400">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 italic">
+                            {loading ? (
+                                <tr><td colSpan={5} className="p-12 text-center text-slate-400">読み込み中...</td></tr>
+                            ) : users.map(u => (
+                                <tr key={u.id} className="hover:bg-slate-50/50 transition-colors">
+                                    <td className="px-8 py-6">
+                                        <div className="font-bold text-slate-900">{u.name || "未設定"}</div>
+                                    </td>
+                                    <td className="px-8 py-6">
+                                        <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black border ${u.role === "TENANT_ADMIN"
                                             ? "text-blue-600 bg-blue-50 border-blue-100"
                                             : "text-slate-600 bg-slate-50 border-slate-100"
-                                        }`}>
-                                        <Shield size={12} />
-                                        {u.role === "TENANT_ADMIN" ? "管理者" : "一般"}
-                                    </div>
-                                </td>
-                                <td className="px-8 py-6 text-slate-500 text-sm">
-                                    <div className="flex items-center gap-2">
-                                        <Mail size={14} className="text-slate-300" />
-                                        {u.email}
-                                    </div>
-                                </td>
-                                <td className="px-8 py-6 text-slate-400 text-xs">
-                                    {new Date(u.createdAt).toLocaleDateString("ja-JP")}
-                                </td>
-                                <td className="px-8 py-6 text-right">
-                                    <div className="flex items-center justify-end gap-2">
-                                        <button
-                                            onClick={() => {
-                                                setSelectedUser(u);
-                                                setIsModalOpen(true);
-                                            }}
-                                            className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
-                                        >
-                                            <Edit2 size={18} />
-                                        </button>
-                                        <button
-                                            onClick={() => handleDelete(u.id)}
-                                            className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all"
-                                        >
-                                            <Trash2 size={18} />
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
+                                            }`}>
+                                            <Shield size={12} />
+                                            {u.role === "TENANT_ADMIN" ? "管理者" : "一般"}
+                                        </div>
+                                    </td>
+                                    <td className="px-8 py-6 text-slate-500 text-sm">
+                                        <div className="flex items-center gap-2">
+                                            <Mail size={14} className="text-slate-300" />
+                                            {u.email}
+                                        </div>
+                                    </td>
+                                    <td className="px-8 py-6 text-slate-400 text-xs">
+                                        {new Date(u.createdAt).toLocaleDateString("ja-JP")}
+                                    </td>
+                                    <td className="px-8 py-6 text-right">
+                                        <div className="flex items-center justify-end gap-2">
+                                            <button
+                                                onClick={() => {
+                                                    setSelectedUser(u);
+                                                    setIsModalOpen(true);
+                                                }}
+                                                className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                                            >
+                                                <Edit2 size={18} />
+                                            </button>
+                                            <button
+                                                onClick={() => handleDelete(u.id)}
+                                                className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all"
+                                            >
+                                                <Trash2 size={18} />
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             {isModalOpen && (
