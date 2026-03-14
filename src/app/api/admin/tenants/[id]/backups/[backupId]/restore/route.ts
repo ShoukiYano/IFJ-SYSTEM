@@ -18,7 +18,7 @@ export async function POST(
         const backupId = params.backupId;
 
         // 1. バックアップレコードの取得
-        const backup = await (prisma as any).tenantBackup.findUnique({
+        const backup = await (prisma as any).tenantBackup.findFirst({
             where: { id: backupId, tenantId },
         });
 

@@ -14,7 +14,7 @@ export async function GET(
             return NextResponse.json({ error: "権限がありません" }, { status: 403 });
         }
 
-        const backup = await (prisma as any).tenantBackup.findUnique({
+        const backup = await (prisma as any).tenantBackup.findFirst({
             where: {
                 id: params.backupId,
                 tenantId: params.id
@@ -60,5 +60,49 @@ export async function GET(
     } catch (error) {
         console.error("GET /api/admin/tenants/[id]/backups/[backupId] error:", error);
         return NextResponse.json({ error: "ダウンロードに失敗しました" }, { status: 500 });
+    }
+}
+
+export async function DELETE(
+    req: Request,
+    { params }: { params: { id: string; backupId: string } }
+) {
+    try {
+        const context = await getTenantContext();
+        if (!context || context.role !== "SYSTEM_ADMIN") {
+            return NextResponse.json({ error: "権限がありません" }, { status: 403 });
+        }
+
+        const backup = await (prisma as any).tenantBackup.findFirst({
+            where: {
+                id: params.backupId,
+                tenantId: params.id
+            },
+        });
+
+        if (!backup) {
+            return NextResponse.json({ error: "バックアップが見つかりません" }, { status: 404 });
+        }
+
+        // Delete from Supabase Storage if it was saved there
+        if (backup.fileUrl) {
+            const { supabaseAdmin } = await import("@/lib/supabaseAdmin");
+            const { error } = await supabaseAdmin.storage
+                .from("backups")
+                .remove([backup.fileUrl]);
+
+            if (error) {
+                console.error("Storage delete error:", error);
+            }
+        }
+
+        await (prisma as any).tenantBackup.delete({
+            where: { id: backup.id }
+        });
+
+        return NextResponse.json({ success: true });
+    } catch (error) {
+        console.error("DELETE /api/admin/tenants/[id]/backups/[backupId] error:", error);
+        return NextResponse.json({ error: "削除に失敗しました" }, { status: 500 });
     }
 }
