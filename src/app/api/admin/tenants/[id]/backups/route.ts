@@ -69,7 +69,8 @@ export async function POST(
       second: "2-digit",
     }).replace(/\//g, "").replace(/ /g, "_").replace(/:/g, "");
 
-    const filename = `backup_${tenant.name}_${timestamp}.json`;
+    // Supabase StorageはASCII以外のキーを拒否するため、テナント名を除外しIDのみ使用
+    const filename = `backup_${params.id}_${timestamp}.json`;
     const storagePath = `${params.id}/${filename}`;
 
     // Supabase SDK（管理者モード）を使用してStorageにアップロード
