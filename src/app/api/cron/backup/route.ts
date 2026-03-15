@@ -19,7 +19,7 @@ export async function GET(req: Request) {
   try {
     // ① 全テナントを取得（削除済み除く）
     const tenants = await (prisma as any).tenant.findMany({
-      where: { deletedAt: null },
+      where: { isActive: true },
       select: { id: true, name: true },
     });
 
