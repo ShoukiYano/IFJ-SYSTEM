@@ -48,11 +48,14 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
     }
   }, [session]);
 
+  const role = (session?.user as any)?.role;
+  const isTenantAdmin = role === "TENANT_ADMIN" || (isImpersonating && role === "SYSTEM_ADMIN");
+
   const menuItems = [
     { label: "ダッシュボード", icon: LayoutDashboard, href: "/" },
     { label: "見積書管理", icon: FileText, href: "/quotations", feature: "invoice" },
     { label: "請求書管理", icon: PlusCircle, href: "/invoices", feature: "invoice" },
-    { label: "勤怠管理", icon: FileText, href: "/attendance", feature: "attendance" },
+    { label: "勤怠管理", icon: FileText, href: isTenantAdmin ? "/attendance/manage" : "/attendance", feature: "attendance" },
     { label: "シフト管理", icon: PlusCircle, href: "/attendance/shifts", feature: "attendance" },
     { label: "要員管理", icon: Users, href: "/staff" },
     { label: "取引先管理", icon: Users, href: "/clients" },
@@ -77,7 +80,6 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
     { label: "プロフィール設定", icon: Settings, href: "/admin/profile" },
   ];
 
-  const role = (session?.user as any)?.role;
 
   // 代理ログイン中はテナントメニューを表示、それ以外は role で判定
   const showTenantMenu = isImpersonating || role !== "SYSTEM_ADMIN";
