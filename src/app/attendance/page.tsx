@@ -12,11 +12,14 @@ export default function AttendancePage() {
   const [weeklyShifts, setWeeklyShifts] = useState<any[]>([]);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [showCheckOutModal, setShowCheckOutModal] = useState(false);
+  const [showShiftRequestModal, setShowShiftRequestModal] = useState(false);
+  const [requests, setRequests] = useState<any[]>([]);
 
   useEffect(() => {
     const init = async () => {
       await fetchStatus();
       await fetchWeeklyShifts();
+      await fetchRequests();
       setLoading(false);
     };
     init();
@@ -42,6 +45,18 @@ export default function AttendancePage() {
       if (res.ok) {
         const json = await res.json();
         setWeeklyShifts(json);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const fetchRequests = async () => {
+    try {
+      const res = await fetch("/api/shifts/requests");
+      if (res.ok) {
+        const json = await res.json();
+        setRequests(json);
       }
     } catch (error) {
       console.error(error);
@@ -238,10 +253,39 @@ export default function AttendancePage() {
       </div>
 
       {/* シフト変更申請ボタン */}
-      <button className="w-full bg-white border border-slate-200 text-slate-600 py-4 rounded-2xl text-sm font-black hover:bg-slate-50 transition-all flex items-center justify-center gap-2 mb-10">
+      <button 
+        onClick={() => setShowShiftRequestModal(true)}
+        className="w-full bg-white border border-slate-200 text-slate-600 py-4 rounded-2xl text-sm font-black hover:bg-slate-50 transition-all flex items-center justify-center gap-2"
+      >
         <Clock size={16} />
         シフト変更を申請する
       </button>
+
+      {/* 申請状況一覧 (簡易) */}
+      {requests.length > 0 && (
+        <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 space-y-4">
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Recent Requests</p>
+          <div className="space-y-2">
+            {requests.map((r: any) => (
+              <div key={r.id} className="bg-white p-3 rounded-xl border border-slate-100 flex justify-between items-center text-xs">
+                <div>
+                  <div className="font-bold text-slate-700">
+                    {format(new Date(r.targetDate), "M/d")} : {format(new Date(r.requestStartTime), "HH:mm")} - {format(new Date(r.requestEndTime), "HH:mm")}
+                  </div>
+                  <div className="text-[10px] text-slate-400 mt-0.5 line-clamp-1">{r.reason}</div>
+                </div>
+                <div className={`px-2 py-1 rounded-lg font-black text-[10px] uppercase ${
+                  r.status === 'APPROVED' ? 'bg-emerald-100 text-emerald-600' :
+                  r.status === 'REJECTED' ? 'bg-rose-100 text-rose-600' :
+                  'bg-amber-100 text-amber-600'
+                }`}>
+                  {r.status}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* 場所情報 (デモ) */}
       <div className="flex items-center justify-center gap-2 text-slate-400">
@@ -262,6 +306,133 @@ export default function AttendancePage() {
           loading={punching}
         />
       )}
+
+      {showShiftRequestModal && (
+        <ShiftRequestModal
+          isOpen={showShiftRequestModal}
+          onClose={() => setShowShiftRequestModal(false)}
+          onSuccess={() => {
+            setShowShiftRequestModal(false);
+            fetchRequests();
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+function ShiftRequestModal({ isOpen, onClose, onSuccess }: { isOpen: boolean, onClose: () => void, onSuccess: () => void }) {
+  const [date, setDate] = useState(format(new Date(), "yyyy-MM-dd"));
+  const [startTime, setStartTime] = useState("09:00");
+  const [endTime, setEndTime] = useState("18:00");
+  const [reason, setReason] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const res = await fetch("/api/shifts/requests", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          targetDate: date,
+          requestStartTime: `${date}T${startTime}:00`,
+          requestEndTime: `${date}T${endTime}:00`,
+          reason
+        })
+      });
+      if (res.ok) {
+        alert("シフト変更を申請しました");
+        onSuccess();
+      } else {
+        const data = await res.json();
+        alert(data.error || "申請に失敗しました");
+      }
+    } catch (err) {
+      alert("通信エラーが発生しました");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-50 p-6 overflow-y-auto">
+      <div className="bg-white rounded-[2.5rem] w-full max-w-lg shadow-2xl p-10 my-auto animate-in zoom-in-95 duration-200">
+        <div className="flex items-center justify-between mb-8">
+          <div className="space-y-1">
+            <h3 className="text-2xl font-black text-slate-900">シフト変更の申請</h3>
+            <p className="text-slate-500 font-bold text-sm">希望する日時と理由を入力してください</p>
+          </div>
+          <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 transition-colors">
+            <ArrowRight className="rotate-180" size={24} />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="space-y-2">
+            <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">対象日</label>
+            <input 
+              type="date" 
+              required
+              className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-bold focus:border-indigo-500 outline-none transition-all"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">希望開始時間</label>
+              <input 
+                type="time" 
+                required
+                className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-black text-xl focus:border-indigo-500 outline-none transition-all"
+                value={startTime}
+                onChange={(e) => setStartTime(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">希望終了時間</label>
+              <input 
+                type="time" 
+                required
+                className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-black text-xl focus:border-indigo-500 outline-none transition-all"
+                value={endTime}
+                onChange={(e) => setEndTime(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">申請理由</label>
+            <textarea 
+              required
+              className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-medium focus:border-indigo-500 outline-none transition-all h-32"
+              placeholder="例: 客先の要望により1時間前倒しで勤務するため"
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+            />
+          </div>
+
+          <div className="flex flex-col gap-3 pt-4">
+            <button 
+              type="submit"
+              disabled={loading}
+              className="w-full bg-indigo-600 text-white py-5 rounded-2xl font-black shadow-xl shadow-indigo-200 hover:bg-indigo-700 hover:-translate-y-0.5 transition-all disabled:opacity-50"
+            >
+              {loading ? <Loader2 className="animate-spin mx-auto" size={24} /> : "申請を提出する"}
+            </button>
+            <button 
+              type="button"
+              onClick={onClose}
+              className="w-full py-4 text-slate-400 font-black hover:text-slate-600 transition-all"
+            >
+              キャンセル
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

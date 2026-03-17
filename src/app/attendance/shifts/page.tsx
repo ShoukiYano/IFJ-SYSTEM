@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Calendar as CalendarIcon, Users, ChevronLeft, ChevronRight, Save, Loader2, Copy, Trash2 } from "lucide-react";
+import { Calendar as CalendarIcon, Users, ChevronLeft, ChevronRight, Save, Loader2, Copy, Trash2, AlertCircle } from "lucide-react";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, addMonths, subMonths, isWeekend, startOfWeek, endOfWeek } from "date-fns";
 import { ja } from "date-fns/locale";
 import { useSession } from "next-auth/react";
@@ -19,6 +19,8 @@ export default function ShiftManagePage() {
   
   // 編集中のシフト（一時保存用）
   const [pendingShifts, setPendingShifts] = useState<any[]>([]);
+  const [shiftRequests, setShiftRequests] = useState<any[]>([]);
+  const [showRequests, setShowRequests] = useState(false);
 
   // 編集モーダル用
   const [editingCell, setEditingCell] = useState<{ staffId: string; date: Date; shift: any } | null>(null);
@@ -40,6 +42,13 @@ export default function ShiftManagePage() {
         setStaffs(sData);
         setShifts(shData);
         setPendingShifts([]); // クリア
+      }
+
+      // 申請一覧も取得
+      const reqRes = await fetch("/api/shifts/requests?status=PENDING");
+      if (reqRes.ok) {
+        const reqData = await reqRes.json();
+        setShiftRequests(reqData);
       }
     } catch (error) {
       console.error(error);
@@ -124,10 +133,6 @@ export default function ShiftManagePage() {
   const handleDeleteShift = () => {
     if (!editingCell) return;
 
-    // 削除時は pendingShifts から取り除き、DB上のものがある場合は API 側で明示的な削除シグナルを送る必要がある。
-    // ここでは簡易的に「削除対象」として扱う（保存時に送るリストから外す & DB側も消す対象にする）
-    // bulk API 側が「送られてこなかった日付を消す」というロジックなら単純に filter でOK。
-    // とりあえず pending から消す。
     setPendingShifts(prev => [
         ...prev.filter(ps => !(ps.staffId === editingCell.staffId && format(new Date(ps.date), "yyyy-MM-dd") === format(editingCell.date, "yyyy-MM-dd"))),
         { staffId: editingCell.staffId, date: editingCell.date, isDeleted: true } // 削除フラグ
@@ -157,6 +162,30 @@ export default function ShiftManagePage() {
     }
   };
 
+  const handleProcessRequest = async (requestId: string, status: "APPROVED" | "REJECTED") => {
+    let rejectionReason = "";
+    if (status === "REJECTED") {
+      rejectionReason = prompt("却下する理由を入力してください") || "";
+      if (!rejectionReason) return;
+    }
+
+    try {
+      const res = await fetch(`/api/shifts/requests/${requestId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status, rejectionReason })
+      });
+      if (res.ok) {
+        alert(status === "APPROVED" ? "承認しました" : "棄却しました");
+        fetchData();
+      } else {
+        alert("処理に失敗しました");
+      }
+    } catch (error) {
+      alert("通信エラーが発生しました");
+    }
+  };
+
   if (loading) return <div className="p-8 font-black text-slate-400 animate-pulse">カレンダーを生成中...</div>;
 
   return (
@@ -167,6 +196,18 @@ export default function ShiftManagePage() {
           <p className="text-slate-500 font-medium">要員ごとの勤務予定を一括で編成します</p>
         </div>
         <div className="flex items-center gap-4">
+          <button 
+            onClick={() => setShowRequests(!showRequests)}
+            className={`px-6 py-3 rounded-2xl font-black transition-all flex items-center gap-2 relative ${showRequests ? 'bg-amber-100 text-amber-700' : 'bg-white border border-slate-100 text-slate-600 shadow-sm'}`}
+          >
+            <AlertCircle size={20} />
+            申請を確認
+            {shiftRequests.length > 0 && (
+              <span className="absolute -top-2 -right-2 bg-rose-500 text-white text-[10px] w-6 h-6 flex items-center justify-center rounded-full border-2 border-white animate-bounce">
+                {shiftRequests.length}
+              </span>
+            )}
+          </button>
           <div className="flex items-center bg-white rounded-2xl border border-slate-100 p-1 shadow-sm">
             <button onClick={() => setCurrentMonth(subMonths(currentMonth, 1))} className="p-2 hover:bg-slate-50 rounded-xl transition-all">
               <ChevronLeft size={20} />
@@ -188,6 +229,77 @@ export default function ShiftManagePage() {
           </button>
         </div>
       </div>
+
+      {showRequests && (
+        <div className="bg-amber-50 border border-amber-200 rounded-[2.5rem] p-8 animate-in slide-in-from-top-4 duration-300">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-xl font-black text-amber-900 flex items-center gap-2">
+              <AlertCircle className="text-amber-500" />
+              シフト変更申請の確認
+            </h3>
+            <span className="text-xs font-bold text-amber-700">{shiftRequests.length} 件の未処理申請</span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {shiftRequests.length > 0 ? (
+              shiftRequests.map((r: any) => (
+                <div key={r.id} className="bg-white rounded-3xl p-6 shadow-sm border border-amber-100 space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="size-10 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-600 font-bold">
+                      {r.staff.name.charAt(0)}
+                    </div>
+                    <div>
+                      <div className="font-black text-slate-800">{r.staff.name}</div>
+                      <div className="text-[10px] text-amber-600 font-bold uppercase">{format(new Date(r.targetDate), "yyyy/MM/dd (E)", { locale: ja })}</div>
+                    </div>
+                  </div>
+
+                  <div className="bg-slate-50 rounded-2xl p-4 flex items-center justify-between">
+                    <div>
+                      <div className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mb-1">Proposed</div>
+                      <div className="text-lg font-black text-slate-900">
+                        {format(new Date(r.requestStartTime), "HH:mm")} - {format(new Date(r.requestEndTime), "HH:mm")}
+                      </div>
+                    </div>
+                    {r.currentStartTime && (
+                      <div className="text-right">
+                        <div className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mb-1">Current</div>
+                        <div className="text-xs font-bold text-slate-400 line-through">
+                          {format(new Date(r.currentStartTime), "HH:mm")} - {format(new Date(r.currentEndTime), "HH:mm")}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Reason</p>
+                    <p className="text-xs text-slate-600 font-medium leading-relaxed bg-slate-50/50 p-3 rounded-xl border border-slate-50">{r.reason}</p>
+                  </div>
+
+                  <div className="flex gap-2 pt-2">
+                    <button 
+                      onClick={() => handleProcessRequest(r.id, "APPROVED")}
+                      className="flex-1 bg-indigo-600 text-white py-3 rounded-2xl text-xs font-black shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all"
+                    >
+                      承認する
+                    </button>
+                    <button 
+                      onClick={() => handleProcessRequest(r.id, "REJECTED")}
+                      className="flex-1 bg-white border border-slate-200 text-slate-400 py-3 rounded-2xl text-xs font-black hover:bg-rose-50 hover:text-rose-500 hover:border-rose-100 transition-all"
+                    >
+                      棄却
+                    </button>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="col-span-full py-12 text-center text-amber-600 bg-white/50 rounded-3xl border border-dashed border-amber-200">
+                <p className="font-bold">現在、未処理のシフト変更申請はありません</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="bg-white rounded-[2.5rem] shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden">
         <div className="overflow-x-auto">
