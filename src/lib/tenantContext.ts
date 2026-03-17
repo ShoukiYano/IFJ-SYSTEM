@@ -1,5 +1,6 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "./auth";
+import prisma from "./prisma";
 import { redirect } from "next/navigation";
 
 /**
@@ -25,6 +26,13 @@ export async function getTenantContext() {
     const impUserId = cookies().get("x-impersonate-user-id")?.value;
 
     if (impTenantId) {
+      // Fetch tenant features for impersonation
+      const tenant = await (prisma.tenant as any).findUnique({
+        where: { id: impTenantId },
+        select: { hasInvoiceFeature: true, hasAttendanceFeature: true }
+      });
+
+      console.log(`[IMP] Impersonating tenant: ${impTenantId}`, { hasInvoice: (tenant as any)?.hasInvoiceFeature, hasAttendance: (tenant as any)?.hasAttendanceFeature });
       return {
         userId: impUserId || realUserId,
         tenantId: impTenantId,
@@ -32,6 +40,8 @@ export async function getTenantContext() {
         originalRole: realRole, // Preserve system admin status
         user: session.user,
         isImpersonating: true,
+        hasInvoiceFeature: (tenant as any)?.hasInvoiceFeature ?? true,
+        hasAttendanceFeature: (tenant as any)?.hasAttendanceFeature ?? false,
       };
     }
   }
@@ -43,6 +53,8 @@ export async function getTenantContext() {
     originalRole: realRole,
     user: session.user,
     isImpersonating: false,
+    hasInvoiceFeature: (session.user as any).hasInvoiceFeature ?? true,
+    hasAttendanceFeature: (session.user as any).hasAttendanceFeature ?? false,
   };
 }
 

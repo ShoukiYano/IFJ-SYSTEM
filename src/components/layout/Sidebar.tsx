@@ -16,6 +16,10 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
   const pathname = usePathname();
   const { data: session } = useSession();
   const [isImpersonating, setIsImpersonating] = useState(false);
+  const [effectiveFeatures, setEffectiveFeatures] = useState({
+    hasInvoiceFeature: (session?.user as any)?.hasInvoiceFeature !== false,
+    hasAttendanceFeature: (session?.user as any)?.hasAttendanceFeature === true,
+  });
 
   useEffect(() => {
     const checkImpersonation = async () => {
@@ -23,11 +27,25 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
         const res = await fetch("/api/admin/impersonate/status");
         if (res.ok) {
           const data = await res.json();
+          console.log("[SIDEBAR] Impersonation status:", data);
           setIsImpersonating(data.isImpersonating);
+          if (data.isImpersonating) {
+            setEffectiveFeatures({
+              hasInvoiceFeature: data.hasInvoiceFeature,
+              hasAttendanceFeature: data.hasAttendanceFeature,
+            });
+          }
         }
       } catch (e) { }
     };
-    if (session) checkImpersonation();
+    if (session) {
+      checkImpersonation();
+      // 初期値はセッションから
+      setEffectiveFeatures({
+        hasInvoiceFeature: (session?.user as any)?.hasInvoiceFeature !== false,
+        hasAttendanceFeature: (session?.user as any)?.hasAttendanceFeature === true,
+      });
+    }
   }, [session]);
 
   const menuItems = [
@@ -44,12 +62,9 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
     { label: "システム設定", icon: Settings, href: "/settings" },
   ];
 
-  const hasInvoiceFeature = (session?.user as any)?.hasInvoiceFeature !== false;
-  const hasAttendanceFeature = (session?.user as any)?.hasAttendanceFeature === true;
-
   const filteredMenuItems = menuItems.filter(item => {
-    if ((item as any).feature === "invoice") return hasInvoiceFeature;
-    if ((item as any).feature === "attendance") return hasAttendanceFeature;
+    if ((item as any).feature === "invoice") return effectiveFeatures.hasInvoiceFeature;
+    if ((item as any).feature === "attendance") return effectiveFeatures.hasAttendanceFeature;
     return true;
   });
 

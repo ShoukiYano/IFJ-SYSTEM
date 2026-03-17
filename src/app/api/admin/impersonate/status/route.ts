@@ -8,5 +8,7 @@ export async function GET() {
     return NextResponse.json({
         isImpersonating: !!context?.isImpersonating,
         tenantId: context?.tenantId,
+        hasInvoiceFeature: (context as any)?.hasInvoiceFeature,
+        hasAttendanceFeature: (context as any)?.hasAttendanceFeature,
     });
 }
