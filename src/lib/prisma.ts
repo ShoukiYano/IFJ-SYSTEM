@@ -8,6 +8,7 @@ const prismaClientSingleton = () => {
     query: {
       $allModels: {
         async $allOperations({ model, operation, args, query }) {
+          console.log(`[PRISMA] START ${model}.${operation}`);
           const tenantId = getTenantId();
 
           // テナント分離が必要なモデル一覧
@@ -59,7 +60,14 @@ const prismaClientSingleton = () => {
             }
           }
 
-          return query(args);
+          try {
+            const result = await query(args);
+            console.log(`[PRISMA] END ${model}.${operation}`);
+            return result;
+          } catch (err) {
+            console.error(`[PRISMA] ERROR ${model}.${operation}:`, err);
+            throw err;
+          }
         },
       },
     },
