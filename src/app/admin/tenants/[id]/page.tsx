@@ -185,6 +185,24 @@ export default function TenantDetailPage({ params }: { params: { id: string } })
     }
   };
 
+  const handleImpersonate = async () => {
+    if (!confirm(`${tenant.name} としてログインしますか？\n（システム管理者権限を保持したまま動作確認が可能です）`)) return;
+    try {
+      const res = await fetch("/api/admin/impersonate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tenantId: tenant.id }),
+      });
+      if (res.ok) {
+        window.location.href = "/";
+      } else {
+        alert("代理ログインに失敗しました");
+      }
+    } catch (error) {
+      alert("通信エラーが発生しました");
+    }
+  };
+
   if (loading) return <div className="p-8">読み込み中...</div>;
   if (!tenant) return null;
 
@@ -196,9 +214,18 @@ export default function TenantDetailPage({ params }: { params: { id: string } })
           テナント一覧に戻る
         </Link>
         <div className="flex justify-between items-end">
-          <div>
-            <h1 className="text-3xl font-bold text-slate-800">{tenant.name}</h1>
-            <p className="text-slate-500 mt-1">ID: {tenant.id}</p>
+          <div className="flex items-end gap-6">
+            <div>
+              <h1 className="text-3xl font-bold text-slate-800">{tenant.name}</h1>
+              <p className="text-slate-500 mt-1">ID: {tenant.id}</p>
+            </div>
+            <button
+              onClick={handleImpersonate}
+              className="mb-1 bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-indigo-700 transition shadow-lg shadow-indigo-600/20"
+            >
+              <Key size={18} />
+              このテナントとして動作確認
+            </button>
           </div>
           <button
             onClick={handleDelete}
