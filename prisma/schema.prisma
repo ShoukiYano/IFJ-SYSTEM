@@ -188,6 +188,9 @@ model Staff {
   type               StaffType @default(PROPER)
   manager            String?
   name               String
+  email              String?   // 連絡用/紐付け用メールアドレス
+  userId             String?   @unique
+  user               User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
   area               StaffArea @default(KANTO)
   unitPrice          Decimal   @db.Decimal(12, 2)
   minHours           Float?
@@ -362,6 +365,8 @@ model User {
   sessions       Session[]
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
+  
+  staff          Staff?
 
   @@index([tenantId])
 }

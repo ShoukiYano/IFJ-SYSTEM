@@ -1,11 +1,17 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { X, Save, User, Calendar, RefreshCcw } from "lucide-react";
+import { X, Save, User, Calendar, RefreshCcw, Key } from "lucide-react";
 
 interface Client {
   id: string;
   name: string;
+}
+
+interface TenantUser {
+  id: string;
+  name: string;
+  email: string;
 }
 
 interface StaffModalProps {
@@ -17,38 +23,46 @@ interface StaffModalProps {
 
 export default function StaffModal({ isOpen, onClose, onSuccess, staff }: StaffModalProps) {
   const [clients, setClients] = useState<Client[]>([]);
+  const [users, setUsers] = useState<TenantUser[]>([]);
   const [formData, setFormData] = useState({
     name: "",
     type: "PROPER" as "PROPER" | "BP",
-    area: "KANTO" as "KANSAI" | "KANTO",
+    area: "KANTO" as "KANSAI" | "KANTO" | "NAGOYA",
     manager: "",
     clientId: "",
     unitPrice: 0,
     minHours: 140,
     maxHours: 180,
-    contractStartDate: new Date().toISOString().split("-").slice(0, 2).join("-"), // Default to current YYYY-MM
+    contractStartDate: new Date().toISOString().split("-").slice(0, 2).join("-"),
     renewalInterval: 3,
     paymentTerms: "",
     settlementUnit: 15,
+    userId: "", // Linking to User account
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    fetch("/api/clients")
-      .then((res) => res.json())
-      .then((data) => {
-        if (Array.isArray(data)) {
-          setClients(data);
-        } else {
-          console.error("Expected array for clients, got:", data);
-          setClients([]);
+    // Fetch clients and users
+    const fetchData = async () => {
+      try {
+        const [cRes, uRes] = await Promise.all([
+          fetch("/api/clients"),
+          fetch("/api/users")
+        ]);
+        if (cRes.ok) {
+          const cData = await cRes.json();
+          setClients(Array.isArray(cData) ? cData : []);
         }
-      })
-      .catch((err) => {
-        console.error("Fetch clients error:", err);
-        setClients([]);
-      });
-  }, []);
+        if (uRes.ok) {
+          const uData = await uRes.json();
+          setUsers(Array.isArray(uData) ? uData : []);
+        }
+      } catch (err) {
+        console.error("Fetch data error:", err);
+      }
+    };
+    if (isOpen) fetchData();
+  }, [isOpen]);
 
   useEffect(() => {
     if (staff) {
@@ -65,6 +79,7 @@ export default function StaffModal({ isOpen, onClose, onSuccess, staff }: StaffM
         renewalInterval: staff.renewalInterval || 3,
         paymentTerms: staff.paymentTerms || "",
         settlementUnit: staff.settlementUnit || 15,
+        userId: staff.userId || "",
       });
     } else {
       setFormData({
@@ -80,6 +95,7 @@ export default function StaffModal({ isOpen, onClose, onSuccess, staff }: StaffM
         renewalInterval: 3,
         paymentTerms: "",
         settlementUnit: 15,
+        userId: "",
       });
     }
   }, [staff, isOpen]);
@@ -96,6 +112,7 @@ export default function StaffModal({ isOpen, onClose, onSuccess, staff }: StaffM
         body: JSON.stringify({
           ...formData,
           contractStartDate: formData.contractStartDate ? `${formData.contractStartDate}-01T00:00:00Z` : null,
+          userId: formData.userId || null,
         }),
         headers: { "Content-Type": "application/json" },
       });
@@ -131,8 +148,30 @@ export default function StaffModal({ isOpen, onClose, onSuccess, staff }: StaffM
 
         <div className="flex-1 overflow-y-auto p-8">
           <form id="staff-form" onSubmit={handleSubmit} className="space-y-6">
+            <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 space-y-4">
+               <h3 className="text-sm font-black text-slate-800 flex items-center gap-2">
+                 <Key size={16} className="text-indigo-600" /> ログインアカウント連携
+               </h3>
+               <div>
+                  <label className="text-[10px] font-bold text-slate-400 uppercase mb-1.5 block">紐付けるユーザーアカウント</label>
+                  <select
+                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl outline-none focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 font-medium"
+                    value={formData.userId}
+                    onChange={(e) => setFormData({ ...formData, userId: e.target.value })}
+                  >
+                    <option value="">(未紐付け)</option>
+                    {users.map((u) => (
+                      <option key={u.id} value={u.id}>
+                        {u.name} ({u.email})
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-[10px] text-slate-500 mt-2 ml-1">※勤怠打刻を行うには、各従業員のログイン用アカウントと紐付ける必要があります。</p>
+               </div>
+            </div>
+
             <div>
-              <label className="text-xs font-bold text-slate-500 uppercase mb-1.5 block">名前</label>
+              <label className="text-xs font-bold text-slate-500 uppercase mb-1.5 block">要員名</label>
               <input
                 type="text"
                 required
@@ -169,7 +208,7 @@ export default function StaffModal({ isOpen, onClose, onSuccess, staff }: StaffM
             </div>
 
             <div>
-              <label className="text-xs font-bold text-slate-500 uppercase mb-1.5 block">担当者 (Manager)</label>
+              <label className="text-xs font-bold text-slate-500 uppercase mb-1.5 block">担当営業 (Manager)</label>
               <input
                 type="text"
                 className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none"
@@ -179,18 +218,7 @@ export default function StaffModal({ isOpen, onClose, onSuccess, staff }: StaffM
             </div>
 
             <div>
-              <label className="text-xs font-bold text-slate-500 uppercase mb-1.5 block">支払いサイト (例: 15日, 45日)</label>
-              <input
-                type="text"
-                className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20"
-                placeholder="例: 45日サイト"
-                value={formData.paymentTerms}
-                onChange={(e) => setFormData({ ...formData, paymentTerms: e.target.value })}
-              />
-            </div>
-
-            <div>
-              <label className="text-xs font-bold text-slate-500 uppercase mb-1.5 block">所属取引先</label>
+              <label className="text-xs font-bold text-slate-500 uppercase mb-1.5 block">所属取引先 (Client)</label>
               <select
                 required
                 className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none"
@@ -206,48 +234,61 @@ export default function StaffModal({ isOpen, onClose, onSuccess, staff }: StaffM
               </select>
             </div>
 
-            <div>
-              <label className="text-xs font-bold text-slate-500 uppercase mb-1.5 block">単価 (円)</label>
-              <input
-                type="number"
-                required
-                className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none"
-                value={formData.unitPrice}
-                onChange={(e) => setFormData({ ...formData, unitPrice: parseInt(e.target.value) || 0 })}
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
+            <div className="p-6 bg-emerald-50/30 rounded-2xl border border-emerald-100 space-y-6">
+              <h3 className="text-sm font-black text-emerald-800">精算・単価パラメータ</h3>
+              
               <div>
-                <label className="text-xs font-bold text-slate-500 uppercase mb-1.5 block">精算幅 (下限h)</label>
+                <label className="text-xs font-bold text-emerald-600 uppercase mb-1.5 block">契約単価 (月額/円)</label>
                 <input
                   type="number"
-                  className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none"
-                  value={formData.minHours}
-                  onChange={(e) => setFormData({ ...formData, minHours: parseFloat(e.target.value) || 0 })}
+                  required
+                  className="w-full px-4 py-2 bg-white border border-emerald-100 rounded-xl outline-none focus:ring-4 focus:ring-emerald-500/5 font-bold"
+                  value={formData.unitPrice}
+                  onChange={(e) => setFormData({ ...formData, unitPrice: parseInt(e.target.value) || 0 })}
                 />
               </div>
-              <div>
-                <label className="text-xs font-bold text-slate-500 uppercase mb-1.5 block">精算幅 (上限h)</label>
-                <input
-                  type="number"
-                  className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none"
-                  value={formData.maxHours}
-                  onChange={(e) => setFormData({ ...formData, maxHours: parseFloat(e.target.value) || 0 })}
-                />
-              </div>
-            </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-xs font-bold text-slate-500 uppercase mb-1.5 block">精算単位 (分)</label>
-                <input
-                  type="number"
-                  className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none"
-                  placeholder="15"
-                  value={formData.settlementUnit}
-                  onChange={(e) => setFormData({ ...formData, settlementUnit: parseInt(e.target.value) || 0 })}
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-bold text-emerald-600 uppercase mb-1.5 block">精算下限(h)</label>
+                  <input
+                    type="number"
+                    className="w-full px-4 py-2 bg-white border border-emerald-100 rounded-xl outline-none"
+                    value={formData.minHours}
+                    onChange={(e) => setFormData({ ...formData, minHours: parseFloat(e.target.value) || 0 })}
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-emerald-600 uppercase mb-1.5 block">精算上限(h)</label>
+                  <input
+                    type="number"
+                    className="w-full px-4 py-2 bg-white border border-emerald-100 rounded-xl outline-none"
+                    value={formData.maxHours}
+                    onChange={(e) => setFormData({ ...formData, maxHours: parseFloat(e.target.value) || 0 })}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-bold text-emerald-600 uppercase mb-1.5 block">支払いサイト</label>
+                  <input
+                    type="text"
+                    className="w-full px-4 py-2 bg-white border border-emerald-100 rounded-xl outline-none"
+                    placeholder="45日等"
+                    value={formData.paymentTerms}
+                    onChange={(e) => setFormData({ ...formData, paymentTerms: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-emerald-600 uppercase mb-1.5 block">精算単位 (分)</label>
+                  <input
+                    type="number"
+                    className="w-full px-4 py-2 bg-white border border-emerald-100 rounded-xl outline-none"
+                    value={formData.settlementUnit}
+                    onChange={(e) => setFormData({ ...formData, settlementUnit: parseInt(e.target.value) || 0 })}
+                  />
+                </div>
               </div>
             </div>
 
@@ -270,7 +311,7 @@ export default function StaffModal({ isOpen, onClose, onSuccess, staff }: StaffM
                     <RefreshCcw size={10} /> 更新間隔
                   </label>
                   <select
-                    className="w-full px-4 py-2 bg-white border border-blue-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20"
+                    className="w-full px-4 py-2 bg-white border border-blue-200 rounded-xl outline-none"
                     value={formData.renewalInterval}
                     onChange={(e) => setFormData({ ...formData, renewalInterval: parseInt(e.target.value) })}
                   >

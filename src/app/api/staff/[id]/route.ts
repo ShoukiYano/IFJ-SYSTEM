@@ -16,6 +16,7 @@ const staffUpdateSchema = z.object({
   renewalInterval: z.number().min(1).optional().nullable(),
   paymentTerms: z.string().optional().nullable(),
   settlementUnit: z.number().optional().nullable(),
+  userId: z.string().optional().nullable(),
 });
 
 export async function GET(req: Request, { params }: { params: { id: string } }) {
@@ -66,6 +67,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
       data: {
         ...validated,
         contractStartDate: validated.contractStartDate ? new Date(validated.contractStartDate) : (validated.contractStartDate === null ? null : undefined),
+        userId: validated.userId !== undefined ? (validated.userId === null ? null : validated.userId) : undefined,
       },
     });
 
