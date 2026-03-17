@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Lock, Mail, Loader2, AlertCircle, Building2 } from "lucide-react";
+import Image from "next/image";
 
 export default function TenantLoginPage({ params }: { params: { subdomain: string } }) {
   const [tenant, setTenant] = useState<any>(null);
@@ -83,7 +84,7 @@ export default function TenantLoginPage({ params }: { params: { subdomain: strin
         <div className="text-center mb-10">
           <div className="inline-flex p-5 bg-white rounded-[2rem] shadow-xl shadow-slate-200 mb-6 border-b-4 border-indigo-600">
             {tenant.logoUrl ? (
-              <img src={tenant.logoUrl} className="h-12 object-contain" alt={tenant.name} />
+              <Image src={tenant.logoUrl} className="h-12 object-contain" alt={tenant.name} width={200} height={48} />
             ) : (
               <Building2 className="text-indigo-600" size={40} />
             )}

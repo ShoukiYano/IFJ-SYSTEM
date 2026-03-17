@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Calculator, Download, ChevronLeft, ChevronRight, AlertCircle, CheckCircle2, TrendingDown, TrendingUp, Filter } from "lucide-react";
 import { format, addMonths, subMonths, startOfMonth } from "date-fns";
 import { ja } from "date-fns/locale";
@@ -10,11 +10,7 @@ export default function MonthlyAttendancePage() {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<any[]>([]);
 
-  useEffect(() => {
-    fetchSummary();
-  }, [currentMonth]);
-
-  const fetchSummary = async () => {
+  const fetchSummary = useCallback(async () => {
     setLoading(true);
     try {
       const monthStr = format(currentMonth, "yyyy-MM");
@@ -28,7 +24,11 @@ export default function MonthlyAttendancePage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentMonth]);
+
+  useEffect(() => {
+    fetchSummary();
+  }, [fetchSummary]);
 
   const totals = data.reduce((acc, curr) => ({
     hours: acc.hours + curr.totalHours,

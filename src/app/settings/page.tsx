@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Save, Building2, Landmark, CheckCircle2, Mail, GitBranch, Plus, Trash2 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 
 export default function SettingsPage() {
@@ -136,7 +137,7 @@ export default function SettingsPage() {
               }}
               className="bg-white border-2 border-slate-200 text-slate-700 px-6 py-3 rounded-xl font-bold hover:bg-slate-50 transition-all flex items-center gap-2 shadow-sm hover:shadow-md active:scale-95"
             >
-              <img src="https://www.google.com/favicon.ico" alt="Google" className="size-4" />
+              <Image src="https://www.google.com/favicon.ico" alt="Google" width={16} height={16} className="size-4" />
               Google連携を開始する
             </button>
           )}
@@ -166,7 +167,7 @@ export default function SettingsPage() {
               <div className="flex items-center gap-6">
                 <div className="size-24 border bg-white rounded flex items-center justify-center overflow-hidden">
                   {formData.stampUrl ? (
-                    <img src={formData.stampUrl} alt="Stamp Preview" className="size-full object-contain" />
+                    <Image src={formData.stampUrl} alt="Stamp Preview" width={96} height={96} className="size-full object-contain" />
                   ) : (
                     <span className="text-[10px] text-slate-400">未登録</span>
                   )}

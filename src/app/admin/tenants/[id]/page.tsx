@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Building2, Users, FileText, Save, Trash2, Loader2, CheckCircle2, Plus, Mail, Key, Settings, Database, Download } from "lucide-react";
 import Link from "next/link";
@@ -27,13 +27,7 @@ export default function TenantDetailPage({ params }: { params: { id: string } })
   });
   const [creatingUser, setCreatingUser] = useState(false);
 
-  useEffect(() => {
-    fetchTenant();
-    fetchUsers();
-    fetchBackups();
-  }, []);
-
-  const fetchTenant = async () => {
+  const fetchTenant = useCallback(async () => {
     try {
       const res = await fetch(`/api/admin/tenants/${params.id}`);
       if (res.ok) {
@@ -48,9 +42,9 @@ export default function TenantDetailPage({ params }: { params: { id: string } })
     } finally {
       setLoading(false);
     }
-  };
+  }, [params.id, router]);
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     setUsersLoading(true);
     try {
       const res = await fetch(`/api/admin/tenants/${params.id}/users`);
@@ -63,9 +57,9 @@ export default function TenantDetailPage({ params }: { params: { id: string } })
     } finally {
       setUsersLoading(false);
     }
-  };
+  }, [params.id]);
 
-  const fetchBackups = async () => {
+  const fetchBackups = useCallback(async () => {
     setBackupsLoading(true);
     try {
       const res = await fetch(`/api/admin/tenants/${params.id}/backups`);
@@ -78,7 +72,13 @@ export default function TenantDetailPage({ params }: { params: { id: string } })
     } finally {
       setBackupsLoading(false);
     }
-  };
+  }, [params.id]);
+
+  useEffect(() => {
+    fetchTenant();
+    fetchUsers();
+    fetchBackups();
+  }, [fetchTenant, fetchUsers, fetchBackups]);
 
   const handleCreateBackup = async () => {
     if (!confirm("現在のデータのスナップショットを作成しますか？")) return;

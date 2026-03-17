@@ -96,7 +96,7 @@ export default function NewInvoicePage() {
         }
       }
     }
-  }, [invoice.clientId, invoice.issueDate, clients]);
+  }, [invoice.clientId, invoice.issueDate, invoice.dueDate, clients]);
 
   const handleAddItem = () => {
     setInvoice({

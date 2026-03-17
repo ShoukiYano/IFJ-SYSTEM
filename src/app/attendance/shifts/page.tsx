@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Calendar as CalendarIcon, Users, ChevronLeft, ChevronRight, Save, Loader2, Copy, Trash2 } from "lucide-react";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, addMonths, subMonths, isWeekend, startOfWeek, endOfWeek } from "date-fns";
 import { ja } from "date-fns/locale";
@@ -15,11 +15,7 @@ export default function ShiftManagePage() {
   // 編集中のシフト（一時保存用）
   const [pendingShifts, setPendingShifts] = useState<any[]>([]);
 
-  useEffect(() => {
-    fetchData();
-  }, [currentMonth]);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const [sRes, shRes] = await Promise.all([
@@ -39,7 +35,11 @@ export default function ShiftManagePage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentMonth]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const handleSetDefault = (staffId: string) => {
     const days = eachDayOfInterval({

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Plus, Search, Filter, CheckCircle, Clock as ClockIcon, Download, ListChecks, Trash2 } from "lucide-react";
 import { InvoiceTable } from "@/components/invoices/InvoiceTable";
 import BatchGenerateModal from "@/components/invoices/BatchGenerateModal";
@@ -20,7 +20,7 @@ export default function InvoicesPage() {
   const [showFilters, setShowFilters] = useState(false);
   const [isBatchModalOpen, setIsBatchModalOpen] = useState(false);
 
-  const fetchInvoices = async () => {
+  const fetchInvoices = useCallback(async () => {
     setLoading(true);
     const params = new URLSearchParams();
     if (filters.keyword) params.append("keyword", filters.keyword);
@@ -33,14 +33,14 @@ export default function InvoicesPage() {
     const data = await res.json();
     setInvoices(Array.isArray(data) ? data : []);
     setLoading(false);
-  };
+  }, [filters]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
       fetchInvoices();
     }, 500);
     return () => clearTimeout(timer);
-  }, [filters]);
+  }, [fetchInvoices]);
 
   const handleBulkUpdate = async (status: string) => {
     if (selectedIds.length === 0) return;

@@ -180,6 +180,7 @@ export const InvoiceDocument = ({ invoice, company }: any) => {
 
         <View style={styles.companySection}>
           {company?.stampUrl && (
+            /* eslint-disable-next-line jsx-a11y/alt-text */
             <Image src={company.stampUrl} style={styles.stamp} />
           )}
           <Text style={{ fontSize: 12, fontWeight: "bold" }}>{company?.name}</Text>

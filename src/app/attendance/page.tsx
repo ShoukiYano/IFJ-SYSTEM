@@ -249,7 +249,7 @@ export default function AttendancePage() {
         
         {/* 当日シフト */}
         <div className="mb-6">
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Today's Shift</p>
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Today&apos;s Shift</p>
           {shift ? (
             <div className="flex items-center justify-between p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100/50 relative overflow-hidden">
               <div className="absolute top-0 right-0 w-24 h-full bg-indigo-600/5 -skew-x-12 translate-x-12"></div>
