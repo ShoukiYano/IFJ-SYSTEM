@@ -37,25 +37,31 @@ export const authOptions: NextAuthOptions = {
         }
 
         // テナント検証: ログインページのサブドメインとユーザーのテナントが一致するか確認
-        if (credentials.subdomain) {
+        // システム管理者の場合は全テナントを跨げるようにチェックをスキップ
+        if (credentials.subdomain && user.role !== "SYSTEM_ADMIN") {
           const loginSubdomain = credentials.subdomain.trim().toLowerCase();
           const userSubdomain = user.tenant?.subdomain?.toLowerCase();
           console.log("[AUTH] Tenant check - login subdomain:", loginSubdomain, "user's subdomain:", userSubdomain);
           if (loginSubdomain !== userSubdomain) {
-            console.log("[AUTH] Tenant mismatch! Blocking login.");
+            console.log("[AUTH] Tenant mismatch! Blocking login for non-admin.");
             throw new Error("ERR_USER_NOT_FOUND");
           }
+        } else if (credentials.subdomain && user.role === "SYSTEM_ADMIN") {
+          console.log("[AUTH] System admin login via tenant page - bypassing subdomain check");
         }
 
         console.log("[AUTH] User found, comparing password...");
 
+        console.log("[AUTH] User found:", { email: user.email, role: user.role, hasTenant: !!user.tenant });
+
         if (!user.password) {
-          console.log("[AUTH] User has no password set");
+          console.log("[AUTH] User has no password set in DB");
           throw new Error("ERR_NO_PASSWORD");
         }
 
+        console.log("[AUTH] Comparing with bcrypt...");
         const isValid = await bcrypt.compare(credentials.password, user.password);
-        console.log("[AUTH] Password valid:", isValid);
+        console.log("[AUTH] Bcrypt result:", isValid);
 
         if (!isValid) {
           console.log("[AUTH] Password mismatch for:", email);
@@ -70,8 +76,8 @@ export const authOptions: NextAuthOptions = {
           tenantSubdomain: user.tenant?.subdomain,
           role: user.role,
           tosAccepted: !!(user as any).tosAcceptedAt,
-          hasInvoiceFeature: user.tenant?.hasInvoiceFeature ?? true,
-          hasAttendanceFeature: user.tenant?.hasAttendanceFeature ?? false,
+          hasInvoiceFeature: (user.tenant as any)?.hasInvoiceFeature ?? true,
+          hasAttendanceFeature: (user.tenant as any)?.hasAttendanceFeature ?? false,
         };
       },
     }),
