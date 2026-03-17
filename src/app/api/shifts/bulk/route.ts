@@ -22,6 +22,15 @@ export async function POST(req: Request) {
     const results = await (prisma as any).$transaction(
       shifts.map((s: any) => {
         const date = startOfDay(new Date(s.date));
+        if (s.isDeleted) {
+          return (prisma as any).shift.deleteMany({
+            where: {
+              staffId: s.staffId,
+              date: date,
+              tenantId: tenantId
+            }
+          });
+        }
         return (prisma as any).shift.upsert({
           where: {
             staffId_date: {

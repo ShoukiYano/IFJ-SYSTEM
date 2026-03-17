@@ -31,6 +31,7 @@ export default function DashboardPage() {
   const [expiringContracts, setExpiringContracts] = useState<any[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [clients, setClients] = useState<any[]>([]);
+  const [attendanceSummary, setAttendanceSummary] = useState<any>(null);
 
   // 絞り込みフィルタ
   const [filterMonth, setFilterMonth] = useState("");
@@ -107,10 +108,24 @@ export default function DashboardPage() {
       }
     };
 
+    // 勤怠サマリー取得
+    const fetchAttendance = async () => {
+      try {
+        const res = await fetch("/api/attendance/summary");
+        if (res.ok) {
+          const data = await res.json();
+          setAttendanceSummary(data.summary);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
     fetchAll();
     fetchStats();
     fetchContracts();
     fetchClients();
+    fetchAttendance();
   }, []);
 
   // フィルタ変更時に再取得
@@ -166,6 +181,31 @@ export default function DashboardPage() {
           </a>
         </div>
       </div>
+
+      {/* 勤怠アラート */}
+      {attendanceSummary?.missingPunchInCount > 0 && (
+        <div className="bg-rose-50 border border-rose-200 rounded-2xl p-6 shadow-sm animate-in slide-in-from-top duration-500">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-rose-100 text-rose-600 rounded-2xl">
+                <AlertTriangle size={24} />
+              </div>
+              <div>
+                <h3 className="font-black text-rose-900 text-lg">勤怠アラート: 未打刻者がいます</h3>
+                <p className="text-rose-700 text-sm font-bold">
+                  本日のシフト開始時刻を過ぎていますが、まだ出勤打刻が行われていない従業員が <span className="text-xl px-1">{attendanceSummary.missingPunchInCount}</span> 名います。
+                </p>
+              </div>
+            </div>
+            <a 
+              href="/attendance/manage" 
+              className="bg-rose-600 text-white px-6 py-3 rounded-xl font-black shadow-lg shadow-rose-200 hover:bg-rose-700 transition-all flex items-center gap-2 whitespace-nowrap"
+            >
+              状況を確認する <ChevronRight size={18} />
+            </a>
+          </div>
+        </div>
+      )}
 
       {/* 契約更新アラート */}
       {expiringContracts.length > 0 && (

@@ -55,13 +55,22 @@ export async function GET(req: Request) {
     const lateCount = records.filter((r: any) => r.hasDiscrepancy).length;
     const pendingReportsCount = records.filter((r: any) => r.status === "SUBMITTED").length;
 
+    // 未打刻（遅刻疑い）の集計
+    // シフトがあるが、開始時間を過ぎても出勤打刻がない人数
+    const missingPunchInCount = shifts.filter((s: any) => {
+      const shiftStart = new Date(s.startTime);
+      const hasClockedIn = records.some((r: any) => r.staffId === s.staffId && r.clockIn);
+      return shiftStart < today && !hasClockedIn;
+    }).length;
+
     return NextResponse.json({
       summary: {
         totalStaff,
         clockedInCount,
         clockedOutCount,
         lateCount,
-        pendingReportsCount
+        pendingReportsCount,
+        missingPunchInCount
       },
       staffs: staffs.map((s: any) => {
         const record = records.find((r: any) => r.staffId === s.id);

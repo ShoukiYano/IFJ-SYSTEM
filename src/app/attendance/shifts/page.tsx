@@ -15,6 +15,9 @@ export default function ShiftManagePage() {
   // 編集中のシフト（一時保存用）
   const [pendingShifts, setPendingShifts] = useState<any[]>([]);
 
+  // 編集モーダル用
+  const [editingCell, setEditingCell] = useState<{ staffId: string; date: Date; shift: any } | null>(null);
+
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
@@ -61,6 +64,46 @@ export default function ShiftManagePage() {
       ...prev.filter(ps => ps.staffId !== staffId),
       ...newShifts
     ]);
+  };
+
+  const openEditModal = (staffId: string, date: Date, currentShift: any) => {
+    setEditingCell({ staffId, date, shift: currentShift });
+  };
+
+  const handleUpdateShift = (startTime: string, endTime: string) => {
+    if (!editingCell) return;
+    
+    const baseDate = new Date(editingCell.date);
+    const startParts = startTime.split(":");
+    const endParts = endTime.split(":");
+    
+    const newShift = {
+      staffId: editingCell.staffId,
+      date: editingCell.date,
+      startTime: new Date(new Date(baseDate).setHours(parseInt(startParts[0]), parseInt(startParts[1]), 0, 0)),
+      endTime: new Date(new Date(baseDate).setHours(parseInt(endParts[0]), parseInt(endParts[1]), 0, 0)),
+      type: "WORKING"
+    };
+
+    setPendingShifts(prev => [
+      ...prev.filter(ps => !(ps.staffId === editingCell.staffId && format(new Date(ps.date), "yyyy-MM-dd") === format(editingCell.date, "yyyy-MM-dd"))),
+      newShift
+    ]);
+    setEditingCell(null);
+  };
+
+  const handleDeleteShift = () => {
+    if (!editingCell) return;
+
+    // 削除時は pendingShifts から取り除き、DB上のものがある場合は API 側で明示的な削除シグナルを送る必要がある。
+    // ここでは簡易的に「削除対象」として扱う（保存時に送るリストから外す & DB側も消す対象にする）
+    // bulk API 側が「送られてこなかった日付を消す」というロジックなら単純に filter でOK。
+    // とりあえず pending から消す。
+    setPendingShifts(prev => [
+        ...prev.filter(ps => !(ps.staffId === editingCell.staffId && format(new Date(ps.date), "yyyy-MM-dd") === format(editingCell.date, "yyyy-MM-dd"))),
+        { staffId: editingCell.staffId, date: editingCell.date, isDeleted: true } // 削除フラグ
+    ]);
+    setEditingCell(null);
   };
 
   const handleSave = async () => {
@@ -159,24 +202,25 @@ export default function ShiftManagePage() {
                     const active = pending || shift;
 
                     return (
-                      <td key={`${staff.id}-${day.toISOString()}`} className={`p-1 border-r border-slate-100 text-center ${isWeekend(day) ? 'bg-slate-100/10' : ''}`}>
-                        {active ? (
-                          <div className={`p-2 rounded-xl text-[10px] font-black tracking-tighter shadow-sm transition-all animate-in zoom-in-90 ${pending ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-600'}`}>
+                      <td 
+                        key={`${staff.id}-${day.toISOString()}`} 
+                        className={`p-1 border-r border-slate-100 text-center ${isWeekend(day) ? 'bg-slate-100/10' : ''}`}
+                        onClick={() => {
+                          if (active?.isDeleted) {
+                             openEditModal(staff.id, day, null);
+                          } else {
+                             openEditModal(staff.id, day, active);
+                          }
+                        }}
+                      >
+                        {active && !active.isDeleted ? (
+                          <div className={`p-2 rounded-xl text-[10px] font-black tracking-tighter shadow-sm transition-all animate-in zoom-in-90 cursor-pointer ${pending ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
                             {format(new Date(active.startTime), "HH:mm")}
                             <div className="border-t border-white/20 my-0.5"></div>
                             {format(new Date(active.endTime), "HH:mm")}
                           </div>
                         ) : (
-                          <div className="size-full min-h-[48px] flex items-center justify-center text-slate-200 group-hover:text-slate-300 cursor-copy hover:bg-indigo-50 rounded-xl transition-all" onClick={() => {
-                            const newShift = {
-                              staffId: staff.id,
-                              date: day,
-                              startTime: new Date(day.setHours(9, 0, 0, 0)),
-                              endTime: new Date(day.setHours(18, 0, 0, 0)),
-                              type: "WORKING"
-                            };
-                            setPendingShifts(prev => [...prev, newShift]);
-                          }}>
+                          <div className="size-full min-h-[48px] flex items-center justify-center text-slate-200 group-hover:text-slate-300 cursor-copy hover:bg-indigo-50 rounded-xl transition-all">
                             +
                           </div>
                         )}
@@ -202,6 +246,78 @@ export default function ShiftManagePage() {
           </p>
         </div>
       </div>
+
+      {editingCell && (
+        <EditModal 
+          isOpen={!!editingCell}
+          onClose={() => setEditingCell(null)}
+          onSave={handleUpdateShift}
+          onDelete={handleDeleteShift}
+          staffName={staffs.find(s => s.id === editingCell.staffId)?.name}
+          date={editingCell.date}
+          currentShift={editingCell.shift}
+        />
+      )}
     </div>
   );
+}
+
+function EditModal({ isOpen, onClose, onSave, onDelete, staffName, date, currentShift }: any) {
+    const [start, setStart] = useState(currentShift ? format(new Date(currentShift.startTime), "HH:mm") : "09:00");
+    const [end, setEnd] = useState(currentShift ? format(new Date(currentShift.endTime), "HH:mm") : "18:00");
+
+    return (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-6">
+            <div className="bg-white rounded-[2rem] w-full max-w-sm shadow-2xl p-8 space-y-6">
+                <div className="space-y-1">
+                    <h3 className="text-xl font-black text-slate-900">シフトの編集</h3>
+                    <p className="text-slate-500 text-sm font-bold">{staffName} | {format(date, "M/d(E)", { locale: ja })}</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">開始時間</label>
+                        <input 
+                            type="time" 
+                            className="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl font-black text-lg"
+                            value={start}
+                            onChange={(e) => setStart(e.target.value)}
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">終了時間</label>
+                        <input 
+                            type="time" 
+                            className="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl font-black text-lg"
+                            value={end}
+                            onChange={(e) => setEnd(e.target.value)}
+                        />
+                    </div>
+                </div>
+
+                <div className="flex flex-col gap-3 pt-4">
+                    <button 
+                        onClick={() => onSave(start, end)}
+                        className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all"
+                    >
+                        反映する
+                    </button>
+                    <div className="grid grid-cols-2 gap-3">
+                        <button 
+                            onClick={onDelete}
+                            className="py-4 bg-rose-50 text-rose-600 rounded-2xl font-black hover:bg-rose-100 transition-all"
+                        >
+                            削除
+                        </button>
+                        <button 
+                            onClick={onClose}
+                            className="py-4 bg-slate-50 text-slate-400 rounded-2xl font-black hover:bg-slate-100 transition-all"
+                        >
+                            閉じる
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
 }

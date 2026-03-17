@@ -80,7 +80,7 @@ export default function AttendanceManagePage() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <StatCard title="社員数" value={summary.totalStaff} icon={Users} color="bg-slate-500" />
         <StatCard title="出勤済み" value={summary.clockedInCount} icon={CheckCircle} color="bg-emerald-500" subtitle={`退勤 ${summary.clockedOutCount}名`} />
-        <StatCard title="差異あり" value={summary.lateCount} icon={AlertTriangle} color="bg-rose-500" />
+        <StatCard title="未打刻(要確認)" value={summary.missingPunchInCount} icon={AlertTriangle} color={summary.missingPunchInCount > 0 ? "bg-rose-600" : "bg-slate-400"} />
         <StatCard title="承認待ち報告" value={summary.pendingReportsCount} icon={FileText} color="bg-indigo-500" />
       </div>
 
@@ -143,7 +143,14 @@ export default function AttendanceManagePage() {
                         )}
                       </div>
                     ) : (
-                      <span className="text-xs font-bold text-slate-300">未打刻</span>
+                      <div className="space-y-1">
+                        <span className="text-xs font-bold text-slate-300 block">未打刻</span>
+                        {staff.todayShift && new Date(staff.todayShift.startTime) < new Date() && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-rose-50 text-rose-600 rounded-md text-[9px] font-black border border-rose-100 animate-pulse">
+                            <AlertTriangle size={10} /> 未出勤 (遅刻疑い)
+                          </span>
+                        )}
+                      </div>
                     )}
                   </td>
                   <td className="px-8 py-6">

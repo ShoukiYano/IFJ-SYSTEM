@@ -66,8 +66,15 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
   ];
 
   const filteredMenuItems = menuItems.filter(item => {
-    if ((item as any).feature === "invoice") return effectiveFeatures.hasInvoiceFeature;
-    if ((item as any).feature === "attendance") return effectiveFeatures.hasAttendanceFeature;
+    // 1. Feature flag control
+    if ((item as any).feature === "invoice" && !effectiveFeatures.hasInvoiceFeature) return false;
+    if ((item as any).feature === "attendance" && !effectiveFeatures.hasAttendanceFeature) return false;
+
+    // 2. Role-based restriction for general users
+    if (role === "TENANT_USER") {
+      return ["勤怠管理", "シフト管理"].includes(item.label);
+    }
+
     return true;
   });
 
