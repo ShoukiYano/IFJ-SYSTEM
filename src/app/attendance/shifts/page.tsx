@@ -18,6 +18,9 @@ export default function ShiftManagePage() {
   // 編集モーダル用
   const [editingCell, setEditingCell] = useState<{ staffId: string; date: Date; shift: any } | null>(null);
 
+  // 一括編集用
+  const [bulkEditStaff, setBulkEditStaff] = useState<any | null>(null);
+
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
@@ -45,25 +48,39 @@ export default function ShiftManagePage() {
   }, [fetchData]);
 
   const handleSetDefault = (staffId: string) => {
+    const staff = staffs.find(s => s.id === staffId);
+    if (staff) setBulkEditStaff(staff);
+  };
+
+  const handleBulkUpdateShift = (startTime: string, endTime: string) => {
+    if (!bulkEditStaff) return;
+
     const days = eachDayOfInterval({
       start: startOfMonth(currentMonth),
       end: endOfMonth(currentMonth)
     });
 
+    const startParts = startTime.split(":");
+    const endParts = endTime.split(":");
+
     const newShifts = days
       .filter(day => !isWeekend(day)) // 平日のみ
-      .map(day => ({
-        staffId,
-        date: day,
-        startTime: new Date(day.setHours(9, 0, 0, 0)),
-        endTime: new Date(day.setHours(18, 0, 0, 0)),
-        type: "WORKING"
-      }));
+      .map(day => {
+        const baseDate = new Date(day);
+        return {
+          staffId: bulkEditStaff.id,
+          date: day,
+          startTime: new Date(new Date(baseDate).setHours(parseInt(startParts[0]), parseInt(startParts[1]), 0, 0)),
+          endTime: new Date(new Date(baseDate).setHours(parseInt(endParts[0]), parseInt(endParts[1]), 0, 0)),
+          type: "WORKING"
+        };
+      });
 
     setPendingShifts(prev => [
-      ...prev.filter(ps => ps.staffId !== staffId),
+      ...prev.filter(ps => ps.staffId !== bulkEditStaff.id),
       ...newShifts
     ]);
+    setBulkEditStaff(null);
   };
 
   const openEditModal = (staffId: string, date: Date, currentShift: any) => {
@@ -241,7 +258,7 @@ export default function ShiftManagePage() {
         <div>
           <h4 className="font-black text-indigo-900">効率的なシフト入力</h4>
           <p className="text-indigo-700 text-sm mt-1">
-            氏名横の <Copy size={14} className="inline mx-1" /> アイコンをクリックすると、その月の平日に標準勤務（9:00 - 18:00）を一括入力できます。
+            氏名横の <Copy size={14} className="inline mx-1" /> アイコンをクリックすると、**時間を指定して**その月の平日にシフトを一括入力できます。
             空欄の「+」をクリックして個別に登録することも可能です。青色のセルは未保存の変更を示します。
           </p>
         </div>
@@ -256,6 +273,16 @@ export default function ShiftManagePage() {
           staffName={staffs.find(s => s.id === editingCell.staffId)?.name}
           date={editingCell.date}
           currentShift={editingCell.shift}
+        />
+      )}
+
+      {bulkEditStaff && (
+        <BulkEditModal
+          isOpen={!!bulkEditStaff}
+          onClose={() => setBulkEditStaff(null)}
+          onSave={handleBulkUpdateShift}
+          staffName={bulkEditStaff.name}
+          month={format(currentMonth, "yyyy年 M月")}
         />
       )}
     </div>
@@ -316,6 +343,69 @@ function EditModal({ isOpen, onClose, onSave, onDelete, staffName, date, current
                             閉じる
                         </button>
                     </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function BulkEditModal({ isOpen, onClose, onSave, staffName, month }: any) {
+    const [start, setStart] = useState("09:00");
+    const [end, setEnd] = useState("18:00");
+
+    return (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-50 p-6">
+            <div className="bg-white rounded-[2.5rem] w-full max-w-md shadow-2xl p-10 space-y-8 animate-in zoom-in-95 duration-200">
+                <div className="space-y-2">
+                    <div className="size-12 rounded-2xl bg-indigo-100 text-indigo-600 flex items-center justify-center mb-4">
+                        <Copy size={24} />
+                    </div>
+                    <h3 className="text-2xl font-black text-slate-900 leading-tight">平日の一括登録</h3>
+                    <p className="text-slate-500 font-bold">
+                        {staffName} さんの <span className="text-indigo-600">{month}</span> の平日に、以下の時間を一括で反映します。
+                    </p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-6">
+                    <div className="space-y-3">
+                        <label className="text-xs font-black text-slate-400 uppercase tracking-widest">開始時間</label>
+                        <input 
+                            type="time" 
+                            className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-black text-xl focus:border-indigo-500 outline-none transition-all"
+                            value={start}
+                            onChange={(e) => setStart(e.target.value)}
+                        />
+                    </div>
+                    <div className="space-y-3">
+                        <label className="text-xs font-black text-slate-400 uppercase tracking-widest">終了時間</label>
+                        <input 
+                            type="time" 
+                            className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-black text-xl focus:border-indigo-500 outline-none transition-all"
+                            value={end}
+                            onChange={(e) => setEnd(e.target.value)}
+                        />
+                    </div>
+                </div>
+
+                <div className="bg-amber-50 rounded-2xl p-4 border border-amber-100">
+                    <p className="text-[10px] font-bold text-amber-700 leading-relaxed">
+                        ※土日・祝日は除外されます。すでに登録されている平日のシフトは、この時間で上書きされます。
+                    </p>
+                </div>
+
+                <div className="flex flex-col gap-3 pt-4">
+                    <button 
+                        onClick={() => onSave(start, end)}
+                        className="w-full bg-indigo-600 text-white py-5 rounded-2xl font-black shadow-xl shadow-indigo-200 hover:bg-indigo-700 hover:-translate-y-0.5 transition-all"
+                    >
+                        平日に一括反映する
+                    </button>
+                    <button 
+                        onClick={onClose}
+                        className="w-full py-4 text-slate-400 font-black hover:text-slate-600 transition-all"
+                    >
+                        キャンセル
+                    </button>
                 </div>
             </div>
         </div>
