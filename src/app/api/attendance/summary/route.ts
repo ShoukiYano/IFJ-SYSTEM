@@ -12,7 +12,12 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
     }
 
-    const { tenantId } = context;
+    const { tenantId, role } = context;
+
+    // 一般ユーザーはサマリー取得不可
+    if (role === "TENANT_USER") {
+      return NextResponse.json({ error: "権限がありません" }, { status: 403 });
+    }
     const today = new Date();
     const todayStart = startOfDay(today);
     const todayEnd = endOfDay(today);

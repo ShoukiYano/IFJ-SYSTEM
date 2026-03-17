@@ -4,8 +4,13 @@ import { useState, useEffect, useCallback } from "react";
 import { Calendar as CalendarIcon, Users, ChevronLeft, ChevronRight, Save, Loader2, Copy, Trash2 } from "lucide-react";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, addMonths, subMonths, isWeekend, startOfWeek, endOfWeek } from "date-fns";
 import { ja } from "date-fns/locale";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 export default function ShiftManagePage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [staffs, setStaffs] = useState<any[]>([]);
   const [shifts, setShifts] = useState<any[]>([]);
@@ -44,8 +49,15 @@ export default function ShiftManagePage() {
   }, [currentMonth]);
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    if (status === "authenticated") {
+      const role = (session?.user as any)?.role;
+      if (role === "TENANT_USER") {
+        router.push("/attendance");
+        return;
+      }
+      fetchData();
+    }
+  }, [session, status, router, fetchData]);
 
   const handleSetDefault = (staffId: string) => {
     const staff = staffs.find(s => s.id === staffId);

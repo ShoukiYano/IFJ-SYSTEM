@@ -25,37 +25,52 @@ export async function GET(req: Request) {
 
     const today = new Date();
     const todayStart = startOfDay(today);
-    const todayEnd = endOfDay(today);
 
-    // 2. 本日の打刻レコード取得
-    const record = await (prisma as any).attendanceRecord.findUnique({
+    // 2. 打刻レコード取得（日跨ぎ対応：まず未退勤のレコードを探す）
+    let record = await (prisma as any).attendanceRecord.findFirst({
       where: {
-        staffId_date: {
-          staffId: staff.id,
-          date: todayStart
-        }
+        staffId: staff.id,
+        clockIn: { not: null },
+        clockOut: null,
       },
       include: {
         workReport: true
-      }
+      },
+      orderBy: { date: "desc" }
     });
 
-    // 3. 本日のシフト取得
+    // 未退勤レコードがなければ、本日（日付指定）のレコードを探す
+    if (!record) {
+      record = await (prisma as any).attendanceRecord.findUnique({
+        where: {
+          staffId_date: {
+            staffId: staff.id,
+            date: todayStart
+          }
+        },
+        include: {
+          workReport: true
+        }
+      });
+    }
+
+    // 3. 本日のシフト取得 (record が yesterday のものでも、基本的には record.date に基づくシフトを出すべき)
+    const activeDate = record ? record.date : todayStart;
     const shift = await (prisma as any).shift.findUnique({
       where: {
         staffId_date: {
           staffId: staff.id,
-          date: todayStart
+          date: activeDate
         }
       }
     });
 
-    // 4. 前日の報告状況チェック (直近の営業日を取得するのが理想だが、簡易的に「昨日」を確認)
-    // ※実際には「最後に打刻した日」の報告が出ているかを確認すべき
+    // 4. 前日の報告状況チェック
+    // record が「昨日の未完了分」である場合は、それは「前日の報告漏れ」とは扱わず「現在進行中」とする
     const lastWorkingRecord = await (prisma as any).attendanceRecord.findFirst({
       where: {
         staffId: staff.id,
-        date: { lt: todayStart },
+        date: { lt: activeDate },
         clockIn: { not: null }
       },
       orderBy: { date: "desc" }

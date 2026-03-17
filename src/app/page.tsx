@@ -15,8 +15,13 @@ export default function DashboardPage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (status === "authenticated" && (session?.user as any)?.role === "SYSTEM_ADMIN") {
-      router.push("/admin/tenants");
+    if (status === "authenticated") {
+      const user = session?.user as any;
+      if (user.role === "SYSTEM_ADMIN") {
+        router.push("/admin/tenants");
+      } else if (user.role === "TENANT_USER") {
+        router.push("/attendance");
+      }
     }
   }, [session, status, router]);
 
@@ -59,24 +64,27 @@ export default function DashboardPage() {
   useEffect(() => {
     // 初回: フィルタなしで取得
     const fetchAll = async () => {
-      const res = await fetch("/api/invoices");
-      const data = await res.json();
-      if (Array.isArray(data) && data.length > 0) {
-        setInvoices(data.slice(0, 10));
-        const total = data.reduce((acc, inv) => acc + Number(inv.totalAmount || 0), 0);
-        setStats({
-          totalAmount: total,
-          count: data.length,
-          pending: data.filter(inv => inv.status !== 'PAID').length,
-        });
-      } else {
-        setInvoices([]);
-        setStats({ totalAmount: 0, count: 0, pending: 0 });
+      if (status !== "authenticated" || (session?.user as any)?.role === "TENANT_USER") return;
+      try {
+        const res = await fetch("/api/invoices");
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          setInvoices(data.slice(0, 10));
+          const total = data.reduce((acc, inv) => acc + Number(inv.totalAmount || 0), 0);
+          setStats({
+            totalAmount: total,
+            count: data.length,
+            pending: data.filter(inv => inv.status !== 'PAID').length,
+          });
+        }
+      } catch (err) {
+        console.error(err);
       }
     };
 
     // 売上統計取得
     const fetchStats = async () => {
+      if (status !== "authenticated" || (session?.user as any)?.role === "TENANT_USER") return;
       const res = await fetch("/api/stats/sales");
       const data = await res.json();
       if (Array.isArray(data)) {
@@ -86,6 +94,7 @@ export default function DashboardPage() {
 
     // 契約終了間近のエンジニア取得
     const fetchContracts = async () => {
+      if (status !== "authenticated" || (session?.user as any)?.role === "TENANT_USER") return;
       try {
         const res = await fetch("/api/stats/contracts");
         const data = await res.json();
@@ -99,6 +108,7 @@ export default function DashboardPage() {
 
     // クライアント一覧取得
     const fetchClients = async () => {
+      if (status !== "authenticated" || (session?.user as any)?.role === "TENANT_USER") return;
       try {
         const res = await fetch("/api/clients");
         const data = await res.json();
@@ -110,6 +120,7 @@ export default function DashboardPage() {
 
     // 勤怠サマリー取得
     const fetchAttendance = async () => {
+      if (status !== "authenticated" || (session?.user as any)?.role === "TENANT_USER") return;
       try {
         const res = await fetch("/api/attendance/summary");
         if (res.ok) {
@@ -126,10 +137,11 @@ export default function DashboardPage() {
     fetchContracts();
     fetchClients();
     fetchAttendance();
-  }, []);
+  }, [status, session]);
 
   // フィルタ変更時に再取得
   useEffect(() => {
+    if ((session?.user as any)?.role === "TENANT_USER") return;
     if (filterMonth || filterClientId) {
       setSelectedIds([]);
       fetchInvoices(filterMonth, filterClientId);
@@ -160,6 +172,19 @@ export default function DashboardPage() {
       alert("通信エラーが発生しました。");
     }
   };
+
+  if (status === "loading") {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  // 一般ユーザーは何も描画せずリダイレクトを待つ
+  if ((session?.user as any)?.role === "TENANT_USER") {
+    return null;
+  }
 
   return (
     <div className="space-y-8">

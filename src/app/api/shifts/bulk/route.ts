@@ -10,7 +10,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
     }
 
-    const { tenantId } = context;
+    const { tenantId, role } = context;
+
+    // 一般ユーザーはシフトの一括更新・削除不可
+    if (role === "TENANT_USER") {
+      return NextResponse.json({ error: "権限がありません" }, { status: 403 });
+    }
     const body = await req.json();
     const { shifts } = body; // Array of { staffId, date, startTime, endTime, type }
 

@@ -28,6 +28,10 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
     }
 
+    if (context.role === "TENANT_USER") {
+      return NextResponse.json({ error: "権限がありません" }, { status: 403 });
+    }
+
     const { searchParams } = new URL(req.url);
     const clientId = searchParams.get("clientId");
 

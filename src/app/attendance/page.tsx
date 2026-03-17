@@ -11,6 +11,7 @@ export default function AttendancePage() {
   const [data, setData] = useState<any>(null);
   const [weeklyShifts, setWeeklyShifts] = useState<any[]>([]);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [showCheckOutModal, setShowCheckOutModal] = useState(false);
 
   useEffect(() => {
     const init = async () => {
@@ -47,12 +48,20 @@ export default function AttendancePage() {
     }
   };
 
-  const handlePunch = async () => {
+  const handlePunch = async (extraData: any = {}) => {
     setPunching(true);
     try {
-      const res = await fetch("/api/attendance/punch", { method: "POST" });
+      const res = await fetch("/api/attendance/punch", { 
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+           attendanceRecordId: data?.record?.id,
+           ...extraData
+        })
+      });
       const result = await res.json();
       if (res.ok) {
+        setShowCheckOutModal(false);
         await fetchStatus();
       } else {
         alert(result.error || "打刻に失敗しました");
@@ -64,36 +73,14 @@ export default function AttendancePage() {
     }
   };
 
-  const handleReport = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const content = formData.get("content") as string;
-    const discrepancyReason = formData.get("discrepancyReason") as string;
-
-    setPunching(true);
-    try {
-      const res = await fetch("/api/attendance/report", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          attendanceRecordId: data.record.id,
-          content,
-          discrepancyReason
-        })
-      });
-      if (res.ok) {
-        alert("業務報告を提出しました");
-        await fetchStatus();
-      } else {
-        const result = await res.json();
-        alert(result.error || "提出に失敗しました");
-      }
-    } catch (error) {
-      alert("通信エラーが発生しました");
-    } finally {
-      setPunching(false);
+  const onPunchClick = () => {
+    if (isClockedIn) {
+      setShowCheckOutModal(true);
+    } else {
+      handlePunch();
     }
   };
+
 
   if (loading) {
     return (
@@ -147,7 +134,7 @@ export default function AttendancePage() {
       <div className="grid grid-cols-1 gap-4">
         {!isFinished ? (
           <button
-            onClick={handlePunch}
+            onClick={onPunchClick}
             disabled={punching || (isPreviousReportMissing && !isClockedIn)}
             className={`
               relative overflow-hidden h-32 rounded-[2rem] flex flex-col items-center justify-center transition-all
@@ -184,64 +171,9 @@ export default function AttendancePage() {
         )}
       </div>
 
-      {/* 業務報告入力フォーム */}
-      {needsReport && (
-        <div className="bg-white rounded-[2rem] border-2 border-indigo-600 p-8 shadow-xl animate-in slide-in-from-bottom-8">
-          <h3 className="text-xl font-black text-slate-900 mb-6 flex items-center gap-2">
-            <FileText size={24} className="text-indigo-600" />
-            業務実績の報告
-          </h3>
-          <form onSubmit={handleReport} className="space-y-6">
-            <div className="space-y-2">
-              <label className="text-xs font-black text-slate-500 uppercase tracking-wider ml-1">業務内容</label>
-              <textarea
-                name="content"
-                required
-                className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 transition-all font-medium min-h-[120px]"
-                placeholder="実施した作業内容を入力してください"
-                defaultValue={record.workReport?.content}
-              />
-            </div>
-
-            {record.hasDiscrepancy && (
-              <div className="space-y-2">
-                <label className="text-xs font-black text-rose-500 uppercase tracking-wider ml-1 flex items-center gap-1">
-                  <AlertCircle size={14} /> シフト差異の理由
-                </label>
-                <textarea
-                  name="discrepancyReason"
-                  required
-                  className="w-full p-4 bg-rose-50/30 border border-rose-100 rounded-2xl outline-none focus:ring-4 focus:ring-rose-500/5 focus:border-rose-500 transition-all font-medium h-20"
-                  placeholder="シフトと15分以上の差がある理由を入力してください"
-                  defaultValue={record.workReport?.discrepancyReason}
-                />
-              </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={punching}
-              className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all disabled:opacity-50"
-            >
-              {punching ? <Loader2 className="animate-spin mx-auto" size={20} /> : "報告を提出する"}
-            </button>
-          </form>
-        </div>
-      )}
-
-      {/* 提出済みメッセージ */}
-      {isFinished && record.status === 'SUBMITTED' && (
-        <div className="bg-white rounded-[2rem] border border-slate-100 p-8 text-center shadow-sm">
-          <div className="size-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4">
-            <CheckCircle2 size={32} />
-          </div>
-          <h3 className="text-xl font-black text-slate-900 mb-2">報告提出済み</h3>
-          <p className="text-slate-500 text-sm">本日の業務報告は正常に提出されました。<br/>お疲れ様でした！</p>
-        </div>
-      )}
 
       {/* 勤務スケジュール */}
-      <div className="bg-white rounded-[2rem] border border-slate-200 p-6 shadow-sm overflow-hidden">
+      <div id="shifts" className="bg-white rounded-[2rem] border border-slate-200 p-6 shadow-sm overflow-hidden">
         <h3 className="text-slate-800 font-black flex items-center gap-2 mb-4">
           <Calendar size={18} className="text-indigo-600" />
           勤務スケジュール
@@ -317,6 +249,198 @@ export default function AttendancePage() {
         <span className="text-[10px] font-bold uppercase tracking-widest">
           GPS Position: Standard (Tokyo Office)
         </span>
+      </div>
+
+      {showCheckOutModal && (
+        <CheckOutModal 
+          isOpen={showCheckOutModal}
+          onClose={() => setShowCheckOutModal(false)}
+          onConfirm={handlePunch}
+          record={record}
+          shift={shift}
+          currentTime={currentTime}
+          loading={punching}
+        />
+      )}
+    </div>
+  );
+}
+
+function CheckOutModal({ onClose, onConfirm, record, shift, currentTime, loading }: any) {
+  const [clockInTime, setClockInTime] = useState(format(new Date(record.clockIn), "HH:mm"));
+  const [clockOutTime, setClockOutTime] = useState(format(currentTime, "HH:mm"));
+  const [breakMinutes, setBreakMinutes] = useState(record.breakMinutes || 60);
+  const [location, setLocation] = useState(record.location || "");
+  const [note, setNote] = useState(record.note || "");
+  const [content, setContent] = useState(record.workReport?.content || "");
+  const [discrepancyReason, setDiscrepancyReason] = useState(record.workReport?.discrepancyReason || "");
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // 現在のレコードの日付をベースに、入力された時間を合成
+    const baseDate = new Date(record.date);
+    const [inH, inM] = clockInTime.split(":").map(Number);
+    const [outH, outM] = clockOutTime.split(":").map(Number);
+
+    const inDate = new Date(baseDate);
+    inDate.setHours(inH, inM, 0, 0);
+
+    const outDate = new Date(baseDate);
+    outDate.setHours(outH, outM, 0, 0);
+    // 終了時間が開始時間より前なら翌日とみなす
+    if (outDate < inDate) {
+      outDate.setDate(outDate.getDate() + 1);
+    }
+
+    onConfirm({
+      clockIn: inDate.toISOString(),
+      clockOut: outDate.toISOString(),
+      breakMinutes,
+      location,
+      note,
+      content,
+      discrepancyReason
+    });
+  };
+
+  // シフト差異判定（フロント側でも簡易チェック）
+  const hasDiscrepancy = () => {
+      if (!shift) return false;
+      const [inH, inM] = clockInTime.split(":").map(Number);
+      const [outH, outM] = clockOutTime.split(":").map(Number);
+      const sIn = new Date(shift.startTime);
+      const sOut = new Date(shift.endTime);
+      
+      const diffIn = Math.abs((inH * 60 + inM) - (sIn.getHours() * 60 + sIn.getMinutes()));
+      const diffOut = Math.abs((outH * 60 + outM) - (sOut.getHours() * 60 + sOut.getMinutes()));
+      return diffIn > 15 || diffOut > 15;
+  };
+
+  return (
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-50 p-6 overflow-y-auto">
+      <div className="bg-white rounded-[2.5rem] w-full max-w-lg shadow-2xl p-10 my-auto animate-in zoom-in-95 duration-200">
+        <div className="flex items-center justify-between mb-8">
+          <div className="space-y-1">
+            <h3 className="text-2xl font-black text-slate-900">退勤打刻 - 稼働実績報告</h3>
+            <p className="text-slate-500 font-bold text-sm">
+              {format(new Date(record.date), "yyyy/MM/dd (E)", { locale: ja })} の稼働実績
+            </p>
+          </div>
+          <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 transition-colors">
+            <ArrowRight className="rotate-180" size={24} />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">開始時間</label>
+              <input 
+                type="time" 
+                required
+                className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-black text-xl focus:border-indigo-500 outline-none transition-all"
+                value={clockInTime}
+                onChange={(e) => setClockInTime(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">終了時間</label>
+              <input 
+                type="time" 
+                required
+                className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-black text-xl focus:border-indigo-500 outline-none transition-all"
+                value={clockOutTime}
+                onChange={(e) => setClockOutTime(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">休憩時間 (分)</label>
+                <input 
+                  type="number" 
+                  required
+                  className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-bold focus:border-indigo-500 outline-none transition-all"
+                  value={breakMinutes}
+                  onChange={(e) => setBreakMinutes(Number(e.target.value))}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">稼働場所</label>
+                <input 
+                  type="text" 
+                  placeholder="例: 客先常駐"
+                  className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-bold focus:border-indigo-500 outline-none transition-all"
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                />
+              </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">業務内容</label>
+            <textarea 
+              required
+              className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-bold focus:border-indigo-500 outline-none transition-all h-24"
+              placeholder="実施された具体的な作業内容を入力してください"
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">備考・特記事項</label>
+            <textarea 
+              className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-medium focus:border-indigo-500 outline-none transition-all h-20"
+              placeholder="深夜作業、早出等の特記事項があれば入力してください"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+            />
+          </div>
+
+          {(hasDiscrepancy() || record.hasDiscrepancy) && (
+              <div className="space-y-2 animate-in slide-in-from-top-2">
+                <label className="text-xs font-black text-rose-500 uppercase tracking-widest ml-1 flex items-center gap-1">
+                  <AlertCircle size={14} /> シフト差異の理由
+                </label>
+                <textarea 
+                  required
+                  className="w-full p-4 bg-rose-50/30 border-2 border-rose-100 rounded-2xl font-medium focus:border-rose-500 outline-none transition-all h-20"
+                  placeholder="シフトと15分以上の差がある理由を入力してください"
+                  value={discrepancyReason}
+                  onChange={(e) => setDiscrepancyReason(e.target.value)}
+                />
+              </div>
+          )}
+
+          {shift && (
+              <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-4 flex gap-3 text-indigo-700">
+                  <Clock size={18} className="shrink-0 mt-0.5" />
+                  <div className="text-xs font-bold leading-relaxed">
+                      シフト予定: {format(new Date(shift.startTime), "HH:mm")} - {format(new Date(shift.endTime), "HH:mm")}
+                  </div>
+              </div>
+          )}
+
+          <div className="flex flex-col gap-3 pt-4">
+            <button 
+              type="submit"
+              disabled={loading}
+              className="w-full bg-indigo-600 text-white py-5 rounded-2xl font-black shadow-xl shadow-indigo-200 hover:bg-indigo-700 hover:-translate-y-0.5 transition-all disabled:opacity-50"
+            >
+              {loading ? <Loader2 className="animate-spin mx-auto" size={24} /> : "実績を報告して退勤する"}
+            </button>
+            <button 
+              type="button"
+              onClick={onClose}
+              className="w-full py-4 text-slate-400 font-black hover:text-slate-600 transition-all"
+            >
+              キャンセル
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );

@@ -4,8 +4,13 @@ import { useState, useEffect } from "react";
 import { Users, Clock, AlertTriangle, CheckCircle, Search, Filter, ArrowUpRight, MoreVertical, FileText, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 export default function AttendanceManagePage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<any>(null);
   const [search, setSearch] = useState("");
@@ -13,8 +18,15 @@ export default function AttendanceManagePage() {
   const [reviewing, setReviewing] = useState(false);
 
   useEffect(() => {
-    fetchSummary();
-  }, []);
+    if (status === "authenticated") {
+      const role = (session?.user as any)?.role;
+      if (role === "TENANT_USER") {
+        router.push("/attendance");
+        return;
+      }
+      fetchSummary();
+    }
+  }, [session, status, router]);
 
   const fetchSummary = async () => {
     setLoading(true);
