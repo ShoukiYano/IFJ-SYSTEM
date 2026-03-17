@@ -76,6 +76,9 @@ model Tenant {
   googleOAuthToken   GoogleOAuthToken?
   branchOffices      BranchOffice[]
   announcementReads  AnnouncementRead[]
+  attendanceRecords  AttendanceRecord[]
+  shifts             Shift[]
+  shiftRequests      ShiftChangeRequest[]
 }
 
 model GoogleOAuthToken {
