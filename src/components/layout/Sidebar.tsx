@@ -35,7 +35,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
     { label: "見積書管理", icon: FileText, href: "/quotations", feature: "invoice" },
     { label: "請求書管理", icon: PlusCircle, href: "/invoices", feature: "invoice" },
     { label: "勤怠管理", icon: FileText, href: "/attendance", feature: "attendance" },
-    { label: "シフト管理", icon: PlusCircle, href: "/shifts", feature: "attendance" },
+    { label: "シフト管理", icon: PlusCircle, href: "/attendance/shifts", feature: "attendance" },
     { label: "要員管理", icon: Users, href: "/staff" },
     { label: "取引先管理", icon: Users, href: "/clients" },
     { label: "操作マニュアル", icon: Book, href: "/manual" },
