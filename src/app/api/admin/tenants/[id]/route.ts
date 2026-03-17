@@ -50,7 +50,7 @@ export async function PATCH(
     }
 
     const body = await req.json();
-    const { name, subdomain, registrationNumber, address, tel, email, isActive } = body;
+    const { name, subdomain, registrationNumber, address, tel, email, isActive, hasInvoiceFeature, hasAttendanceFeature } = body;
 
     const tenant = await (prisma as any).tenant.update({
       where: { id: params.id },
@@ -62,6 +62,8 @@ export async function PATCH(
         tel,
         email,
         isActive,
+        hasInvoiceFeature,
+        hasAttendanceFeature,
       },
     });
 

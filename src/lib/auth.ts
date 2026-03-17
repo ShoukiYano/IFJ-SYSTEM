@@ -70,6 +70,8 @@ export const authOptions: NextAuthOptions = {
           tenantSubdomain: user.tenant?.subdomain,
           role: user.role,
           tosAccepted: !!(user as any).tosAcceptedAt,
+          hasInvoiceFeature: user.tenant?.hasInvoiceFeature ?? true,
+          hasAttendanceFeature: user.tenant?.hasAttendanceFeature ?? false,
         };
       },
     }),
@@ -88,6 +90,8 @@ export const authOptions: NextAuthOptions = {
         token.tenantSubdomain = (user as any).tenantSubdomain;
         token.role = (user as any).role;
         token.tosAccepted = (user as any).tosAccepted;
+        token.hasInvoiceFeature = (user as any).hasInvoiceFeature;
+        token.hasAttendanceFeature = (user as any).hasAttendanceFeature;
       }
       if (trigger === "update" && session?.tosAccepted !== undefined) {
         token.tosAccepted = session.tosAccepted;
@@ -101,6 +105,8 @@ export const authOptions: NextAuthOptions = {
         (session.user as any).tenantSubdomain = token.tenantSubdomain;
         (session.user as any).role = token.role;
         (session.user as any).tosAccepted = token.tosAccepted;
+        (session.user as any).hasInvoiceFeature = token.hasInvoiceFeature;
+        (session.user as any).hasAttendanceFeature = token.hasAttendanceFeature;
       }
       return session;
     },

@@ -280,27 +280,53 @@ export default function TenantDetailPage({ params }: { params: { id: string } })
             </div>
           </div>
 
-          <div className="space-y-2">
-            <label className="text-sm font-bold text-slate-700">有効化設定</label>
-            <div className="flex items-center gap-4">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="radio"
-                  checked={tenant.isActive === true}
-                  onChange={() => setTenant({ ...tenant, isActive: true })}
-                  className="size-4 text-indigo-600"
-                />
-                <span className="text-sm font-medium">有効</span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="radio"
-                  checked={tenant.isActive === false}
-                  onChange={() => setTenant({ ...tenant, isActive: false })}
-                  className="size-4 text-rose-600"
-                />
-                <span className="text-sm font-medium">無効（ログイン不可）</span>
-              </label>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-slate-700">有効化設定</label>
+              <div className="flex items-center gap-4 py-2">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    checked={tenant.isActive === true}
+                    onChange={() => setTenant({ ...tenant, isActive: true })}
+                    className="size-4 text-indigo-600"
+                  />
+                  <span className="text-sm font-medium">有効</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    checked={tenant.isActive === false}
+                    onChange={() => setTenant({ ...tenant, isActive: false })}
+                    className="size-4 text-rose-600"
+                  />
+                  <span className="text-sm font-medium">無効（ログイン不可）</span>
+                </label>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-slate-700">利用可能な機能</label>
+              <div className="flex items-center gap-6 py-2">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={tenant.hasInvoiceFeature}
+                    onChange={e => setTenant({ ...tenant, hasInvoiceFeature: e.target.checked })}
+                    className="size-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                  />
+                  <span className="text-sm font-medium">請求書管理</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={tenant.hasAttendanceFeature}
+                    onChange={e => setTenant({ ...tenant, hasAttendanceFeature: e.target.checked })}
+                    className="size-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                  />
+                  <span className="text-sm font-medium">勤怠管理 (SES)</span>
+                </label>
+              </div>
             </div>
           </div>
 

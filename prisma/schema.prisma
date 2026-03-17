@@ -55,6 +55,11 @@ model Tenant {
   bankAccountName    String?
   logoUrl            String?
   stampUrl           String?
+  
+  // 機能フラグ
+  hasInvoiceFeature    Boolean   @default(true)
+  hasAttendanceFeature Boolean   @default(false)
+
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
 
@@ -204,6 +209,11 @@ model Staff {
   deletedAt          DateTime?
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
+
+  // 勤怠・シフト関連
+  attendanceRecords  AttendanceRecord[]
+  shifts             Shift[]
+  shiftRequests      ShiftChangeRequest[]
 
   @@index([tenantId])
   @@unique([tenantId, id])
@@ -428,4 +438,104 @@ model AnnouncementRead {
 
   @@unique([announcementId, tenantId])
   @@index([tenantId])
+}
+
+// -----------------------------------------------
+// 勤怠・シフト管理機能
+// -----------------------------------------------
+
+enum AttendanceStatus {
+  DATED       // 日付のみ（予定あり）
+  STAMPED     // 打刻済み（報告未）
+  SUBMITTED   // 報告提出済み
+  APPROVED    // 承認済み
+  REMANDED    // 差戻し
+}
+
+enum ShiftType {
+  WORKING     // 出勤
+  HOLIDAY     // 休日
+  PAID_LEAVE  // 有給
+}
+
+enum RequestStatus {
+  PENDING     // 申請中
+  APPROVED    // 承認済み
+  REJECTED    // 棄却済み
+}
+
+model AttendanceRecord {
+  id             String           @id @default(uuid())
+  tenantId       String
+  tenant         Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  staffId        String
+  staff          Staff            @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  date           DateTime         // 対象日
+  clockIn        DateTime?        // 出勤時刻
+  clockOut       DateTime?        // 退勤時刻
+  breakMinutes   Int              @default(60)
+  location       String?          // 稼働場所
+  note           String?          @db.Text
+  status         AttendanceStatus @default(DATED)
+  hasDiscrepancy Boolean          @default(false) // シフトとの差異フラグ
+  updatedBy      String?          // 最終更新者ID
+  
+  workReport     WorkReport?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@unique([staffId, date])
+  @@index([tenantId, date])
+  @@index([staffId, date])
+}
+
+model WorkReport {
+  id                 String           @id @default(uuid())
+  attendanceRecordId String           @unique
+  attendanceRecord   AttendanceRecord @relation(fields: [attendanceRecordId], references: [id], onDelete: Cascade)
+  content            String           @db.Text
+  discrepancyReason  String?          @db.Text // シフト差異理由
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+}
+
+model Shift {
+  id            String    @id @default(uuid())
+  tenantId      String
+  tenant        Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  staffId       String
+  staff         Staff     @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  date          DateTime
+  startTime     DateTime
+  endTime       DateTime
+  type          ShiftType @default(WORKING)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@unique([staffId, date])
+  @@index([staffId, date])
+  @@index([tenantId])
+}
+
+model ShiftChangeRequest {
+  id               String        @id @default(uuid())
+  tenantId         String
+  tenant           Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  staffId          String
+  staff            Staff         @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  targetDate       DateTime
+  currentStartTime DateTime?
+  currentEndTime   DateTime?
+  requestStartTime DateTime
+  requestEndTime   DateTime
+  reason           String        @db.Text
+  status           RequestStatus @default(PENDING)
+  rejectionReason  String?
+  reviewerId       String?       // 承認者/棄却者ID
+  reviewedAt       DateTime?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  @@index([staffId, status])
+  @@index([tenantId, status])
 }

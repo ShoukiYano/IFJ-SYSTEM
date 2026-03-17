@@ -38,7 +38,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { name, subdomain, registrationNumber, address, tel, email } = body;
+    const { name, subdomain, registrationNumber, address, tel, email, hasInvoiceFeature, hasAttendanceFeature } = body;
 
     if (!name) {
       return NextResponse.json({ error: "テナント名は必須です" }, { status: 400 });
@@ -52,6 +52,8 @@ export async function POST(req: Request) {
         address,
         tel,
         email,
+        hasInvoiceFeature: hasInvoiceFeature ?? true,
+        hasAttendanceFeature: hasAttendanceFeature ?? false,
       },
     });
 

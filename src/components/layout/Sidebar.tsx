@@ -32,8 +32,10 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
 
   const menuItems = [
     { label: "ダッシュボード", icon: LayoutDashboard, href: "/" },
-    { label: "見積書管理", icon: FileText, href: "/quotations" },
-    { label: "請求書管理", icon: PlusCircle, href: "/invoices" },
+    { label: "見積書管理", icon: FileText, href: "/quotations", feature: "invoice" },
+    { label: "請求書管理", icon: PlusCircle, href: "/invoices", feature: "invoice" },
+    { label: "勤怠管理", icon: FileText, href: "/attendance", feature: "attendance" },
+    { label: "シフト管理", icon: PlusCircle, href: "/shifts", feature: "attendance" },
     { label: "要員管理", icon: Users, href: "/staff" },
     { label: "取引先管理", icon: Users, href: "/clients" },
     { label: "操作マニュアル", icon: Book, href: "/manual" },
@@ -41,6 +43,15 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
     { label: "操作ログ", icon: FileText, href: "/settings/audit-logs" },
     { label: "システム設定", icon: Settings, href: "/settings" },
   ];
+
+  const hasInvoiceFeature = (session?.user as any)?.hasInvoiceFeature !== false;
+  const hasAttendanceFeature = (session?.user as any)?.hasAttendanceFeature === true;
+
+  const filteredMenuItems = menuItems.filter(item => {
+    if ((item as any).feature === "invoice") return hasInvoiceFeature;
+    if ((item as any).feature === "attendance") return hasAttendanceFeature;
+    return true;
+  });
 
   const adminItems = [
     { label: "システム管理", icon: LayoutDashboard, href: "/admin/dashboard" },
@@ -87,7 +98,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
         </div>
 
         <nav className="flex-1 space-y-1 overflow-y-auto pr-2 custom-scrollbar">
-          {showTenantMenu && menuItems.map((item) => (
+          {showTenantMenu && filteredMenuItems.map((item) => (
             <a
               key={item.href}
               href={item.href}

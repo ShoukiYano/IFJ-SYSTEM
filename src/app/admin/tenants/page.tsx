@@ -16,6 +16,8 @@ export default function TenantsPage() {
     address: "",
     tel: "",
     email: "",
+    hasInvoiceFeature: true,
+    hasAttendanceFeature: false,
   });
 
   useEffect(() => {
@@ -54,6 +56,8 @@ export default function TenantsPage() {
           address: "",
           tel: "",
           email: "",
+          hasInvoiceFeature: true,
+          hasAttendanceFeature: false,
         });
         fetchTenants();
       } else {
@@ -170,6 +174,29 @@ export default function TenantsPage() {
                   className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500/20 outline-none"
                   placeholder="T123..."
                 />
+              </div>
+              <div className="space-y-1">
+                <label className="block text-sm font-bold text-slate-700">利用可能な機能</label>
+                <div className="flex gap-4 p-2 bg-slate-50 rounded-lg border border-slate-100">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input 
+                      type="checkbox"
+                      checked={newTenant.hasInvoiceFeature}
+                      onChange={e => setNewTenant({...newTenant, hasInvoiceFeature: e.target.checked})}
+                      className="size-4 rounded text-indigo-600 focus:ring-indigo-500"
+                    />
+                    <span className="text-xs font-bold text-slate-700">請求書管理</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input 
+                      type="checkbox"
+                      checked={newTenant.hasAttendanceFeature}
+                      onChange={e => setNewTenant({...newTenant, hasAttendanceFeature: e.target.checked})}
+                      className="size-4 rounded text-indigo-600 focus:ring-indigo-500"
+                    />
+                    <span className="text-xs font-bold text-slate-700">勤怠管理 (SES)</span>
+                  </label>
+                </div>
               </div>
               <div className="flex gap-4 pt-4">
                 <button 
