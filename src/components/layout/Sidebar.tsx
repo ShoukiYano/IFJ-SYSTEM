@@ -68,6 +68,21 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
   const showTenantMenu = isImpersonating || role !== "SYSTEM_ADMIN";
   const showAdminMenu = !isImpersonating && role === "SYSTEM_ADMIN";
 
+  const handleStopImpersonating = async () => {
+    try {
+      const res = await fetch("/api/admin/impersonate", {
+        method: "POST",
+        body: JSON.stringify({ action: "STOP" }),
+        headers: { "Content-Type": "application/json" },
+      });
+      if (res.ok) {
+        window.location.href = "/admin/dashboard";
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   if (!session) return null;
 
   return (
@@ -84,10 +99,23 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
         "w-64 bg-[#1a1c23] h-screen fixed left-0 top-0 text-slate-400 flex flex-col p-4 z-50 transition-transform duration-300 md:translate-x-0",
         isOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full"
       )}>
-        <div className="p-4 mb-4 flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <h1 className="text-white text-xl font-black tracking-tighter">IFJ-SYSTEM</h1>
-            {showTenantMenu && <AnnouncementPanel />}
+        <div className="p-4 mb-4 flex justify-between items-center text-white">
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-3">
+              <h1 className="text-xl font-black tracking-tighter">IFJ-SYSTEM</h1>
+              {showTenantMenu && <AnnouncementPanel />}
+            </div>
+            {isImpersonating && (
+              <div className="flex items-center justify-between bg-rose-500/10 text-rose-500 px-3 py-1.5 rounded-lg border border-rose-500/20 mt-2">
+                <span className="text-[10px] font-bold">代理ログイン中</span>
+                <button 
+                  onClick={handleStopImpersonating}
+                  className="text-[10px] bg-rose-500 text-white px-2 py-0.5 rounded font-black hover:bg-rose-600 transition"
+                >
+                  解除
+                </button>
+              </div>
+            )}
           </div>
           <button
             onClick={onClose}
