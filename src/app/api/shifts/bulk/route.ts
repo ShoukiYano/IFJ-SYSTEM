@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getTenantContext } from "@/lib/tenantContext";
-import { startOfDay } from "date-fns";
+import { startOfDay, format } from "date-fns";
 
 export async function POST(req: Request) {
   try {
@@ -12,9 +12,36 @@ export async function POST(req: Request) {
 
     const { tenantId, role } = context;
 
-    // 一般ユーザーはシフトの一括更新・削除不可
+    // 一般ユーザーはシフトの新規登録のみ許可。変更・削除は申請が必要
     if (role === "TENANT_USER") {
-      return NextResponse.json({ error: "権限がありません" }, { status: 403 });
+      const { shifts } = await req.clone().json();
+      const staff = await (prisma as any).staff.findUnique({
+        where: { userId: context.userId }
+      });
+      if (!staff) return NextResponse.json({ error: "スタッフ情報が見つかりません" }, { status: 404 });
+
+      for (const s of shifts) {
+        if (s.staffId !== staff.id) {
+          return NextResponse.json({ error: "他人のシフトは操作できません" }, { status: 403 });
+        }
+        if (s.isDeleted) {
+          return NextResponse.json({ error: "削除には申請が必要です" }, { status: 403 });
+        }
+
+        // 既存シフトがあるかチェック
+        const date = startOfDay(new Date(s.date));
+        const existing = await (prisma as any).shift.findUnique({
+          where: {
+            staffId_date: {
+              staffId: staff.id,
+              date: date
+            }
+          }
+        });
+        if (existing) {
+          return NextResponse.json({ error: `${format(date, "yyyy-MM-dd")} のシフトは既に存在します。変更には申請が必要です。` }, { status: 403 });
+        }
+      }
     }
     const body = await req.json();
     const { shifts } = body; // Array of { staffId, date, startTime, endTime, type }

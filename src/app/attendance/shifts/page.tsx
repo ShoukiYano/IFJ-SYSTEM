@@ -24,6 +24,8 @@ export default function ShiftManagePage() {
   const [shiftRequests, setShiftRequests] = useState<any[]>([]);
   const [myPendingRequests, setMyPendingRequests] = useState<any[]>([]);
   const [showRequests, setShowRequests] = useState(false);
+  const [isBulkRegister, setIsBulkRegister] = useState(false);
+  const [isBulkRequest, setIsBulkRequest] = useState(false);
 
   // 編集モーダル用
   const [editingCell, setEditingCell] = useState<{ staffId: string; date: Date; shift: any } | null>(null);
@@ -177,7 +179,7 @@ export default function ShiftManagePage() {
     setEditingCell({ staffId, date, shift: currentShift });
   };
 
-  const handleUpdateShift = (startTime: string, endTime: string) => {
+  const handleUpdateShift = async (startTime: string, endTime: string) => {
     if (!editingCell) return;
     
     const baseDate = new Date(editingCell.date);
@@ -192,11 +194,35 @@ export default function ShiftManagePage() {
       type: "WORKING"
     };
 
-    setPendingShifts(prev => [
-      ...prev.filter(ps => !(ps.staffId === editingCell.staffId && format(new Date(ps.date), "yyyy-MM-dd") === format(editingCell.date, "yyyy-MM-dd"))),
-      newShift
-    ]);
-    setEditingCell(null);
+    if (isAdmin) {
+      setPendingShifts(prev => [
+        ...prev.filter(ps => !(ps.staffId === editingCell.staffId && format(new Date(ps.date), "yyyy-MM-dd") === format(editingCell.date, "yyyy-MM-dd"))),
+        newShift
+      ]);
+      setEditingCell(null);
+    } else {
+      // 一般ユーザー：直接保存
+      setSaving(true);
+      try {
+        const res = await fetch("/api/shifts/bulk", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ shifts: [newShift] })
+        });
+        if (res.ok) {
+          alert("登録しました");
+          fetchData();
+          setEditingCell(null);
+        } else {
+          const err = await res.json();
+          alert(err.error || "登録に失敗しました");
+        }
+      } catch (e) {
+        alert("通信エラーが発生しました");
+      } finally {
+        setSaving(false);
+      }
+    }
   };
 
   const handleDeleteShift = () => {
@@ -463,8 +489,13 @@ export default function ShiftManagePage() {
                                openEditModal(staff.id, day, active);
                             }
                           } else {
-                            // 自身の行であれば申請モーダルを開く
-                            setRequestingCell({ date: day, currentShift: active });
+                            // 自身の行であれば申請または直接登録
+                            if (active && !active.isDeleted) {
+                              setRequestingCell({ date: day, currentShift: active });
+                            } else {
+                              // 新規登録：編集モーダルを流用して直接保存を許可する
+                              setEditingCell({ staffId: staff.id, date: day, shift: null });
+                            }
                           }
                         }}
                       >
@@ -510,15 +541,16 @@ export default function ShiftManagePage() {
         </div>
       )}
 
-      {editingCell && isAdmin && (
+      {(editingCell && (isAdmin || (!isAdmin && !editingCell.shift))) && (
         <EditModal 
           isOpen={!!editingCell}
           onClose={() => setEditingCell(null)}
           onSave={handleUpdateShift}
-          onDelete={handleDeleteShift}
+          onDelete={isAdmin ? handleDeleteShift : undefined} // 一般ユーザーは直接削除不可
           staffName={staffs.find(s => s.id === editingCell.staffId)?.name}
           date={editingCell.date}
           currentShift={editingCell.shift}
+          isEmployeeDirectRegister={!isAdmin}
         />
       )}
 
@@ -532,14 +564,144 @@ export default function ShiftManagePage() {
             month={format(currentMonth, "yyyy年 M月")}
           />
         ) : (
-          <BulkRequestModal
-            isOpen={!!bulkEditStaff}
-            onClose={() => setBulkEditStaff(null)}
-            onSave={handleBulkRequestShift}
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-50 p-6">
+            <div className="bg-white rounded-[2.5rem] w-full max-w-lg shadow-2xl p-10 space-y-8 animate-in zoom-in-95 duration-200">
+                <div className="space-y-4">
+                    <div className="size-12 rounded-2xl bg-indigo-100 text-indigo-600 flex items-center justify-center">
+                        <Copy size={24} />
+                    </div>
+                    <div>
+                        <h3 className="text-2xl font-black text-slate-900 leading-tight">平日の一括アクション</h3>
+                        <p className="text-slate-500 font-bold mt-2">
+                           {format(currentMonth, "yyyy年 M月")} の平日に、一括でシフトを入力します。
+                        </p>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                    <button 
+                        onClick={() => {
+                            // 一括登録（既存シフトがない日のみ反映される）
+                            setPendingShifts([]); // クリアしておく（念のため）
+                            setBulkEditStaff(bulkEditStaff);
+                        }}
+                        className="hidden" // 内部制御用
+                    />
+                    <div className="col-span-2 p-6 bg-slate-50 rounded-3xl border-2 border-slate-100 space-y-4">
+                        <div className="flex items-center gap-3 text-indigo-600">
+                            <Save size={20} />
+                            <span className="font-black">直接登録（申請不要）</span>
+                        </div>
+                        <p className="text-xs text-slate-500 font-bold leading-relaxed">
+                            既にシフトが登録されている日を除き、平日に一括でシフトを登録します。管理者の承認を待たずに即時反映されます。
+                        </p>
+                        <button 
+                            onClick={() => {
+                                // BulkEditModal を表示するようにフラグを立てる的な
+                                setIsBulkRegister(true);
+                            }}
+                            className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all"
+                        >
+                            一括登録画面へ
+                        </button>
+                    </div>
+
+                    <div className="col-span-2 p-6 bg-amber-50 rounded-3xl border-2 border-amber-100 space-y-4 opacity-80">
+                        <div className="flex items-center gap-3 text-amber-600">
+                            <Clock size={20} />
+                            <span className="font-black">一括申請（承認が必要）</span>
+                        </div>
+                        <p className="text-xs text-amber-700/70 font-bold leading-relaxed">
+                            既に登録済みのシフトを変更・上書きしたい場合は、こちらから申請を行ってください。
+                        </p>
+                        <button 
+                            onClick={() => setIsBulkRequest(true)}
+                            className="w-full bg-white border-2 border-amber-200 text-amber-600 py-4 rounded-2xl font-black hover:bg-amber-100 transition-all"
+                        >
+                            一括申請画面へ
+                        </button>
+                    </div>
+                </div>
+
+                <button 
+                    onClick={() => setBulkEditStaff(null)}
+                    className="w-full py-2 text-slate-400 font-black hover:text-slate-600 transition-all text-sm"
+                >
+                    キャンセル
+                </button>
+            </div>
+          </div>
+        )
+      )}
+
+      {isBulkRegister && bulkEditStaff && (
+        <BulkEditModal
+            isOpen={true}
+            onClose={() => {
+                setIsBulkRegister(false);
+                setBulkEditStaff(null);
+            }}
+            onSave={async (start: string, end: string) => {
+                // 一般ユーザー用の一括登録処理
+                setSaving(true);
+                try {
+                    const days = eachDayOfInterval({
+                        start: startOfMonth(currentMonth),
+                        end: endOfMonth(currentMonth)
+                    });
+                    const startParts = start.split(":");
+                    const endParts = end.split(":");
+                    
+                    const newShifts = days
+                        .filter(day => !isWeekend(day))
+                        .map(day => {
+                            const baseDate = new Date(day);
+                            return {
+                                staffId: bulkEditStaff.id,
+                                date: day,
+                                startTime: new Date(new Date(baseDate).setHours(parseInt(startParts[0]), parseInt(startParts[1]), 0, 0)),
+                                endTime: new Date(new Date(baseDate).setHours(parseInt(endParts[0]), parseInt(endParts[1]), 0, 0)),
+                                type: "WORKING"
+                            };
+                        });
+
+                    const res = await fetch("/api/shifts/bulk", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ shifts: newShifts })
+                    });
+                    if (res.ok) {
+                        alert("一括登録が完了しました。既存シフトのある日はスキップされました。");
+                        fetchData();
+                        setIsBulkRegister(false);
+                        setBulkEditStaff(null);
+                    } else {
+                        const err = await res.json();
+                        alert(err.error || "登録に失敗しました");
+                    }
+                } catch (e) {
+                    alert("通信エラーが発生しました");
+                } finally {
+                    setSaving(false);
+                }
+            }}
             staffName={bulkEditStaff.name}
             month={format(currentMonth, "yyyy年 M月")}
-          />
-        )
+            isEmployee={true}
+        />
+      )}
+
+      {isBulkRequest && bulkEditStaff && (
+        <BulkRequestModal
+          isOpen={true}
+          onClose={() => {
+              setIsBulkRequest(false);
+              setBulkEditStaff(null);
+          }}
+          onSave={handleBulkRequestShift}
+          staffName={bulkEditStaff.name}
+          month={format(currentMonth, "yyyy年 M月")}
+        />
       )}
 
       {requestingCell && !isAdmin && (
@@ -564,8 +726,11 @@ function RequestModal({ isOpen, onClose, onSave, date, currentShift }: any) {
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-6">
             <div className="bg-white rounded-[2rem] w-full max-w-sm shadow-2xl p-8 space-y-6">
                 <div className="space-y-1">
-                    <h3 className="text-xl font-black text-slate-900">シフトの申請</h3>
-                    <p className="text-slate-500 text-sm font-bold">{format(date, "yyyy/MM/dd(E)", { locale: ja })}</p>
+                    <h3 className="text-xl font-black text-slate-900">シフトの変更申請</h3>
+                    <p className="border-l-4 border-amber-400 pl-3 text-amber-700 text-xs font-bold bg-amber-50 py-2 rounded-r-lg">
+                        既存のシフトを変更・削除する場合は申請が必要です。
+                    </p>
+                    <p className="text-slate-500 text-sm font-bold mt-2">{format(date, "yyyy/MM/dd(E)", { locale: ja })}</p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -605,7 +770,7 @@ function RequestModal({ isOpen, onClose, onSave, date, currentShift }: any) {
                         className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all flex items-center justify-center gap-2"
                     >
                         <Save size={18} />
-                        申請を送信
+                        変更申請を送信
                     </button>
                     <button 
                         onClick={onClose}
@@ -619,16 +784,21 @@ function RequestModal({ isOpen, onClose, onSave, date, currentShift }: any) {
     );
 }
 
-function EditModal({ isOpen, onClose, onSave, onDelete, staffName, date, currentShift }: any) {
+function EditModal({ isOpen, onClose, onSave, onDelete, staffName, date, currentShift, isEmployeeDirectRegister }: any) {
     const [start, setStart] = useState(currentShift ? format(new Date(currentShift.startTime), "HH:mm") : "09:00");
     const [end, setEnd] = useState(currentShift ? format(new Date(currentShift.endTime), "HH:mm") : "18:00");
 
     return (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-6">
-            <div className="bg-white rounded-[2rem] w-full max-sm shadow-2xl p-8 space-y-6">
+            <div className="bg-white rounded-[2rem] w-full max-w-sm shadow-2xl p-8 space-y-6">
                 <div className="space-y-1">
-                    <h3 className="text-xl font-black text-slate-900">シフトの編集</h3>
+                    <h3 className="text-xl font-black text-slate-900">{isEmployeeDirectRegister ? "シフトの直接登録" : "シフトの編集"}</h3>
                     <p className="text-slate-500 text-sm font-bold">{staffName} | {format(date, "M/d(E)", { locale: ja })}</p>
+                    {isEmployeeDirectRegister && (
+                        <p className="text-indigo-600 text-xs font-bold bg-indigo-50 p-2 rounded-lg mt-2">
+                           新規登録は申請不要で即時反映されます。
+                        </p>
+                    )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -657,18 +827,20 @@ function EditModal({ isOpen, onClose, onSave, onDelete, staffName, date, current
                         onClick={() => onSave(start, end)}
                         className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all"
                     >
-                        反映する
+                        {isEmployeeDirectRegister ? "登録する" : "反映する"}
                     </button>
                     <div className="grid grid-cols-2 gap-3">
-                        <button 
-                            onClick={onDelete}
-                            className="py-4 bg-rose-50 text-rose-600 rounded-2xl font-black hover:bg-rose-100 transition-all"
-                        >
-                            削除
-                        </button>
+                        {onDelete && (
+                            <button 
+                                onClick={onDelete}
+                                className="py-4 bg-rose-50 text-rose-600 rounded-2xl font-black hover:bg-rose-100 transition-all"
+                            >
+                                削除
+                            </button>
+                        )}
                         <button 
                             onClick={onClose}
-                            className="py-4 bg-slate-50 text-slate-400 rounded-2xl font-black hover:bg-slate-100 transition-all"
+                            className={`py-4 bg-slate-50 text-slate-400 rounded-2xl font-black hover:bg-slate-100 transition-all ${!onDelete ? 'col-span-2' : ''}`}
                         >
                             閉じる
                         </button>
@@ -679,7 +851,7 @@ function EditModal({ isOpen, onClose, onSave, onDelete, staffName, date, current
     );
 }
 
-function BulkEditModal({ isOpen, onClose, onSave, staffName, month }: any) {
+function BulkEditModal({ isOpen, onClose, onSave, staffName, month, isEmployee }: any) {
     const [start, setStart] = useState("09:00");
     const [end, setEnd] = useState("18:00");
 
@@ -690,9 +862,9 @@ function BulkEditModal({ isOpen, onClose, onSave, staffName, month }: any) {
                     <div className="size-12 rounded-2xl bg-indigo-100 text-indigo-600 flex items-center justify-center mb-4">
                         <Copy size={24} />
                     </div>
-                    <h3 className="text-2xl font-black text-slate-900 leading-tight">平日の一括登録</h3>
+                    <h3 className="text-2xl font-black text-slate-900 leading-tight">{isEmployee ? "平日の一括登録" : "平日の一括登録（管理）"}</h3>
                     <p className="text-slate-500 font-bold">
-                        {staffName} さんの <span className="text-indigo-600">{month}</span> の平日に、以下の時間を一括で反映します。
+                        {isEmployee ? "あなた" : staffName} の <span className="text-indigo-600">{month}</span> の平日に、以下の時間を一括で反映します。
                     </p>
                 </div>
 
