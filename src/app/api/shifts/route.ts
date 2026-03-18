@@ -12,10 +12,6 @@ export async function GET(req: Request) {
     }
 
     const { tenantId, role } = context;
-
-    if (role === "TENANT_USER") {
-      return NextResponse.json({ error: "権限がありません" }, { status: 403 });
-    }
     const { searchParams } = new URL(req.url);
     const startStr = searchParams.get("start");
     const endStr = searchParams.get("end");
@@ -24,14 +20,27 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "期間指定が必要です" }, { status: 400 });
     }
 
-    const shifts = await (prisma as any).shift.findMany({
-      where: {
-        tenantId,
-        date: {
-          gte: new Date(startStr),
-          lte: new Date(endStr)
-        }
+    let where: any = {
+      tenantId,
+      date: {
+        gte: new Date(startStr),
+        lte: new Date(endStr)
       }
+    };
+
+    if (role === "TENANT_USER") {
+      const staff = await (prisma as any).staff.findUnique({
+        where: { userId: context.userId }
+      });
+      if (!staff) {
+        return NextResponse.json({ error: "スタッフ情報が見つかりません" }, { status: 404 });
+      }
+      where.staffId = staff.id;
+    }
+
+    const shifts = await (prisma as any).shift.findMany({
+      where,
+      orderBy: { date: "asc" }
     });
 
     return NextResponse.json(shifts);
