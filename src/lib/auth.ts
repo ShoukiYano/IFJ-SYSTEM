@@ -16,24 +16,24 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         try {
-          console.log("[AUTH] Authorize called with email:", credentials?.email);
+          // console.log("[AUTH] Authorize called with email:", credentials?.email);
           if (!credentials?.email || !credentials?.password) {
-            console.log("[AUTH] Missing credentials");
+            // console.log("[AUTH] Missing credentials");
             throw new Error("メールアドレスとパスワードを入力してください");
           }
 
           const email = credentials.email.trim().toLowerCase();
-          console.log("[AUTH] Normalizing email to:", email);
+          // console.log("[AUTH] Normalizing email to:", email);
 
           // Prisma Client の死活監視
-          console.log("[AUTH] Checking Prisma instance...");
+          // console.log("[AUTH] Checking Prisma instance...");
           if (!prisma) {
             console.error("[AUTH] FATAL: Prisma instance is undefined!");
             throw new Error("ERR_DB_INIT_FAILED");
           }
-          console.log("[AUTH] Prisma instance exists. Models:", Object.keys(prisma).filter(k => !k.startsWith("_")));
+          // console.log("[AUTH] Prisma instance exists. Models:", Object.keys(prisma).filter(k => !k.startsWith("_")));
 
-          console.log("[AUTH] START: prisma.user.findUnique for email:", email);
+          // console.log("[AUTH] START: prisma.user.findUnique for email:", email);
           const user = await prisma.user.findUnique({
             where: { email },
             include: { tenant: true },
@@ -41,10 +41,10 @@ export const authOptions: NextAuthOptions = {
             console.error("[AUTH] CRITICAL DB ERROR during findUnique:", dbErr);
             throw dbErr;
           });
-          console.log("[AUTH] END: prisma.user.findUnique, user found:", !!user);
+          // console.log("[AUTH] END: prisma.user.findUnique, user found:", !!user);
 
           if (!user) {
-            console.log("[AUTH] User not found in DB:", email);
+            // console.log("[AUTH] User not found in DB:", email);
             throw new Error("ERR_USER_NOT_FOUND");
           }
 
@@ -52,28 +52,28 @@ export const authOptions: NextAuthOptions = {
           if (credentials.subdomain && user.role !== "SYSTEM_ADMIN") {
             const loginSubdomain = credentials.subdomain.trim().toLowerCase();
             const userSubdomain = user.tenant?.subdomain?.toLowerCase();
-            console.log("[AUTH] Tenant check - login subdomain:", loginSubdomain, "user's subdomain:", userSubdomain);
+            // console.log("[AUTH] Tenant check - login subdomain:", loginSubdomain, "user's subdomain:", userSubdomain);
             if (loginSubdomain !== userSubdomain) {
-              console.log("[AUTH] Tenant mismatch! Blocking login for non-admin.");
+              // console.log("[AUTH] Tenant mismatch! Blocking login for non-admin.");
               throw new Error("ERR_USER_NOT_FOUND");
             }
           } else if (credentials.subdomain && user.role === "SYSTEM_ADMIN") {
-            console.log("[AUTH] System admin login via tenant page - bypassing subdomain check");
+            // console.log("[AUTH] System admin login via tenant page - bypassing subdomain check");
           }
 
-          console.log("[AUTH] User data:", { email: user.email, role: user.role, hasTenant: !!user.tenant });
+          // console.log("[AUTH] User data:", { email: user.email, role: user.role, hasTenant: !!user.tenant });
 
           if (!user.password) {
-            console.log("[AUTH] User has no password set in DB");
+            // console.log("[AUTH] User has no password set in DB");
             throw new Error("ERR_NO_PASSWORD");
           }
 
-          console.log("[AUTH] Comparing with bcrypt...");
+          // console.log("[AUTH] Comparing with bcrypt...");
           const isValid = await bcrypt.compare(credentials.password, user.password);
-          console.log("[AUTH] Bcrypt result:", isValid);
+          // console.log("[AUTH] Bcrypt result:", isValid);
 
           if (!isValid) {
-            console.log("[AUTH] Password mismatch for:", email);
+            // console.log("[AUTH] Password mismatch for:", email);
             throw new Error("ERR_INVALID_PASSWORD");
           }
 

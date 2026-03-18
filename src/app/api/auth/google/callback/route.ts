@@ -15,10 +15,10 @@ export async function GET(req: Request) {
     }
 
     try {
-        console.log(`[google-auth-callback] Received code for tenantId: ${tenantId}`);
+        // console.log(`[google-auth-callback] Received code for tenantId: ${tenantId}`);
         // Exchange for tokens
         const { tokens } = await oauth2Client.getToken(code);
-        console.log(`[google-auth-callback] Successfully exchanged code for tokens. Refresh token present: ${!!tokens.refresh_token}`);
+        // console.log(`[google-auth-callback] Successfully exchanged code for tokens. Refresh token present: ${!!tokens.refresh_token}`);
 
         oauth2Client.setCredentials(tokens);
 
@@ -26,7 +26,7 @@ export async function GET(req: Request) {
         const oauth2 = google.oauth2({ version: "v2", auth: oauth2Client });
         const userInfo = await oauth2.userinfo.get();
         const email = userInfo.data.email;
-        console.log(`[google-auth-callback] User email: ${email}`);
+        // console.log(`[google-auth-callback] User email: ${email}`);
 
         if (!tokens.access_token || !tokens.refresh_token || !tokens.expiry_date) {
             console.error(`[google-auth-callback] Missing required tokens: access=${!!tokens.access_token}, refresh=${!!tokens.refresh_token}, expiry=${!!tokens.expiry_date}`);
@@ -50,7 +50,7 @@ export async function GET(req: Request) {
                 email: email || null,
             },
         });
-        console.log(`[google-auth-callback] Successfully saved/updated token for tenantId: ${tenantId}. DB ID: ${savedToken.id}`);
+        // console.log(`[google-auth-callback] Successfully saved/updated token for tenantId: ${tenantId}. DB ID: ${savedToken.id}`);
 
         // Redirect back to settings page
         return NextResponse.redirect(`${process.env.NEXTAUTH_URL}/settings?google_connected=success`);

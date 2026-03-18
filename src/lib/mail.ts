@@ -22,7 +22,7 @@ export type SendMailOptions = {
 };
 
 async function sendGmailOAuth2(options: SendMailOptions, tenantId: string) {
-    console.log(`[mail] Attempting Gmail OAuth2 for tenant: ${tenantId}`);
+    // console.log(`[mail] Attempting Gmail OAuth2 for tenant: ${tenantId}`);
     const token = await prisma.googleOAuthToken.findUnique({
         where: { tenantId }
     });
@@ -31,24 +31,24 @@ async function sendGmailOAuth2(options: SendMailOptions, tenantId: string) {
         throw new Error(`Google account not connected for tenant ${tenantId}`);
     }
 
-    console.log(`[mail] Found token for ${token.email}. Refresh token present: ${!!token.refreshToken}`);
+    // console.log(`[mail] Found token for ${token.email}. Refresh token present: ${!!token.refreshToken}`);
     oauth2Client.setCredentials({
         refresh_token: token.refreshToken,
     });
 
     // Manually refresh to be 100% sure
-    console.log("[mail] Manually refreshing access token via Google API...");
+    // console.log("[mail] Manually refreshing access token via Google API...");
     const { token: accessToken } = await oauth2Client.getAccessToken();
 
     if (!accessToken) {
         throw new Error("Failed to refresh access token");
     }
     oauth2Client.setCredentials({ access_token: accessToken });
-    console.log("[mail] Access token refreshed successfully.");
+    // console.log("[mail] Access token refreshed successfully.");
 
     const gmail = google.gmail({ version: "v1", auth: oauth2Client });
 
-    console.log(`[mail] Sending via direct Gmail API (User: ${token.email})...`);
+    // console.log(`[mail] Sending via direct Gmail API (User: ${token.email})...`);
 
     // Construct MIME message
     const boundary = "foo_bar_baz";
@@ -104,7 +104,7 @@ async function sendGmailOAuth2(options: SendMailOptions, tenantId: string) {
                 raw: encodedMessage,
             },
         });
-        console.log("[mail] Email sent successfully via Gmail API");
+        // console.log("[mail] Email sent successfully via Gmail API");
         return { success: true };
     } catch (apiError: any) {
         console.error("[mail] Gmail API Send Error:", apiError);
@@ -113,7 +113,7 @@ async function sendGmailOAuth2(options: SendMailOptions, tenantId: string) {
 }
 
 export async function sendMail(options: SendMailOptions) {
-    console.log(`[mail] Starting sendMail process to: ${options.to}`);
+    // console.log(`[mail] Starting sendMail process to: ${options.to}`);
 
     // Determine tenant context
     let tenantId = options.tenantId;
@@ -130,19 +130,19 @@ export async function sendMail(options: SendMailOptions) {
     if (tenantId) {
         try {
             const result = await sendGmailOAuth2(options, tenantId);
-            console.log("[mail] Email sent successfully via Google OAuth2");
+            // console.log("[mail] Email sent successfully via Google OAuth2");
             return { success: true, data: result };
         } catch (error) {
             console.warn(`[mail] Gmail OAuth2 failed for tenant ${tenantId}. Falling back:`, error);
         }
     } else {
-        console.log("[mail] No tenantId found, skipping Gmail OAuth2");
+        // console.log("[mail] No tenantId found, skipping Gmail OAuth2");
     }
 
     // SMTP Fallback (Legacy / App Password)
     if (process.env.SMTP_USER && process.env.SMTP_PASS) {
         try {
-            console.log("[mail] Attempting SMTP fallback...");
+            // console.log("[mail] Attempting SMTP fallback...");
             const transporter = nodemailer.createTransport({
                 service: "gmail",
                 auth: {
@@ -163,7 +163,7 @@ export async function sendMail(options: SendMailOptions) {
                     contentType: a.contentType || 'application/pdf',
                 })),
             });
-            console.log("[mail] Email sent successfully via SMTP:", info.messageId);
+            // console.log("[mail] Email sent successfully via SMTP:", info.messageId);
             return { success: true, data: info };
         } catch (error) {
             console.error("[mail] SMTP fallback failed:", error);
@@ -173,7 +173,7 @@ export async function sendMail(options: SendMailOptions) {
     // Resend Fallback
     if (resend) {
         try {
-            console.log("[mail] Attempting Resend fallback...");
+            // console.log("[mail] Attempting Resend fallback...");
             const from = options.fromName
                 ? `${options.fromName} <onboarding@resend.dev>`
                 : "Invoice System <onboarding@resend.dev>";
@@ -184,7 +184,7 @@ export async function sendMail(options: SendMailOptions) {
                 content: a.content, // Resend accepts Buffer, string, etc.
             }));
 
-            console.log(`[mail] Sending via Resend with ${resendAttachments?.length || 0} attachments...`);
+            // console.log(`[mail] Sending via Resend with ${resendAttachments?.length || 0} attachments...`);
             const result = await resend.emails.send({
                 from,
                 to: options.to,
@@ -199,7 +199,7 @@ export async function sendMail(options: SendMailOptions) {
                 return { success: false, error: result.error.message };
             }
 
-            console.log("[mail] Email sent successfully via Resend");
+            // console.log("[mail] Email sent successfully via Resend");
             return { success: true, data: result.data };
         } catch (error) {
             console.error("[mail] Resend fallback failed:", error);

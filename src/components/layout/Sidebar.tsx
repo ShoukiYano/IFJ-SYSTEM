@@ -27,7 +27,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
         const res = await fetch("/api/admin/impersonate/status");
         if (res.ok) {
           const data = await res.json();
-          console.log("[SIDEBAR] Impersonation status:", data);
+          // console.log("[SIDEBAR] Impersonation status:", data);
           setIsImpersonating(data.isImpersonating);
           if (data.isImpersonating) {
             setEffectiveFeatures({
@@ -200,7 +200,10 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
           </div>
 
           <button
-            onClick={() => signOut()}
+            onClick={() => {
+              const tenantId = (session?.user as any)?.tenantId;
+              signOut({ callbackUrl: tenantId ? `/${tenantId}/login` : undefined });
+            }}
             className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-rose-500/10 hover:text-rose-500 transition-all font-bold text-sm"
           >
             <LogOut size={18} />

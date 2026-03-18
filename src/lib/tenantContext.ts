@@ -32,7 +32,7 @@ export async function getTenantContext() {
         select: { hasInvoiceFeature: true, hasAttendanceFeature: true }
       });
 
-      console.log(`[IMP] Impersonating tenant: ${impTenantId}`, { hasInvoice: (tenant as any)?.hasInvoiceFeature, hasAttendance: (tenant as any)?.hasAttendanceFeature });
+      // console.log(`[IMP] Impersonating tenant: ${impTenantId}`, { hasInvoice: (tenant as any)?.hasInvoiceFeature, hasAttendance: (tenant as any)?.hasAttendanceFeature });
       return {
         userId: impUserId || realUserId,
         tenantId: impTenantId,

@@ -46,7 +46,7 @@ export async function POST(
         const googleToken = await prisma.googleOAuthToken.findUnique({
             where: { tenantId: context.tenantId }
         });
-        console.log(`[send-api] Google Token Check: found=${!!googleToken}, hasRefreshToken=${!!googleToken?.refreshToken}`);
+        // console.log(`[send-api] Google Token Check: found=${!!googleToken}, hasRefreshToken=${!!googleToken?.refreshToken}`);
 
         // 送信のたびに新しいaccessId・パスワード・有効期限（7日間）を発行
         const accessId = crypto.randomUUID();
@@ -76,7 +76,7 @@ URL: ${downloadUrl}
 ※ブラウザで開いた後にPDFとして保存できます。${signature ? '\n' + signature : ''}
 `;
 
-        console.log(`[send-api] Sending email with link. tenantId: ${context.tenantId}`);
+        // console.log(`[send-api] Sending email with link. tenantId: ${context.tenantId}`);
         // メール送信
         const result = await sendMail({
             to,
@@ -86,7 +86,7 @@ URL: ${downloadUrl}
             tenantId: context.tenantId,
         });
 
-        console.log(`[send-api] sendMail result: success=${result.success}`);
+        // console.log(`[send-api] sendMail result: success=${result.success}`);
 
         if (!result.success) {
             return NextResponse.json({ error: result.error }, { status: 500 });
