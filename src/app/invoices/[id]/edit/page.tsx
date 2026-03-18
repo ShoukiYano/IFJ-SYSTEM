@@ -2,9 +2,10 @@
 
 import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Plus, Trash2, Save, FileText, ChevronLeft, Loader2, Upload, Building2 } from "lucide-react";
+import { Plus, Trash2, Save, FileText, ChevronLeft, Loader2, Upload, Building2, AlertTriangle } from "lucide-react";
 import * as XLSX from "xlsx";
 import { formatCurrency } from "@/lib/utils";
+import { calculateDueDate, isHolidayOrWeekend } from "@/lib/dateUtils";
 
 export default function EditInvoicePage() {
   const params = useParams();
@@ -415,12 +416,23 @@ export default function EditInvoicePage() {
               </div>
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">支払期限</label>
-                <input
-                  type="date"
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none"
-                  value={invoice.dueDate || ""}
-                  onChange={e => setInvoice({ ...invoice, dueDate: e.target.value })}
-                />
+                <div className="relative">
+                  <input
+                    type="date"
+                    className={`w-full px-3 py-2 border rounded-lg outline-none ${invoice.dueDate && isHolidayOrWeekend(new Date(invoice.dueDate)).isHoliday
+                      ? "bg-amber-50 border-amber-200 text-amber-800"
+                      : "bg-slate-50 border-slate-200"
+                      }`}
+                    value={invoice.dueDate || ""}
+                    onChange={e => setInvoice({ ...invoice, dueDate: e.target.value })}
+                  />
+                  {invoice.dueDate && isHolidayOrWeekend(new Date(invoice.dueDate)).isHoliday && (
+                    <div className="mt-1 flex items-center gap-1 text-[10px] text-amber-600 font-bold">
+                      <AlertTriangle size={12} />
+                      注意: 指定日は {isHolidayOrWeekend(new Date(invoice.dueDate)).reason} です
+                    </div>
+                  )}
+                </div>
               </div>
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">テンプレート</label>
