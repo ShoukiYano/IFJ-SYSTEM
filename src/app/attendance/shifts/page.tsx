@@ -17,14 +17,19 @@ export default function ShiftManagePage() {
   const [shifts, setShifts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [isImpersonating, setIsImpersonating] = useState(false);
   
   // 編集中のシフト（一時保存用）
   const [pendingShifts, setPendingShifts] = useState<any[]>([]);
   const [shiftRequests, setShiftRequests] = useState<any[]>([]);
+  const [myPendingRequests, setMyPendingRequests] = useState<any[]>([]);
   const [showRequests, setShowRequests] = useState(false);
 
   // 編集モーダル用
   const [editingCell, setEditingCell] = useState<{ staffId: string; date: Date; shift: any } | null>(null);
+  
+  // 申請モーダル用 (一般ユーザー)
+  const [requestingCell, setRequestingCell] = useState<{ date: Date; currentShift: any } | null>(null);
 
   // 一括編集用
   const [bulkEditStaff, setBulkEditStaff] = useState<any | null>(null);
@@ -52,15 +57,22 @@ export default function ShiftManagePage() {
           const shData = await shRes.json();
           setShifts(shData);
           setStaffs([{
-            id: (session.user as any).staffId || "current-user", // API/Context 側で staffId が渡されている前提、なければ仮
+            id: (session.user as any).staffId || "current-user",
             name: session.user.name || "自分",
           }]);
+
+          // 一般ユーザー：自分の申請一覧も取得
+          const reqRes = await fetch("/api/shifts/requests?status=PENDING");
+          if (reqRes.ok) {
+            const reqData = await reqRes.json();
+            setMyPendingRequests(reqData);
+          }
         }
       }
       setPendingShifts([]); // クリア
 
       if (isAdmin) {
-        // 申請一覧も取得
+        // 管理者：全申請の一覧を取得
         const reqRes = await fetch("/api/shifts/requests?status=PENDING");
         if (reqRes.ok) {
           const reqData = await reqRes.json();
@@ -167,6 +179,35 @@ export default function ShiftManagePage() {
         fetchData();
       } else {
         alert("保存に失敗しました");
+      }
+    } catch (error) {
+      alert("通信エラーが発生しました");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleRequestShift = async (startTime: string, endTime: string, reason: string) => {
+    if (!requestingCell) return;
+    setSaving(true);
+    try {
+      const res = await fetch("/api/shifts/requests", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          targetDate: requestingCell.date.toISOString(),
+          requestStartTime: new Date(new Date(requestingCell.date).setHours(parseInt(startTime.split(":")[0]), parseInt(startTime.split(":")[1]), 0, 0)).toISOString(),
+          requestEndTime: new Date(new Date(requestingCell.date).setHours(parseInt(endTime.split(":")[0]), parseInt(endTime.split(":")[1]), 0, 0)).toISOString(),
+          reason
+        })
+      });
+      if (res.ok) {
+        alert("申請を送信しました。管理者の承認をお待ちください。");
+        fetchData();
+        setRequestingCell(null);
+      } else {
+        const error = await res.json();
+        alert(error.error || "申請に失敗しました");
       }
     } catch (error) {
       alert("通信エラーが発生しました");
@@ -361,10 +402,10 @@ export default function ShiftManagePage() {
                     </div>
                   </td>
                   {eachDayOfInterval({ start: startOfMonth(currentMonth), end: endOfMonth(currentMonth) }).map(day => {
-                    // 全員分表示するか自分分のみ表示するかは API 側で制御されている
                     const shift = shifts.find(s => s.staffId === staff.id && format(new Date(s.date), "yyyy-MM-dd") === format(day, "yyyy-MM-dd"));
                     const pending = pendingShifts.find(ps => ps.staffId === staff.id && format(new Date(ps.date), "yyyy-MM-dd") === format(day, "yyyy-MM-dd"));
-                    const active = pending || shift;
+                    const myReq = !isAdmin ? myPendingRequests.find(r => format(new Date(r.targetDate), "yyyy-MM-dd") === format(day, "yyyy-MM-dd")) : null;
+                    const active = pending || shift || myReq;
 
                     return (
                       <td 
@@ -377,18 +418,27 @@ export default function ShiftManagePage() {
                             } else {
                                openEditModal(staff.id, day, active);
                             }
+                          } else {
+                            // 自身の行であれば申請モーダルを開く
+                            setRequestingCell({ date: day, currentShift: active });
                           }
                         }}
                       >
                         {active && !active.isDeleted ? (
-                          <div className={`p-2 rounded-xl text-[10px] font-black tracking-tighter shadow-sm transition-all animate-in zoom-in-90 ${isAdmin ? 'cursor-pointer' : ''} ${pending ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
-                            {format(new Date(active.startTime), "HH:mm")}
-                            <div className="border-t border-white/20 my-0.5"></div>
-                            {format(new Date(active.endTime), "HH:mm")}
+                          <div className={cn(
+                            "p-2 rounded-xl text-[10px] font-black tracking-tighter shadow-sm transition-all animate-in zoom-in-90 cursor-pointer",
+                            pending ? "bg-indigo-600 text-white" : 
+                            myReq ? "bg-amber-100 text-amber-700 border-2 border-amber-200" :
+                            "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                          )}>
+                            {format(new Date(active.startTime || active.requestStartTime), "HH:mm")}
+                            <div className={cn("my-0.5 border-t", pending ? "border-white/20" : "border-slate-200")}></div>
+                            {format(new Date(active.endTime || active.requestEndTime), "HH:mm")}
+                            {myReq && <div className="mt-1 text-[8px] opacity-70">申請中</div>}
                           </div>
                         ) : (
-                          <div className={cn("size-full min-h-[48px] flex items-center justify-center text-slate-200 group-hover:text-slate-300 transition-all", isAdmin && "cursor-copy hover:bg-indigo-50 rounded-xl")}>
-                            {isAdmin ? "+" : ""}
+                          <div className={cn("size-full min-h-[48px] flex items-center justify-center text-slate-200 group-hover:text-slate-300 transition-all cursor-copy hover:bg-indigo-50 rounded-xl")}>
+                            +
                           </div>
                         )}
                       </td>
@@ -437,8 +487,82 @@ export default function ShiftManagePage() {
           month={format(currentMonth, "yyyy年 M月")}
         />
       )}
+
+      {requestingCell && !isAdmin && (
+        <RequestModal
+          isOpen={!!requestingCell}
+          onClose={() => setRequestingCell(null)}
+          onSave={handleRequestShift}
+          date={requestingCell.date}
+          currentShift={requestingCell.currentShift}
+        />
+      )}
     </div>
   );
+}
+
+function RequestModal({ isOpen, onClose, onSave, date, currentShift }: any) {
+    const [start, setStart] = useState(currentShift ? format(new Date(currentShift.startTime || currentShift.requestStartTime), "HH:mm") : "09:00");
+    const [end, setEnd] = useState(currentShift ? format(new Date(currentShift.endTime || currentShift.requestEndTime), "HH:mm") : "18:00");
+    const [reason, setReason] = useState(currentShift?.reason || "");
+
+    return (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-6">
+            <div className="bg-white rounded-[2rem] w-full max-w-sm shadow-2xl p-8 space-y-6">
+                <div className="space-y-1">
+                    <h3 className="text-xl font-black text-slate-900">シフトの申請</h3>
+                    <p className="text-slate-500 text-sm font-bold">{format(date, "yyyy/MM/dd(E)", { locale: ja })}</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">希望開始時間</label>
+                        <input 
+                            type="time" 
+                            className="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl font-black text-lg"
+                            value={start}
+                            onChange={(e) => setStart(e.target.value)}
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">希望終了時間</label>
+                        <input 
+                            type="time" 
+                            className="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl font-black text-lg"
+                            value={end}
+                            onChange={(e) => setEnd(e.target.value)}
+                        />
+                    </div>
+                </div>
+
+                <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">申請理由</label>
+                    <textarea 
+                        className="w-full p-4 bg-slate-50 border border-slate-100 rounded-xl font-medium text-sm min-h-[100px] resize-none focus:ring-4 focus:ring-indigo-500/5 outline-none"
+                        placeholder="例：私用のため、10時から勤務希望です"
+                        value={reason}
+                        onChange={(e) => setReason(e.target.value)}
+                    />
+                </div>
+
+                <div className="flex flex-col gap-3 pt-4">
+                    <button 
+                        onClick={() => onSave(start, end, reason)}
+                        className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all flex items-center justify-center gap-2"
+                    >
+                        <Save size={18} />
+                        申請を送信
+                    </button>
+                    <button 
+                        onClick={onClose}
+                        className="py-4 bg-slate-50 text-slate-400 rounded-2xl font-black hover:bg-slate-100 transition-all"
+                    >
+                        閉じる
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
 }
 
 function EditModal({ isOpen, onClose, onSave, onDelete, staffName, date, currentShift }: any) {
