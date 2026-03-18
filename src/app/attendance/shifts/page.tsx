@@ -464,11 +464,20 @@ export default function ShiftManagePage() {
                         </div>
                         <span className="font-black text-slate-800 text-sm whitespace-nowrap">{staff.name}</span>
                       </div>
-                      {(isAdmin || !isAdmin) && (
+                      {!isAdmin ? (
+                        <button 
+                          onClick={() => handleSetDefault(staff.id)}
+                          className="px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg text-[10px] font-black hover:bg-indigo-100 transition-all flex items-center gap-1.5 whitespace-nowrap ml-4"
+                          title="平日のシフトを一括で登録"
+                        >
+                          <Copy size={12} />
+                          一括登録
+                        </button>
+                      ) : (
                         <button 
                           onClick={() => handleSetDefault(staff.id)}
                           className="p-2 text-slate-300 hover:text-indigo-600 transition-all opacity-0 group-hover:opacity-100"
-                          title={isAdmin ? "平日に標準シフト(9-18)を適用" : "平日を一括申請"}
+                          title="平日に標準シフト(9-18)を適用"
                         >
                           <Copy size={16} />
                         </button>
