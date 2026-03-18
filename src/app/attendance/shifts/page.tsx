@@ -25,7 +25,6 @@ export default function ShiftManagePage() {
   const [myPendingRequests, setMyPendingRequests] = useState<any[]>([]);
   const [showRequests, setShowRequests] = useState(false);
   const [isBulkRegister, setIsBulkRegister] = useState(false);
-  const [isBulkRequest, setIsBulkRequest] = useState(false);
 
   // 編集モーダル用
   const [editingCell, setEditingCell] = useState<{ staffId: string; date: Date; shift: any } | null>(null);
@@ -96,7 +95,12 @@ export default function ShiftManagePage() {
 
   const handleSetDefault = (staffId: string) => {
     const staff = staffs.find(s => s.id === staffId);
-    if (staff) setBulkEditStaff(staff);
+    if (staff) {
+      setBulkEditStaff(staff);
+      if (!isAdmin) {
+        setIsBulkRegister(true);
+      }
+    }
   };
 
   const handleBulkUpdateShift = (startTime: string, endTime: string) => {
@@ -554,8 +558,7 @@ export default function ShiftManagePage() {
         />
       )}
 
-      {bulkEditStaff && (
-        isAdmin ? (
+      {bulkEditStaff && isAdmin && (
           <BulkEditModal
             isOpen={!!bulkEditStaff}
             onClose={() => setBulkEditStaff(null)}
@@ -563,75 +566,6 @@ export default function ShiftManagePage() {
             staffName={bulkEditStaff.name}
             month={format(currentMonth, "yyyy年 M月")}
           />
-        ) : (
-          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-50 p-6">
-            <div className="bg-white rounded-[2.5rem] w-full max-w-lg shadow-2xl p-10 space-y-8 animate-in zoom-in-95 duration-200">
-                <div className="space-y-4">
-                    <div className="size-12 rounded-2xl bg-indigo-100 text-indigo-600 flex items-center justify-center">
-                        <Copy size={24} />
-                    </div>
-                    <div>
-                        <h3 className="text-2xl font-black text-slate-900 leading-tight">平日の一括アクション</h3>
-                        <p className="text-slate-500 font-bold mt-2">
-                           {format(currentMonth, "yyyy年 M月")} の平日に、一括でシフトを入力します。
-                        </p>
-                    </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                    <button 
-                        onClick={() => {
-                            // 一括登録（既存シフトがない日のみ反映される）
-                            setPendingShifts([]); // クリアしておく（念のため）
-                            setBulkEditStaff(bulkEditStaff);
-                        }}
-                        className="hidden" // 内部制御用
-                    />
-                    <div className="col-span-2 p-6 bg-slate-50 rounded-3xl border-2 border-slate-100 space-y-4">
-                        <div className="flex items-center gap-3 text-indigo-600">
-                            <Save size={20} />
-                            <span className="font-black">直接登録（申請不要）</span>
-                        </div>
-                        <p className="text-xs text-slate-500 font-bold leading-relaxed">
-                            既にシフトが登録されている日を除き、平日に一括でシフトを登録します。管理者の承認を待たずに即時反映されます。
-                        </p>
-                        <button 
-                            onClick={() => {
-                                // BulkEditModal を表示するようにフラグを立てる的な
-                                setIsBulkRegister(true);
-                            }}
-                            className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all"
-                        >
-                            一括登録画面へ
-                        </button>
-                    </div>
-
-                    <div className="col-span-2 p-6 bg-amber-50 rounded-3xl border-2 border-amber-100 space-y-4 opacity-80">
-                        <div className="flex items-center gap-3 text-amber-600">
-                            <Clock size={20} />
-                            <span className="font-black">一括申請（承認が必要）</span>
-                        </div>
-                        <p className="text-xs text-amber-700/70 font-bold leading-relaxed">
-                            既に登録済みのシフトを変更・上書きしたい場合は、こちらから申請を行ってください。
-                        </p>
-                        <button 
-                            onClick={() => setIsBulkRequest(true)}
-                            className="w-full bg-white border-2 border-amber-200 text-amber-600 py-4 rounded-2xl font-black hover:bg-amber-100 transition-all"
-                        >
-                            一括申請画面へ
-                        </button>
-                    </div>
-                </div>
-
-                <button 
-                    onClick={() => setBulkEditStaff(null)}
-                    className="w-full py-2 text-slate-400 font-black hover:text-slate-600 transition-all text-sm"
-                >
-                    キャンセル
-                </button>
-            </div>
-          </div>
-        )
       )}
 
       {isBulkRegister && bulkEditStaff && (
@@ -691,18 +625,6 @@ export default function ShiftManagePage() {
         />
       )}
 
-      {isBulkRequest && bulkEditStaff && (
-        <BulkRequestModal
-          isOpen={true}
-          onClose={() => {
-              setIsBulkRequest(false);
-              setBulkEditStaff(null);
-          }}
-          onSave={handleBulkRequestShift}
-          staffName={bulkEditStaff.name}
-          month={format(currentMonth, "yyyy年 M月")}
-        />
-      )}
 
       {requestingCell && !isAdmin && (
         <RequestModal
