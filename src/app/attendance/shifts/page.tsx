@@ -25,6 +25,7 @@ export default function ShiftManagePage() {
   const [myPendingRequests, setMyPendingRequests] = useState<any[]>([]);
   const [showRequests, setShowRequests] = useState(false);
   const [isBulkRegister, setIsBulkRegister] = useState(false);
+  const [showBulkConfirm, setShowBulkConfirm] = useState<{ start: string; end: string; dates: Date[] } | null>(null);
 
   // 編集モーダル用
   const [editingCell, setEditingCell] = useState<{ staffId: string; date: Date; shift: any } | null>(null);
@@ -206,6 +207,9 @@ export default function ShiftManagePage() {
       setEditingCell(null);
     } else {
       // 一般ユーザー：直接保存
+      if (!window.confirm(`${format(baseDate, "M/d(E)", { locale: ja })} に ${startTime} - ${endTime} のシフトを登録しますか？`)) {
+        return;
+      }
       setSaving(true);
       try {
         const res = await fetch("/api/shifts/bulk", {
@@ -585,48 +589,25 @@ export default function ShiftManagePage() {
                 setBulkEditStaff(null);
             }}
             onSave={async (start: string, end: string) => {
-                // 一般ユーザー用の一括登録処理
-                setSaving(true);
-                try {
-                    const days = eachDayOfInterval({
-                        start: startOfMonth(currentMonth),
-                        end: endOfMonth(currentMonth)
-                    });
-                    const startParts = start.split(":");
-                    const endParts = end.split(":");
-                    
-                    const newShifts = days
-                        .filter(day => !isWeekend(day))
-                        .map(day => {
-                            const baseDate = new Date(day);
-                            return {
-                                staffId: bulkEditStaff.id,
-                                date: day,
-                                startTime: new Date(new Date(baseDate).setHours(parseInt(startParts[0]), parseInt(startParts[1]), 0, 0)),
-                                endTime: new Date(new Date(baseDate).setHours(parseInt(endParts[0]), parseInt(endParts[1]), 0, 0)),
-                                type: "WORKING"
-                            };
-                        });
+                // 対象日の計算
+                const days = eachDayOfInterval({
+                    start: startOfMonth(currentMonth),
+                    end: endOfMonth(currentMonth)
+                });
+                
+                // 平日かつ既存シフトがない日を抽出
+                const targetDates = days.filter(day => {
+                    const isWp = !isWeekend(day);
+                    const hasShift = shifts.some(s => s.staffId === (session?.user as any).staffId && isSameDay(new Date(s.date), day));
+                    return isWp && !hasShift;
+                });
 
-                    const res = await fetch("/api/shifts/bulk", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ shifts: newShifts })
-                    });
-                    if (res.ok) {
-                        alert("一括登録が完了しました。既存シフトのある日はスキップされました。");
-                        fetchData();
-                        setIsBulkRegister(false);
-                        setBulkEditStaff(null);
-                    } else {
-                        const err = await res.json();
-                        alert(err.error || "登録に失敗しました");
-                    }
-                } catch (e) {
-                    alert("通信エラーが発生しました");
-                } finally {
-                    setSaving(false);
+                if (targetDates.length === 0) {
+                    alert("一括登録できる空きの平日がありません。");
+                    return;
                 }
+
+                setShowBulkConfirm({ start, end, dates: targetDates });
             }}
             staffName={bulkEditStaff.name}
             month={format(currentMonth, "yyyy年 M月")}
@@ -642,6 +623,56 @@ export default function ShiftManagePage() {
           onSave={handleRequestShift}
           date={requestingCell.date}
           currentShift={requestingCell.currentShift}
+        />
+      )}
+
+      {showBulkConfirm && (
+        <BulkConfirmModal 
+            isOpen={true}
+            onClose={() => setShowBulkConfirm(null)}
+            onConfirm={async () => {
+                setSaving(true);
+                try {
+                    const { start, end, dates } = showBulkConfirm;
+                    const startParts = start.split(":");
+                    const endParts = end.split(":");
+                    
+                    const newShifts = dates.map(day => {
+                        const baseDate = new Date(day);
+                        return {
+                            staffId: (session?.user as any).staffId,
+                            date: day,
+                            startTime: new Date(new Date(baseDate).setHours(parseInt(startParts[0]), parseInt(startParts[1]), 0, 0)),
+                            endTime: new Date(new Date(baseDate).setHours(parseInt(endParts[0]), parseInt(endParts[1]), 0, 0)),
+                            type: "WORKING"
+                        };
+                    });
+
+                    const res = await fetch("/api/shifts/bulk", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ shifts: newShifts })
+                    });
+                    
+                    if (res.ok) {
+                        alert("一括登録が完了しました。");
+                        fetchData();
+                        setShowBulkConfirm(null);
+                        setIsBulkRegister(false);
+                        setBulkEditStaff(null);
+                    } else {
+                        const err = await res.json();
+                        alert(err.error || "登録に失敗しました");
+                    }
+                } catch (e) {
+                    alert("通信エラーが発生しました");
+                } finally {
+                    setSaving(false);
+                }
+            }}
+            start={showBulkConfirm.start}
+            end={showBulkConfirm.end}
+            dates={showBulkConfirm.dates}
         />
       )}
     </div>
@@ -911,6 +942,51 @@ function BulkRequestModal({ isOpen, onClose, onSave, staffName, month }: any) {
                         className="w-full py-4 text-slate-400 font-black hover:text-slate-600 transition-all"
                     >
                         キャンセル
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function BulkConfirmModal({ isOpen, onClose, onConfirm, start, end, dates }: any) {
+    return (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-[60] p-6">
+            <div className="bg-white rounded-[2.5rem] w-full max-w-md shadow-2xl p-10 space-y-8 animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+                <div className="space-y-2">
+                    <div className="size-12 rounded-2xl bg-indigo-100 text-indigo-600 flex items-center justify-center mb-4">
+                        <AlertCircle size={24} />
+                    </div>
+                    <h3 className="text-2xl font-black text-slate-900 leading-tight">一括登録の最終確認</h3>
+                    <p className="text-slate-500 font-bold">
+                        以下の <span className="text-indigo-600">{dates.length}日間</span> に <span className="text-indigo-600 bg-indigo-50 px-2 py-1 rounded-lg">{start} - {end}</span> を一括登録します。よろしいですか？
+                    </p>
+                </div>
+
+                <div className="flex-1 overflow-y-auto bg-slate-50 rounded-3xl border-2 border-slate-100 p-6 space-y-2 min-h-[200px]">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">登録対象日</p>
+                    <div className="grid grid-cols-2 gap-2">
+                        {dates.map((d: Date) => (
+                            <div key={d.toISOString()} className="bg-white px-3 py-2 rounded-xl border border-slate-100 text-xs font-black text-slate-700 flex items-center justify-between">
+                                {format(d, "M/d (E)", { locale: ja })}
+                                <span className="size-1.5 rounded-full bg-indigo-400"></span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                <div className="flex flex-col gap-3 pt-4">
+                    <button 
+                        onClick={onConfirm}
+                        className="w-full bg-indigo-600 text-white py-5 rounded-2xl font-black shadow-xl shadow-indigo-200 hover:bg-indigo-700 hover:-translate-y-0.5 transition-all"
+                    >
+                        この内容で一括登録する
+                    </button>
+                    <button 
+                        onClick={onClose}
+                        className="w-full py-4 text-slate-400 font-black hover:text-slate-600 transition-all text-sm"
+                    >
+                        内容を修正する（戻る）
                     </button>
                 </div>
             </div>
