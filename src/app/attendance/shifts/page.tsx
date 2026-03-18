@@ -47,10 +47,14 @@ export default function ShiftManagePage() {
           setShifts(shData);
         }
       } else {
-        // TENANT_USER
-        if (shRes.ok) {
+        // TENANT_USER: 自分自身の情報を staffs にセットする（テーブル構造を維持するため）
+        if (shRes.ok && session?.user) {
           const shData = await shRes.json();
           setShifts(shData);
+          setStaffs([{
+            id: (session.user as any).staffId || "current-user", // API/Context 側で staffId が渡されている前提、なければ仮
+            name: session.user.name || "自分",
+          }]);
         }
       }
       setPendingShifts([]); // クリア
@@ -68,7 +72,7 @@ export default function ShiftManagePage() {
     } finally {
       setLoading(false);
     }
-  }, [currentMonth, isAdmin]);
+  }, [currentMonth, isAdmin, session]);
 
   useEffect(() => {
     if (status === "authenticated") {
@@ -113,6 +117,7 @@ export default function ShiftManagePage() {
   };
 
   const openEditModal = (staffId: string, date: Date, currentShift: any) => {
+    if (!isAdmin) return; // 一般ユーザーは編集不可
     setEditingCell({ staffId, date, shift: currentShift });
   };
 
@@ -316,35 +321,35 @@ export default function ShiftManagePage() {
         </div>
       )}
 
-      {/* メインコンテンツ */}
-      {isAdmin ? (
-        <div className="bg-white rounded-[2.5rem] shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse min-w-[1200px]">
-              <thead>
-                <tr className="bg-slate-50/50">
-                  <th className="p-6 text-[10px] font-black uppercase text-slate-400 tracking-widest sticky left-0 bg-slate-50/50 z-10 w-64 border-r border-slate-100">従業員名 / アクション</th>
-                  {eachDayOfInterval({ start: startOfMonth(currentMonth), end: endOfMonth(currentMonth) }).map(day => (
-                    <th key={day.toISOString()} className={`p-4 text-center border-r border-slate-100 min-w-[48px] ${isWeekend(day) ? 'bg-slate-100/30' : ''}`}>
-                      <div className="text-[10px] font-black text-slate-400 uppercase">{format(day, "E", { locale: ja })}</div>
-                      <div className={`text-sm font-black mt-1 ${isToday(day) ? 'text-indigo-600 ring-2 ring-indigo-50 rounded-full inline-block w-7 h-7 leading-7 bg-white' : 'text-slate-600'}`}>
-                        {format(day, "d")}
-                      </div>
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {staffs.map(staff => (
-                  <tr key={staff.id} className="hover:bg-slate-50/30 transition-colors group">
-                    <td className="p-6 sticky left-0 bg-white group-hover:bg-slate-50/30 z-10 border-r border-slate-100 shadow-xl shadow-transparent group-hover:shadow-slate-200/50">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="size-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 font-bold text-xs">
-                            {staff.name.charAt(0)}
-                          </div>
-                          <span className="font-black text-slate-800 text-sm whitespace-nowrap">{staff.name}</span>
+      {/* メインテーブルコンテンツ（管理者・一般ユーザー共通） */}
+      <div className="bg-white rounded-[2.5rem] shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse min-w-[1200px]">
+            <thead>
+              <tr className="bg-slate-50/50">
+                <th className="p-6 text-[10px] font-black uppercase text-slate-400 tracking-widest sticky left-0 bg-slate-50/50 z-10 w-64 border-r border-slate-100">従業員名 / アクション</th>
+                {eachDayOfInterval({ start: startOfMonth(currentMonth), end: endOfMonth(currentMonth) }).map(day => (
+                  <th key={day.toISOString()} className={`p-4 text-center border-r border-slate-100 min-w-[48px] ${isWeekend(day) ? 'bg-slate-100/30' : ''}`}>
+                    <div className="text-[10px] font-black text-slate-400 uppercase">{format(day, "E", { locale: ja })}</div>
+                    <div className={`text-sm font-black mt-1 ${isToday(day) ? 'text-indigo-600 ring-2 ring-indigo-50 rounded-full inline-block w-7 h-7 leading-7 bg-white' : 'text-slate-600'}`}>
+                      {format(day, "d")}
+                    </div>
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {staffs.map(staff => (
+                <tr key={staff.id} className="hover:bg-slate-50/30 transition-colors group">
+                  <td className="p-6 sticky left-0 bg-white group-hover:bg-slate-50/30 z-10 border-r border-slate-100 shadow-xl shadow-transparent group-hover:shadow-slate-200/50">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="size-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 font-bold text-xs">
+                          {staff.name?.charAt(0) || "U"}
                         </div>
+                        <span className="font-black text-slate-800 text-sm whitespace-nowrap">{staff.name}</span>
+                      </div>
+                      {isAdmin && (
                         <button 
                           onClick={() => handleSetDefault(staff.id)}
                           className="p-2 text-slate-300 hover:text-indigo-600 transition-all opacity-0 group-hover:opacity-100"
@@ -352,90 +357,49 @@ export default function ShiftManagePage() {
                         >
                           <Copy size={16} />
                         </button>
-                      </div>
-                    </td>
-                    {eachDayOfInterval({ start: startOfMonth(currentMonth), end: endOfMonth(currentMonth) }).map(day => {
-                      const shift = shifts.find(s => s.staffId === staff.id && format(new Date(s.date), "yyyy-MM-dd") === format(day, "yyyy-MM-dd"));
-                      const pending = pendingShifts.find(ps => ps.staffId === staff.id && format(new Date(ps.date), "yyyy-MM-dd") === format(day, "yyyy-MM-dd"));
-                      const active = pending || shift;
+                      )}
+                    </div>
+                  </td>
+                  {eachDayOfInterval({ start: startOfMonth(currentMonth), end: endOfMonth(currentMonth) }).map(day => {
+                    // 全員分表示するか自分分のみ表示するかは API 側で制御されている
+                    const shift = shifts.find(s => s.staffId === staff.id && format(new Date(s.date), "yyyy-MM-dd") === format(day, "yyyy-MM-dd"));
+                    const pending = pendingShifts.find(ps => ps.staffId === staff.id && format(new Date(ps.date), "yyyy-MM-dd") === format(day, "yyyy-MM-dd"));
+                    const active = pending || shift;
 
-                      return (
-                        <td 
-                          key={`${staff.id}-${day.toISOString()}`} 
-                          className={`p-1 border-r border-slate-100 text-center ${isWeekend(day) ? 'bg-slate-100/10' : ''}`}
-                          onClick={() => {
+                    return (
+                      <td 
+                        key={`${staff.id}-${day.toISOString()}`} 
+                        className={`p-1 border-r border-slate-100 text-center ${isWeekend(day) ? 'bg-slate-100/10' : ''}`}
+                        onClick={() => {
+                          if (isAdmin) {
                             if (active?.isDeleted) {
                                openEditModal(staff.id, day, null);
                             } else {
                                openEditModal(staff.id, day, active);
                             }
-                          }}
-                        >
-                          {active && !active.isDeleted ? (
-                            <div className={`p-2 rounded-xl text-[10px] font-black tracking-tighter shadow-sm transition-all animate-in zoom-in-90 cursor-pointer ${pending ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
-                              {format(new Date(active.startTime), "HH:mm")}
-                              <div className="border-t border-white/20 my-0.5"></div>
-                              {format(new Date(active.endTime), "HH:mm")}
-                            </div>
-                          ) : (
-                            <div className="size-full min-h-[48px] flex items-center justify-center text-slate-200 group-hover:text-slate-300 cursor-copy hover:bg-indigo-50 rounded-xl transition-all">
-                              +
-                            </div>
-                          )}
-                        </td>
-                      );
-                    })}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                          }
+                        }}
+                      >
+                        {active && !active.isDeleted ? (
+                          <div className={`p-2 rounded-xl text-[10px] font-black tracking-tighter shadow-sm transition-all animate-in zoom-in-90 ${isAdmin ? 'cursor-pointer' : ''} ${pending ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
+                            {format(new Date(active.startTime), "HH:mm")}
+                            <div className="border-t border-white/20 my-0.5"></div>
+                            {format(new Date(active.endTime), "HH:mm")}
+                          </div>
+                        ) : (
+                          <div className={cn("size-full min-h-[48px] flex items-center justify-center text-slate-200 group-hover:text-slate-300 transition-all", isAdmin && "cursor-copy hover:bg-indigo-50 rounded-xl")}>
+                            {isAdmin ? "+" : ""}
+                          </div>
+                        )}
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-      ) : (
-        /* 一般ユーザー向け月間カレンダー */
-        <div className="grid grid-cols-7 gap-4">
-          {["月", "火", "水", "木", "金", "土", "日"].map(day => (
-            <div key={day} className="text-center p-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">{day}</div>
-          ))}
-          {/* 月の開始日までの空セル */}
-          {Array.from({ length: (startOfWeek(startOfMonth(currentMonth), { weekStartsOn: 1 }).getDay() === 0 ? 6 : startOfWeek(startOfMonth(currentMonth), { weekStartsOn: 1 }).getDay() - 1) }).map((_, i) => (
-            <div key={`empty-${i}`} className="bg-slate-50/30 rounded-3xl h-32 border border-slate-100/50"></div>
-          ))}
-          {eachDayOfInterval({ start: startOfMonth(currentMonth), end: endOfMonth(currentMonth) }).map(day => {
-            const shift = shifts.find(s => isSameDay(new Date(s.date), day));
-            return (
-              <div 
-                key={day.toISOString()} 
-                className={cn(
-                  "bg-white rounded-3xl h-32 p-4 border transition-all flex flex-col justify-between group",
-                  isToday(day) ? "border-indigo-600 shadow-lg shadow-indigo-100 z-10 scale-[1.02]" : "border-slate-100 shadow-sm hover:border-slate-300",
-                  !isSameMonth(day, currentMonth) ? "opacity-30" : ""
-                )}
-              >
-                <div className="flex justify-between items-start">
-                  <span className={cn(
-                    "text-lg font-black tracking-tighter",
-                    isToday(day) ? "text-indigo-600" : isWeekend(day) ? "text-rose-400" : "text-slate-900"
-                  )}>
-                    {format(day, "d")}
-                  </span>
-                </div>
-                {shift ? (
-                    <div className="bg-indigo-50 text-indigo-600 p-2 rounded-xl text-[10px] font-black border border-indigo-100/50">
-                        <div className="flex items-center gap-1 mb-0.5">
-                            <Clock size={10} />
-                            <span>WORKING</span>
-                        </div>
-                        {format(new Date(shift.startTime), "HH:mm")} - {format(new Date(shift.endTime), "HH:mm")}
-                    </div>
-                ) : (
-                    <div className="text-[10px] text-slate-300 font-bold italic">No Shift</div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      )}
+      </div>
       
       {isAdmin && (
         <div className="bg-indigo-50 border border-indigo-100 p-6 rounded-[2rem] flex items-start gap-4">
