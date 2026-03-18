@@ -128,6 +128,50 @@ export default function ShiftManagePage() {
     setBulkEditStaff(null);
   };
 
+  const handleBulkRequestShift = async (startTime: string, endTime: string, reason: string) => {
+    if (!bulkEditStaff) return;
+    setSaving(true);
+    try {
+      const days = eachDayOfInterval({
+        start: startOfMonth(currentMonth),
+        end: endOfMonth(currentMonth)
+      });
+      
+      const weekdays = days.filter(day => !isWeekend(day));
+      const requests = weekdays.map(day => {
+        const baseDate = new Date(day);
+        const startParts = startTime.split(":");
+        const endParts = endTime.split(":");
+        
+        return {
+          targetDate: day.toISOString(),
+          requestStartTime: new Date(new Date(baseDate).setHours(parseInt(startParts[0]), parseInt(startParts[1]), 0, 0)).toISOString(),
+          requestEndTime: new Date(new Date(baseDate).setHours(parseInt(endParts[0]), parseInt(endParts[1]), 0, 0)).toISOString(),
+          reason
+        };
+      });
+
+      const res = await fetch("/api/shifts/requests/bulk", {
+         method: "POST",
+         headers: { "Content-Type": "application/json" },
+         body: JSON.stringify({ requests })
+      });
+
+      if (res.ok) {
+        alert("一括申請を送信しました。");
+        fetchData();
+        setBulkEditStaff(null);
+      } else {
+        const error = await res.json();
+        alert(error.error || "一括申請に失敗しました");
+      }
+    } catch (error) {
+      alert("通信エラーが発生しました");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const openEditModal = (staffId: string, date: Date, currentShift: any) => {
     if (!isAdmin) return; // 一般ユーザーは編集不可
     setEditingCell({ staffId, date, shift: currentShift });
@@ -390,11 +434,11 @@ export default function ShiftManagePage() {
                         </div>
                         <span className="font-black text-slate-800 text-sm whitespace-nowrap">{staff.name}</span>
                       </div>
-                      {isAdmin && (
+                      {(isAdmin || !isAdmin) && (
                         <button 
                           onClick={() => handleSetDefault(staff.id)}
                           className="p-2 text-slate-300 hover:text-indigo-600 transition-all opacity-0 group-hover:opacity-100"
-                          title="平日に標準シフト(9-18)を適用"
+                          title={isAdmin ? "平日に標準シフト(9-18)を適用" : "平日を一括申請"}
                         >
                           <Copy size={16} />
                         </button>
@@ -478,14 +522,24 @@ export default function ShiftManagePage() {
         />
       )}
 
-      {bulkEditStaff && isAdmin && (
-        <BulkEditModal
-          isOpen={!!bulkEditStaff}
-          onClose={() => setBulkEditStaff(null)}
-          onSave={handleBulkUpdateShift}
-          staffName={bulkEditStaff.name}
-          month={format(currentMonth, "yyyy年 M月")}
-        />
+      {bulkEditStaff && (
+        isAdmin ? (
+          <BulkEditModal
+            isOpen={!!bulkEditStaff}
+            onClose={() => setBulkEditStaff(null)}
+            onSave={handleBulkUpdateShift}
+            staffName={bulkEditStaff.name}
+            month={format(currentMonth, "yyyy年 M月")}
+          />
+        ) : (
+          <BulkRequestModal
+            isOpen={!!bulkEditStaff}
+            onClose={() => setBulkEditStaff(null)}
+            onSave={handleBulkRequestShift}
+            staffName={bulkEditStaff.name}
+            month={format(currentMonth, "yyyy年 M月")}
+          />
+        )
       )}
 
       {requestingCell && !isAdmin && (
@@ -675,6 +729,79 @@ function BulkEditModal({ isOpen, onClose, onSave, staffName, month }: any) {
                         className="w-full bg-indigo-600 text-white py-5 rounded-2xl font-black shadow-xl shadow-indigo-200 hover:bg-indigo-700 hover:-translate-y-0.5 transition-all"
                     >
                         平日に一括反映する
+                    </button>
+                    <button 
+                        onClick={onClose}
+                        className="w-full py-4 text-slate-400 font-black hover:text-slate-600 transition-all"
+                    >
+                        キャンセル
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+function BulkRequestModal({ isOpen, onClose, onSave, staffName, month }: any) {
+    const [start, setStart] = useState("09:00");
+    const [end, setEnd] = useState("18:00");
+    const [reason, setReason] = useState("");
+
+    return (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-50 p-6">
+            <div className="bg-white rounded-[2.5rem] w-full max-w-md shadow-2xl p-10 space-y-8 animate-in zoom-in-95 duration-200">
+                <div className="space-y-2">
+                    <div className="size-12 rounded-2xl bg-indigo-100 text-indigo-600 flex items-center justify-center mb-4">
+                        <Copy size={24} />
+                    </div>
+                    <h3 className="text-2xl font-black text-slate-900 leading-tight">平日の一括申請</h3>
+                    <p className="text-slate-500 font-bold">
+                        <span className="text-indigo-600">{month}</span> の平日に、以下の時間を一括で申請します。
+                    </p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-6">
+                    <div className="space-y-3">
+                        <label className="text-xs font-black text-slate-400 uppercase tracking-widest">希望開始時間</label>
+                        <input 
+                            type="time" 
+                            className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-black text-xl focus:border-indigo-500 outline-none transition-all"
+                            value={start}
+                            onChange={(e) => setStart(e.target.value)}
+                        />
+                    </div>
+                    <div className="space-y-3">
+                        <label className="text-xs font-black text-slate-400 uppercase tracking-widest">希望終了時間</label>
+                        <input 
+                            type="time" 
+                            className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-black text-xl focus:border-indigo-500 outline-none transition-all"
+                            value={end}
+                            onChange={(e) => setEnd(e.target.value)}
+                        />
+                    </div>
+                </div>
+
+                <div className="space-y-2">
+                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest tracking-widest">申請理由</label>
+                    <textarea 
+                        className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-medium text-sm min-h-[100px] resize-none focus:border-indigo-500 outline-none transition-all"
+                        placeholder="例：標準的な勤務時間として一括申請します"
+                        value={reason}
+                        onChange={(e) => setReason(e.target.value)}
+                    />
+                </div>
+
+                <div className="bg-amber-50 rounded-2xl p-4 border border-amber-100">
+                    <p className="text-[10px] font-bold text-amber-700 leading-relaxed">
+                        ※土日・祝日は除外されます。すでに登録されている平日のシフトがある場合、上書き申請となります。
+                    </p>
+                </div>
+
+                <div className="flex flex-col gap-3 pt-4">
+                    <button 
+                        onClick={() => onSave(start, end, reason)}
+                        className="w-full bg-indigo-600 text-white py-5 rounded-2xl font-black shadow-xl shadow-indigo-200 hover:bg-indigo-700 hover:-translate-y-0.5 transition-all"
+                    >
+                        平日に一括申請する
                     </button>
                     <button 
                         onClick={onClose}
