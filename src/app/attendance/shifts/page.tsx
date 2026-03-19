@@ -26,7 +26,7 @@ export default function ShiftManagePage() {
   const [myPendingRequests, setMyPendingRequests] = useState<any[]>([]);
   const [showRequests, setShowRequests] = useState(false);
   const [isBulkRegister, setIsBulkRegister] = useState(false);
-  const [showBulkConfirm, setShowBulkConfirm] = useState<{ start: string; end: string; shifts: any[] } | null>(null);
+  const [showBulkConfirm, setShowBulkConfirm] = useState<{ shifts: any[]; month: Date } | null>(null);
 
   // 編集モーダル用
   const [editingCell, setEditingCell] = useState<{ staffId: string; date: Date; shift: any } | null>(null);
@@ -332,8 +332,7 @@ export default function ShiftManagePage() {
                  <button 
                   onClick={() => {
                     setShowBulkConfirm({ 
-                      start: "---", 
-                      end: "---", 
+                      month: currentMonth,
                       shifts: pendingShifts
                     });
                   }}
@@ -690,9 +689,9 @@ export default function ShiftManagePage() {
                     setSaving(false);
                 }
             }}
-            start={showBulkConfirm.start}
-            end={showBulkConfirm.end}
             shifts={showBulkConfirm.shifts}
+            month={showBulkConfirm.month}
+            existingShifts={shifts}
         />
       )}
     </div>
@@ -969,33 +968,64 @@ function BulkRequestModal({ isOpen, onClose, onSave, staffName, month }: any) {
     );
 }
 
-function BulkConfirmModal({ isOpen, onClose, onConfirm, start, end, shifts }: any) {
-    const isMixed = start === "---" || end === "---";
+function BulkConfirmModal({ isOpen, onClose, onConfirm, shifts, month, existingShifts = [] }: any) {
+    // 月の日数をすべて取得
+    const daysInMonth = eachDayOfInterval({
+        start: startOfMonth(month),
+        end: endOfMonth(month)
+    });
 
     return (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-[60] p-6">
-            <div className="bg-white rounded-[2.5rem] w-full max-w-md shadow-2xl p-10 space-y-8 animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+            <div className="bg-white rounded-[2.5rem] w-full max-w-md shadow-2xl p-10 space-y-8 animate-in zoom-in-95 duration-200 flex flex-col max-h-[95vh]">
                 <div className="space-y-2">
                     <div className="size-12 rounded-2xl bg-indigo-100 text-indigo-600 flex items-center justify-center mb-4">
-                        <AlertCircle size={24} />
+                        <CalendarIcon size={24} />
                     </div>
-                    <h3 className="text-2xl font-black text-slate-900 leading-tight">一括登録の最終確認</h3>
+                    <h3 className="text-2xl font-black text-slate-900 leading-tight">1ヶ月分の最終確認</h3>
                     <p className="text-slate-500 font-bold">
-                        以下の <span className="text-indigo-600">{shifts.length}日間</span> {isMixed ? "のシフト" : <>に <span className="text-indigo-600 bg-indigo-50 px-2 py-1 rounded-lg">{start} - {end}</span></>} を一括登録します。よろしいですか？
+                        <span className="text-indigo-600">{format(month, "yyyy年 M月")}</span> の勤務予定は以下の内容でよろしいですか？
                     </p>
                 </div>
 
-                <div className="flex-1 overflow-y-auto bg-slate-50 rounded-3xl border-2 border-slate-100 p-6 space-y-2 min-h-[200px]">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">登録対象内容</p>
-                    <div className="space-y-2">
-                        {shifts.map((s: any, idx: number) => (
-                            <div key={idx} className="bg-white px-4 py-3 rounded-2xl border border-slate-100 text-xs font-bold text-slate-700 flex items-center justify-between shadow-sm">
-                                <span>{format(new Date(s.date), "M/d (E)", { locale: ja })}</span>
-                                <span className="text-indigo-600 font-black">
-                                    {format(new Date(s.startTime), "HH:mm")} - {format(new Date(s.endTime), "HH:mm")}
-                                </span>
-                            </div>
-                        ))}
+                <div className="flex-1 overflow-y-auto bg-slate-50 rounded-3xl border-2 border-slate-100 p-6 space-y-2">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">勤務予定表明細</p>
+                    <div className="space-y-1.5">
+                        {daysInMonth.map((d: Date, idx: number) => {
+                            const pending = shifts.find((s: any) => format(new Date(s.date), "yyyy-MM-dd") === format(d, "yyyy-MM-dd"));
+                            const existing = existingShifts.find((s: any) => format(new Date(s.date), "yyyy-MM-dd") === format(d, "yyyy-MM-dd"));
+                            
+                            // 最終的な表示内容を決定: pendingがあればそれを優先、なければ既存、なければ公休
+                            const activeShift = pending || existing;
+                            const isPending = !!pending;
+                            const holidayInfo = isHolidayOrWeekend(d);
+
+                            return (
+                                <div key={idx} className={cn(
+                                    "px-4 py-2.5 rounded-xl border flex items-center justify-between text-[11px] font-bold shadow-sm transition-all",
+                                    isPending ? "bg-indigo-50 border-indigo-100 text-indigo-700" : "bg-white border-slate-50 text-slate-600",
+                                    holidayInfo.isHoliday && !activeShift && "bg-slate-50/50"
+                                )}>
+                                    <div className="flex items-center gap-3">
+                                        <span className={cn(
+                                            "w-12",
+                                            d.getDay() === 0 || holidayInfo.isHoliday && !isPending ? "text-rose-500" : d.getDay() === 6 ? "text-indigo-400" : ""
+                                        )}>
+                                            {format(d, "M/d (E)", { locale: ja })}
+                                        </span>
+                                        {isPending && <span className="bg-indigo-100 text-indigo-500 text-[8px] px-1.5 py-0.5 rounded-md">登録前</span>}
+                                    </div>
+                                    
+                                    {activeShift ? (
+                                        <div className="font-black">
+                                            {format(new Date(activeShift.startTime || activeShift.requestStartTime), "HH:mm")} - {format(new Date(activeShift.endTime || activeShift.requestEndTime), "HH:mm")}
+                                        </div>
+                                    ) : (
+                                        <span className="text-slate-300 font-black">公休</span>
+                                    )}
+                                </div>
+                            );
+                        })}
                     </div>
                 </div>
 
@@ -1004,13 +1034,13 @@ function BulkConfirmModal({ isOpen, onClose, onConfirm, start, end, shifts }: an
                         onClick={onConfirm}
                         className="w-full bg-indigo-600 text-white py-5 rounded-2xl font-black shadow-xl shadow-indigo-200 hover:bg-indigo-700 hover:-translate-y-0.5 transition-all"
                     >
-                        この内容で一括登録する
+                        この内容で確定登録する
                     </button>
                     <button 
                         onClick={onClose}
                         className="w-full py-4 text-slate-400 font-black hover:text-slate-600 transition-all text-sm"
                     >
-                        内容を修正する（戻る）
+                        内容を修正する
                     </button>
                 </div>
             </div>
