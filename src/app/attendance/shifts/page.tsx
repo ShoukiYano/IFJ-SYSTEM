@@ -474,21 +474,21 @@ export default function ShiftManagePage() {
       {/* デスクトップ表示（テーブル形式） */}
       <div className="hidden md:block bg-white rounded-[2.5rem] shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse min-w-[2000px]">
+          <table className="w-full text-left border-collapse min-w-[1600px]">
             <thead>
               <tr className="bg-slate-50/50">
-                <th className="p-6 text-[10px] font-black uppercase text-slate-400 tracking-widest sticky left-0 bg-slate-50/50 z-10 w-64 border-r border-slate-100">従業員名 / アクション</th>
+                <th className="p-3 text-[9px] font-black uppercase text-slate-400 tracking-widest sticky left-0 bg-slate-50/50 z-10 min-w-[160px] border-r border-slate-100">従業員名 / アクション</th>
                 {isAdmin && (
                   <>
-                    <th className="p-6 text-[10px] font-black uppercase text-slate-400 tracking-widest bg-slate-50/50 z-10 min-w-[180px] border-r border-slate-100">クライアント</th>
-                    <th className="p-6 text-[10px] font-black uppercase text-slate-400 tracking-widest bg-slate-50/50 z-10 min-w-[120px] border-r border-slate-100 text-center">エリア</th>
-                    <th className="p-6 text-[10px] font-black uppercase text-slate-400 tracking-widest bg-slate-50/50 z-10 min-w-[120px] border-r border-slate-100">担当者</th>
+                    <th className="p-3 text-[9px] font-black uppercase text-slate-400 tracking-widest bg-slate-50/50 z-10 min-w-[130px] border-r border-slate-100">クライアント</th>
+                    <th className="p-3 text-[9px] font-black uppercase text-slate-400 tracking-widest bg-slate-50/50 z-10 min-w-[70px] border-r border-slate-100 text-center">エリア</th>
+                    <th className="p-3 text-[9px] font-black uppercase text-slate-400 tracking-widest bg-slate-50/50 z-10 min-w-[90px] border-r border-slate-100">担当者</th>
                   </>
                 )}
                 {eachDayOfInterval({ start: startOfMonth(currentMonth), end: endOfMonth(currentMonth) }).map(day => (
-                  <th key={day.toISOString()} className={`p-4 text-center border-r border-slate-100 min-w-[48px] ${isWeekend(day) ? 'bg-slate-100/30' : ''}`}>
-                    <div className="text-[10px] font-black text-slate-400 uppercase">{format(day, "E", { locale: ja })}</div>
-                    <div className={`text-sm font-black mt-1 ${isToday(day) ? 'text-indigo-600 ring-2 ring-indigo-50 rounded-full inline-block w-7 h-7 leading-7 bg-white' : 'text-slate-600'}`}>
+                  <th key={day.toISOString()} className={`p-2 text-center border-r border-slate-100 min-w-[38px] ${isWeekend(day) ? 'bg-slate-100/30' : ''}`}>
+                    <div className="text-[9px] font-black text-slate-400 uppercase">{format(day, "E", { locale: ja })}</div>
+                    <div className={`text-xs font-black mt-1 ${isToday(day) ? 'text-indigo-600 ring-2 ring-indigo-50 rounded-full inline-block w-6 h-6 leading-6 bg-white' : 'text-slate-600'}`}>
                       {format(day, "d")}
                     </div>
                   </th>
@@ -508,7 +508,7 @@ export default function ShiftManagePage() {
                        areaText.includes(q);
               }).map(staff => (
                 <tr key={staff.id} className="hover:bg-slate-50/30 transition-colors group">
-                  <td className="p-6 sticky left-0 bg-white group-hover:bg-slate-50/30 z-10 border-r border-slate-100 shadow-xl shadow-transparent group-hover:shadow-slate-200/50">
+                  <td className="p-3 sticky left-0 bg-white group-hover:bg-slate-50/30 z-10 border-r border-slate-100 shadow-xl shadow-transparent group-hover:shadow-slate-200/50">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <div className="size-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 font-bold text-xs">
@@ -534,12 +534,12 @@ export default function ShiftManagePage() {
                   
                   {isAdmin && (
                     <>
-                      <td className="p-6 border-r border-slate-100">
-                        <span className="text-xs font-bold text-slate-600 whitespace-nowrap">{staff.client?.name || "-"}</span>
+                      <td className="p-3 border-r border-slate-100">
+                        <span className="text-[10px] font-bold text-slate-600 whitespace-nowrap">{staff.client?.name || "-"}</span>
                       </td>
-                      <td className="p-6 border-r border-slate-100 text-center">
+                      <td className="p-3 border-r border-slate-100 text-center">
                         <span className={cn(
-                          "px-2 py-1 rounded-lg text-[10px] font-black border whitespace-nowrap inline-block",
+                          "px-2 py-0.5 rounded-lg text-[9px] font-black border whitespace-nowrap inline-block",
                           staff.area === "KANTO" ? "bg-indigo-50 text-indigo-700 border-indigo-100" :
                           staff.area === "KANSAI" ? "bg-emerald-50 text-emerald-700 border-emerald-100" :
                           "bg-amber-50 text-amber-700 border-amber-100"
@@ -549,8 +549,8 @@ export default function ShiftManagePage() {
                           }
                         </span>
                       </td>
-                      <td className="p-6 border-r border-slate-100">
-                        <span className="text-xs font-bold text-slate-600 italic opacity-60 whitespace-nowrap">{staff.manager || "-"}</span>
+                      <td className="p-3 border-r border-slate-100">
+                        <span className="text-[10px] font-bold text-slate-600 italic opacity-60 whitespace-nowrap">{staff.manager || "-"}</span>
                       </td>
                     </>
                   )}
@@ -590,7 +590,7 @@ export default function ShiftManagePage() {
                     return (
                       <td 
                         key={`${staff.id}-${day.toISOString()}`} 
-                        className={`p-1 border-r border-slate-100 text-center ${isWeekend(day) ? 'bg-slate-100/10' : ''}`}
+                        className={`p-0.5 border-r border-slate-100 text-center ${isWeekend(day) ? 'bg-slate-100/10' : ''}`}
                         onClick={() => {
                           if (isAdmin) {
                             if (active?.isDeleted) {
@@ -609,7 +609,7 @@ export default function ShiftManagePage() {
                       >
                         {active && !active.isDeleted ? (
                           <div className={cn(
-                            "p-2 rounded-xl text-[10px] font-black tracking-tighter shadow-sm transition-all animate-in zoom-in-90 cursor-pointer",
+                            "p-1.5 rounded-lg text-[9px] font-black tracking-tighter shadow-sm transition-all animate-in zoom-in-90 cursor-pointer",
                             pending ? "bg-indigo-600 text-white shadow-indigo-100" : 
                             myReq ? "bg-amber-100 text-amber-700 border-2 border-amber-200" :
                             highlightClass || "bg-slate-100 text-slate-600 hover:bg-slate-200"
@@ -619,7 +619,7 @@ export default function ShiftManagePage() {
                             {format(new Date(active.endTime || active.requestEndTime), "HH:mm")}
                           </div>
                         ) : (
-                          <div className={cn("size-full min-h-[48px] flex items-center justify-center text-slate-200 group-hover:text-slate-300 transition-all cursor-copy hover:bg-indigo-50 rounded-xl")}>
+                          <div className={cn("size-full min-h-[40px] flex items-center justify-center text-slate-200 group-hover:text-slate-300 transition-all cursor-copy hover:bg-indigo-50 rounded-xl")}>
                             +
                           </div>
                         )}
