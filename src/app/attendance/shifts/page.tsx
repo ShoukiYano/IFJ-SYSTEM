@@ -16,6 +16,8 @@ export default function ShiftManagePage() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [staffs, setStaffs] = useState<any[]>([]);
   const [shifts, setShifts] = useState<any[]>([]);
+  const [attendanceRecords, setAttendanceRecords] = useState<any[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [isImpersonating, setIsImpersonating] = useState(false);
@@ -46,13 +48,17 @@ export default function ShiftManagePage() {
       const q = `start=${startOfMonth(currentMonth).toISOString()}&end=${endOfMonth(currentMonth).toISOString()}`;
       const shRes = await fetch(`/api/shifts?${q}`);
       
-      if (isAdmin) {
+       if (isAdmin) {
         const sRes = await fetch("/api/staff");
-        if (sRes.ok && shRes.ok) {
+        const arRes = await fetch(`/api/attendance/bulk?${q}`);
+        
+        if (sRes.ok && shRes.ok && arRes.ok) {
           const sData = await sRes.json();
           const shData = await shRes.json();
+          const arData = await arRes.json();
           setStaffs(sData);
           setShifts(shData);
+          setAttendanceRecords(arData);
         }
       } else {
         // TENANT_USER: 自分自身の情報を staffs にセットする（テーブル構造を維持するため）
@@ -447,6 +453,24 @@ export default function ShiftManagePage() {
       )}
 
       {/* メインテーブルコンテンツ（管理者・一般ユーザー共通） */}
+      {/* 検索・フィルター (管理者のみ) */}
+      {isAdmin && (
+        <div className="mb-6 flex flex-wrap items-center gap-4 bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100">
+          <div className="relative flex-1 min-w-[300px]">
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
+              <Users size={18} />
+            </span>
+            <input
+              type="text"
+              placeholder="従業員名、クライアント、担当者、エリアで検索..."
+              className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-sm focus:bg-white focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all font-medium"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+        </div>
+      )}
+
       {/* デスクトップ表示（テーブル形式） */}
       <div className="hidden md:block bg-white rounded-[2.5rem] shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden">
         <div className="overflow-x-auto">
@@ -454,6 +478,13 @@ export default function ShiftManagePage() {
             <thead>
               <tr className="bg-slate-50/50">
                 <th className="p-6 text-[10px] font-black uppercase text-slate-400 tracking-widest sticky left-0 bg-slate-50/50 z-10 w-64 border-r border-slate-100">従業員名 / アクション</th>
+                {isAdmin && (
+                  <>
+                    <th className="p-6 text-[10px] font-black uppercase text-slate-400 tracking-widest bg-slate-50/50 z-10 w-48 border-r border-slate-100">クライアント</th>
+                    <th className="p-6 text-[10px] font-black uppercase text-slate-400 tracking-widest bg-slate-50/50 z-10 w-32 border-r border-slate-100 text-center">エリア</th>
+                    <th className="p-6 text-[10px] font-black uppercase text-slate-400 tracking-widest bg-slate-50/50 z-10 w-32 border-r border-slate-100">担当者</th>
+                  </>
+                )}
                 {eachDayOfInterval({ start: startOfMonth(currentMonth), end: endOfMonth(currentMonth) }).map(day => (
                   <th key={day.toISOString()} className={`p-4 text-center border-r border-slate-100 min-w-[48px] ${isWeekend(day) ? 'bg-slate-100/30' : ''}`}>
                     <div className="text-[10px] font-black text-slate-400 uppercase">{format(day, "E", { locale: ja })}</div>
@@ -465,7 +496,17 @@ export default function ShiftManagePage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {staffs.map(staff => (
+              {staffs.filter(s => {
+                if (!isAdmin) return true;
+                const q = searchQuery.toLowerCase();
+                const areaLabel: { [key: string]: string } = { KANSAI: "関西", KANTO: "関東", NAGOYA: "名古屋" };
+                const sArea = s.area as string;
+                const areaText = areaLabel[sArea] || sArea;
+                return s.name?.toLowerCase().includes(q) || 
+                       s.client?.name?.toLowerCase().includes(q) || 
+                       s.manager?.toLowerCase().includes(q) ||
+                       areaText.includes(q);
+              }).map(staff => (
                 <tr key={staff.id} className="hover:bg-slate-50/30 transition-colors group">
                   <td className="p-6 sticky left-0 bg-white group-hover:bg-slate-50/30 z-10 border-r border-slate-100 shadow-xl shadow-transparent group-hover:shadow-slate-200/50">
                     <div className="flex items-center justify-between">
@@ -490,12 +531,55 @@ export default function ShiftManagePage() {
                       </button>
                     </div>
                   </td>
+                  
+                  {isAdmin && (
+                    <>
+                      <td className="p-6 border-r border-slate-100">
+                        <span className="text-xs font-bold text-slate-600">{staff.client?.name || "-"}</span>
+                      </td>
+                      <td className="p-6 border-r border-slate-100 text-center">
+                        <span className={cn(
+                          "px-2 py-1 rounded-lg text-[10px] font-black border",
+                          staff.area === "KANTO" ? "bg-indigo-50 text-indigo-700 border-indigo-100" :
+                          staff.area === "KANSAI" ? "bg-emerald-50 text-emerald-700 border-emerald-100" :
+                          "bg-amber-50 text-amber-700 border-amber-100"
+                        )}>
+                          {
+                            ({ KANSAI: "関西", KANTO: "関東", NAGOYA: "名古屋" } as any)[staff.area] || staff.area
+                          }
+                        </span>
+                      </td>
+                      <td className="p-6 border-r border-slate-100">
+                        <span className="text-xs font-bold text-slate-600 italic opacity-60">{staff.manager || "-"}</span>
+                      </td>
+                    </>
+                  )}
+
                   {eachDayOfInterval({ start: startOfMonth(currentMonth), end: endOfMonth(currentMonth) }).map(day => {
                     const dateStr = format(day, "yyyy-MM-dd");
                     const shift = shifts.find(s => (isAdmin ? s.staffId === staff.id : true) && format(new Date(s.date), "yyyy-MM-dd") === dateStr);
                     const pending = pendingShifts.find(ps => (isAdmin ? ps.staffId === staff.id : true) && format(new Date(ps.date), "yyyy-MM-dd") === dateStr);
                     const myReq = !isAdmin ? myPendingRequests.find(r => format(new Date(r.targetDate), "yyyy-MM-dd") === dateStr) : null;
                     const active = pending || shift || myReq;
+                    
+                    // 打刻実績との照合 (管理者のみ)
+                    const record = isAdmin ? attendanceRecords.find(r => r.staffId === staff.id && format(new Date(r.date), "yyyy-MM-dd") === dateStr) : null;
+                    
+                    let highlightClass = "";
+                    if (isAdmin && shift && !pending && !myReq) {
+                      const now = new Date();
+                      const shiftStart = new Date(shift.startTime);
+                      
+                      if (!record?.clockIn) {
+                        // 開始時間を過ぎているのに打刻がない場合
+                        if (shiftStart < now) {
+                          highlightClass = "ring-2 ring-rose-500 bg-rose-50 border-rose-200 text-rose-900";
+                        }
+                      } else if (new Date(record.clockIn) <= shiftStart) {
+                        // 開始時間までに打刻済みの場合
+                        highlightClass = "ring-2 ring-blue-500 bg-blue-50 border-blue-200 text-blue-700";
+                      }
+                    }
 
                     return (
                       <td 
@@ -510,9 +594,9 @@ export default function ShiftManagePage() {
                             }
                           } else {
                             if (active && !active.isDeleted) {
-                              setRequestingCell({ date: day, currentShift: active });
+                               setRequestingCell({ date: day, currentShift: active });
                             } else {
-                              setEditingCell({ staffId: staff.id, date: day, shift: null });
+                               setEditingCell({ staffId: staff.id, date: day, shift: null });
                             }
                           }
                         }}
@@ -522,10 +606,10 @@ export default function ShiftManagePage() {
                             "p-2 rounded-xl text-[10px] font-black tracking-tighter shadow-sm transition-all animate-in zoom-in-90 cursor-pointer",
                             pending ? "bg-indigo-600 text-white shadow-indigo-100" : 
                             myReq ? "bg-amber-100 text-amber-700 border-2 border-amber-200" :
-                            "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                            highlightClass || "bg-slate-100 text-slate-600 hover:bg-slate-200"
                           )}>
                             {format(new Date(active.startTime || active.requestStartTime), "HH:mm")}
-                            <div className={cn("my-0.5 border-t", pending ? "border-white/20" : "border-slate-200")}></div>
+                            <div className={cn("my-0.5 border-t", pending ? "border-white/20" : highlightClass ? "border-current opacity-20" : "border-slate-200")}></div>
                             {format(new Date(active.endTime || active.requestEndTime), "HH:mm")}
                           </div>
                         ) : (
@@ -542,7 +626,7 @@ export default function ShiftManagePage() {
           </table>
         </div>
       </div>
-
+ 
       {/* モバイル表示（カード形式 - 一般ユーザー向け） */}
       {!isAdmin && (
         <div className="md:hidden space-y-4">
@@ -564,7 +648,6 @@ export default function ShiftManagePage() {
               const pending = pendingShifts.find(ps => (isAdmin ? ps.staffId === staffId : true) && format(new Date(ps.date), "yyyy-MM-dd") === dateStr);
               const myReq = myPendingRequests.find(r => format(new Date(r.targetDate), "yyyy-MM-dd") === dateStr);
               const active = pending || shift || myReq;
-              const isW = isWeekend(day);
               const holidayInfo = isHolidayOrWeekend(day);
 
               return (
