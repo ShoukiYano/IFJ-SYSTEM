@@ -301,19 +301,19 @@ export default function ShiftManagePage() {
   return (
     <div className="space-y-8 pb-20">
       {/* ヘッダーセクション */}
-      <div className="flex justify-between items-end">
-        <div>
+      <div className="flex flex-col md:flex-row justify-between md:items-end gap-6">
+        <div className="space-y-1">
           <h1 className="text-3xl font-black text-slate-900 tracking-tight">シフト管理</h1>
-          <p className="text-slate-500 font-medium">{isAdmin ? "要員ごとの勤務予定を一括で編成します" : "自身の勤務スケジュールを確認できます"}</p>
+          <p className="text-slate-500 font-medium text-sm md:text-base">{isAdmin ? "要員ごとの勤務予定を一括で編成します" : "自身の勤務スケジュールを確認できます"}</p>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
           {isAdmin && (
             <button 
               onClick={() => setShowRequests(!showRequests)}
-              className={`px-6 py-3 rounded-2xl font-black transition-all flex items-center gap-2 relative ${showRequests ? 'bg-amber-100 text-amber-700' : 'bg-white border border-slate-100 text-slate-600 shadow-sm'}`}
+              className={`px-6 py-3 rounded-2xl font-black transition-all flex items-center justify-center gap-2 relative ${showRequests ? 'bg-amber-100 text-amber-700' : 'bg-white border border-slate-100 text-slate-600 shadow-sm'}`}
             >
               <AlertCircle size={20} />
-              申請を確認
+              <span className="text-sm">申請を確認</span>
               {shiftRequests.length > 0 && (
                 <span className="absolute -top-2 -right-2 bg-rose-500 text-white text-[10px] w-6 h-6 flex items-center justify-center rounded-full border-2 border-white animate-bounce">
                   {shiftRequests.length}
@@ -323,10 +323,10 @@ export default function ShiftManagePage() {
           )}
 
           {!isAdmin && pendingShifts.length > 0 && (
-            <div className="flex items-center gap-4 bg-indigo-600 px-6 py-3 rounded-2xl shadow-xl shadow-indigo-100 animate-in slide-in-from-top-4">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 bg-indigo-600 px-6 py-4 rounded-2xl shadow-xl shadow-indigo-100 animate-in slide-in-from-top-4">
                <div className="flex flex-col">
                   <span className="text-[10px] text-indigo-100 font-bold uppercase tracking-widest text-left">Pending</span>
-                  <span className="text-white font-black text-sm">{pendingShifts.length}件の未登録シフト</span>
+                  <span className="text-white font-black text-sm whitespace-nowrap">{pendingShifts.length}件の未登録シフト</span>
                </div>
                <div className="flex gap-2">
                  <button 
@@ -336,13 +336,13 @@ export default function ShiftManagePage() {
                       shifts: pendingShifts
                     });
                   }}
-                  className="bg-white text-indigo-600 px-4 py-2 rounded-xl font-black text-xs hover:bg-indigo-50 transition-all shadow-sm"
+                  className="flex-1 bg-white text-indigo-600 px-4 py-2.5 rounded-xl font-black text-xs hover:bg-indigo-50 transition-all shadow-sm whitespace-nowrap"
                  >
                    内容を確認して登録
                  </button>
                  <button 
                   onClick={handleClearPending}
-                  className="bg-indigo-500 text-white px-4 py-2 rounded-xl font-black text-xs hover:bg-indigo-400 transition-all border border-indigo-400/50"
+                  className="bg-indigo-500 text-white px-4 py-2.5 rounded-xl font-black text-xs hover:bg-indigo-400 transition-all border border-indigo-400/50"
                  >
                    破棄
                  </button>
@@ -350,14 +350,14 @@ export default function ShiftManagePage() {
             </div>
           )}
 
-          <div className="flex items-center bg-white rounded-2xl border border-slate-100 p-1 shadow-sm">
-            <button onClick={() => setCurrentMonth(subMonths(currentMonth, 1))} className="p-2 hover:bg-slate-50 rounded-xl transition-all">
+          <div className="flex items-center justify-between bg-white rounded-2xl border border-slate-100 p-1 shadow-sm">
+            <button onClick={() => setCurrentMonth(subMonths(currentMonth, 1))} className="p-2 hover:bg-slate-50 rounded-xl transition-all text-slate-400">
               <ChevronLeft size={20} />
             </button>
-            <span className="px-4 font-black text-slate-700 min-w-[120px] text-center">
+            <span className="px-4 font-black text-slate-700 min-w-[120px] text-center text-sm md:text-base">
               {format(currentMonth, "yyyy年 M月")}
             </span>
-            <button onClick={() => setCurrentMonth(addMonths(currentMonth, 1))} className="p-2 hover:bg-slate-50 rounded-xl transition-all">
+            <button onClick={() => setCurrentMonth(addMonths(currentMonth, 1))} className="p-2 hover:bg-slate-50 rounded-xl transition-all text-slate-400">
               <ChevronRight size={20} />
             </button>
           </div>
@@ -366,10 +366,10 @@ export default function ShiftManagePage() {
             <button 
               onClick={handleSave}
               disabled={saving || pendingShifts.length === 0}
-              className="bg-indigo-600 text-white px-8 py-3 rounded-2xl font-black shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all flex items-center gap-2 disabled:opacity-30"
+              className="bg-indigo-600 text-white px-8 py-3 rounded-2xl font-black shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all flex items-center justify-center gap-2 disabled:opacity-30"
             >
               {saving ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
-              {pendingShifts.length > 0 ? `変更内容を保存 (${pendingShifts.length})` : "保存"}
+              <span className="text-sm">{pendingShifts.length > 0 ? `保存 (${pendingShifts.length})` : "保存"}</span>
             </button>
           )}
         </div>
@@ -447,7 +447,8 @@ export default function ShiftManagePage() {
       )}
 
       {/* メインテーブルコンテンツ（管理者・一般ユーザー共通） */}
-      <div className="bg-white rounded-[2.5rem] shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden">
+      {/* デスクトップ表示（テーブル形式） */}
+      <div className="hidden md:block bg-white rounded-[2.5rem] shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse min-w-[1200px]">
             <thead>
@@ -474,24 +475,19 @@ export default function ShiftManagePage() {
                         </div>
                         <span className="font-black text-slate-800 text-sm whitespace-nowrap">{staff.name}</span>
                       </div>
-                      {!isAdmin ? (
-                        <button 
-                          onClick={() => handleSetDefault(staff.id)}
-                          className="px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg text-[10px] font-black hover:bg-indigo-100 transition-all flex items-center gap-1.5 whitespace-nowrap ml-4"
-                          title="平日のシフトを一括で登録"
-                        >
-                          <Copy size={12} />
-                          一括登録
-                        </button>
-                      ) : (
-                        <button 
-                          onClick={() => handleSetDefault(staff.id)}
-                          className="p-2 text-slate-300 hover:text-indigo-600 transition-all opacity-0 group-hover:opacity-100"
-                          title="平日に標準シフト(9-18)を適用"
-                        >
-                          <Copy size={16} />
-                        </button>
-                      )}
+                      <button 
+                        onClick={() => handleSetDefault(staff.id)}
+                        className={cn(
+                          "transition-all flex items-center gap-1.5 whitespace-nowrap ml-4",
+                          !isAdmin 
+                            ? "px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg text-[10px] font-black hover:bg-indigo-100" 
+                            : "p-2 text-slate-300 hover:text-indigo-600 opacity-0 group-hover:opacity-100"
+                        )}
+                        title={!isAdmin ? "平日のシフトを一括で登録" : "平日に標準シフト(9-18)を適用"}
+                      >
+                        <Copy size={!isAdmin ? 12 : 16} />
+                        {!isAdmin && "一括登録"}
+                      </button>
                     </div>
                   </td>
                   {eachDayOfInterval({ start: startOfMonth(currentMonth), end: endOfMonth(currentMonth) }).map(day => {
@@ -512,11 +508,9 @@ export default function ShiftManagePage() {
                                openEditModal(staff.id, day, active);
                             }
                           } else {
-                            // 自身の行であれば申請または直接登録
                             if (active && !active.isDeleted) {
                               setRequestingCell({ date: day, currentShift: active });
                             } else {
-                              // 新規登録：編集モーダルを流用して直接保存を許可する
                               setEditingCell({ staffId: staff.id, date: day, shift: null });
                             }
                           }
@@ -525,14 +519,13 @@ export default function ShiftManagePage() {
                         {active && !active.isDeleted ? (
                           <div className={cn(
                             "p-2 rounded-xl text-[10px] font-black tracking-tighter shadow-sm transition-all animate-in zoom-in-90 cursor-pointer",
-                            pending ? "bg-indigo-600 text-white" : 
+                            pending ? "bg-indigo-600 text-white shadow-indigo-100" : 
                             myReq ? "bg-amber-100 text-amber-700 border-2 border-amber-200" :
                             "bg-slate-100 text-slate-600 hover:bg-slate-200"
                           )}>
                             {format(new Date(active.startTime || active.requestStartTime), "HH:mm")}
                             <div className={cn("my-0.5 border-t", pending ? "border-white/20" : "border-slate-200")}></div>
                             {format(new Date(active.endTime || active.requestEndTime), "HH:mm")}
-                            {myReq && <div className="mt-1 text-[8px] opacity-70">申請中</div>}
                           </div>
                         ) : (
                           <div className={cn("size-full min-h-[48px] flex items-center justify-center text-slate-200 group-hover:text-slate-300 transition-all cursor-copy hover:bg-indigo-50 rounded-xl")}>
@@ -548,6 +541,90 @@ export default function ShiftManagePage() {
           </table>
         </div>
       </div>
+
+      {/* モバイル表示（カード形式 - 一般ユーザー向け） */}
+      {!isAdmin && (
+        <div className="md:hidden space-y-4">
+          <div className="flex items-center justify-between px-2">
+            <h3 className="text-lg font-black text-slate-800">月間予定リスト</h3>
+            <button 
+              onClick={() => handleSetDefault(staffs[0]?.id)}
+              className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-black shadow-lg shadow-indigo-100"
+            >
+              <Copy size={14} />
+              平日に一括登録
+            </button>
+          </div>
+          <div className="grid grid-cols-1 gap-3">
+            {eachDayOfInterval({ start: startOfMonth(currentMonth), end: endOfMonth(currentMonth) }).map(day => {
+              const staffId = staffs[0]?.id;
+              const shift = shifts.find(s => s.staffId === staffId && format(new Date(s.date), "yyyy-MM-dd") === format(day, "yyyy-MM-dd"));
+              const pending = pendingShifts.find(ps => ps.staffId === staffId && format(new Date(ps.date), "yyyy-MM-dd") === format(day, "yyyy-MM-dd"));
+              const myReq = myPendingRequests.find(r => format(new Date(r.targetDate), "yyyy-MM-dd") === format(day, "yyyy-MM-dd"));
+              const active = pending || shift || myReq;
+              const isW = isWeekend(day);
+              const holidayInfo = isHolidayOrWeekend(day);
+
+              return (
+                <div 
+                  key={day.toISOString()}
+                  onClick={() => {
+                    if (active && !active.isDeleted) {
+                      setRequestingCell({ date: day, currentShift: active });
+                    } else {
+                      setEditingCell({ staffId, date: day, shift: null });
+                    }
+                  }}
+                  className={cn(
+                    "bg-white rounded-[2rem] p-5 border-2 flex items-center justify-between transition-all active:scale-[0.98] shadow-sm",
+                    pending ? "border-indigo-600 bg-indigo-50/50" : 
+                    myReq ? "border-amber-400 bg-amber-50/30" :
+                    "border-slate-50"
+                  )}
+                >
+                  <div className="flex items-center gap-4">
+                    <div className={cn(
+                      "size-12 rounded-2xl flex flex-col items-center justify-center font-black shadow-sm",
+                      isToday(day) ? "bg-indigo-600 text-white ring-4 ring-indigo-50" :
+                      holidayInfo.isHoliday || day.getDay() === 0 ? "bg-rose-50 text-rose-600" :
+                      day.getDay() === 6 ? "bg-indigo-50 text-indigo-600" :
+                      "bg-slate-50 text-slate-500"
+                    )}>
+                      <span className="text-[10px] uppercase leading-none mb-0.5">{format(day, "EEE", { locale: ja })}</span>
+                      <span className="text-lg leading-none">{format(day, "d")}</span>
+                    </div>
+                    <div>
+                      <div className="text-slate-400 text-[10px] font-black uppercase tracking-widest">{format(day, "yyyy年 M月")}</div>
+                      <div className="font-black text-slate-800">
+                        {holidayInfo.isHoliday ? holidayInfo.reason : format(day, "E", { locale: ja }) + "曜日"}
+                      </div>
+                    </div>
+                  </div>
+
+                  {active && !active.isDeleted ? (
+                    <div className="text-right">
+                      {pending && <div className="text-[9px] text-indigo-600 font-black mb-1">登録前</div>}
+                      {myReq && <div className="text-[9px] text-amber-600 font-black mb-1">申請中</div>}
+                      <div className={cn(
+                        "text-lg font-black tracking-tighter",
+                        pending ? "text-indigo-600" : myReq ? "text-amber-700" : "text-slate-800"
+                      )}>
+                        {format(new Date(active.startTime || active.requestStartTime), "HH:mm")}
+                        <span className="mx-1 opacity-20">-</span>
+                        {format(new Date(active.endTime || active.requestEndTime), "HH:mm")}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="size-10 rounded-xl bg-slate-50 border-2 border-dashed border-slate-200 flex items-center justify-center text-slate-300">
+                      <Clock size={18} />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
       
       {isAdmin && (
         <div className="bg-indigo-50 border border-indigo-100 p-6 rounded-[2rem] flex items-start gap-4">
