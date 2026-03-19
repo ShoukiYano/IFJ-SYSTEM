@@ -31,7 +31,7 @@ export default function ShiftManagePage() {
   const [showBulkConfirm, setShowBulkConfirm] = useState<{ shifts: any[]; month: Date } | null>(null);
 
   // 編集モーダル用
-  const [editingCell, setEditingCell] = useState<{ staffId: string; date: Date; shift: any } | null>(null);
+  const [editingCell, setEditingCell] = useState<{ staffId: string; date: Date; shift: any; record?: any } | null>(null);
   
   // 申請モーダル用 (一般ユーザー)
   const [requestingCell, setRequestingCell] = useState<{ date: Date; currentShift: any } | null>(null);
@@ -186,9 +186,9 @@ export default function ShiftManagePage() {
     }
   };
 
-  const openEditModal = (staffId: string, date: Date, currentShift: any) => {
+  const openEditModal = (staffId: string, date: Date, currentShift: any, record?: any) => {
     if (!isAdmin) return; // 一般ユーザーは編集不可
-    setEditingCell({ staffId, date, shift: currentShift });
+    setEditingCell({ staffId, date, shift: currentShift, record });
   };
 
   const handleUpdateShift = async (startTime: string, endTime: string) => {
@@ -575,9 +575,15 @@ export default function ShiftManagePage() {
                         if (shiftStart < now) {
                           highlightClass = "ring-2 ring-rose-500 bg-rose-50 border-rose-200 text-rose-900";
                         }
-                      } else if (new Date(record.clockIn) <= shiftStart) {
-                        // 開始時間までに打刻済みの場合
-                        highlightClass = "ring-2 ring-blue-500 bg-blue-50 border-blue-200 text-blue-700";
+                      } else {
+                        const clockInTime = new Date(record.clockIn);
+                        if (clockInTime <= shiftStart) {
+                          // 開始時間までに打刻済みの場合
+                          highlightClass = "ring-2 ring-blue-500 bg-blue-50 border-blue-200 text-blue-700";
+                        } else {
+                          // 開始時間を過ぎてから打刻した場合
+                          highlightClass = "ring-2 ring-amber-400 bg-amber-50 border-amber-200 text-amber-700";
+                        }
                       }
                     }
 
@@ -588,9 +594,9 @@ export default function ShiftManagePage() {
                         onClick={() => {
                           if (isAdmin) {
                             if (active?.isDeleted) {
-                               openEditModal(staff.id, day, null);
+                               openEditModal(staff.id, day, null, record);
                             } else {
-                               openEditModal(staff.id, day, active);
+                               openEditModal(staff.id, day, active, record);
                             }
                           } else {
                             if (active && !active.isDeleted) {
@@ -928,7 +934,7 @@ function RequestModal({ isOpen, onClose, onSave, date, currentShift }: any) {
     );
 }
 
-function EditModal({ isOpen, onClose, onSave, onDelete, staffName, date, currentShift, isEmployeeDirectRegister }: any) {
+function EditModal({ isOpen, onClose, onSave, onDelete, staffName, date, currentShift, isEmployeeDirectRegister, record }: any) {
     const [start, setStart] = useState(currentShift ? format(new Date(currentShift.startTime), "HH:mm") : "09:00");
     const [end, setEnd] = useState(currentShift ? format(new Date(currentShift.endTime), "HH:mm") : "18:00");
 
@@ -938,6 +944,12 @@ function EditModal({ isOpen, onClose, onSave, onDelete, staffName, date, current
                 <div className="space-y-1">
                     <h3 className="text-xl font-black text-slate-900">{isEmployeeDirectRegister ? "シフトの直接登録" : "シフトの編集"}</h3>
                     <p className="text-slate-500 text-sm font-bold">{staffName} | {format(date, "M/d(E)", { locale: ja })}</p>
+                    {record?.clockIn && (
+                        <div className="bg-amber-50 border border-amber-100 p-3 rounded-xl mt-2 flex items-center justify-between">
+                            <span className="text-[10px] font-black text-amber-600 uppercase">Actual Clock-In</span>
+                            <span className="text-sm font-black text-amber-900">{format(new Date(record.clockIn), "HH:mm")}</span>
+                        </div>
+                    )}
                     {isEmployeeDirectRegister && (
                         <p className="text-indigo-600 text-xs font-bold bg-indigo-50 p-2 rounded-lg mt-2">
                            新規登録は申請不要で即時反映されます。
