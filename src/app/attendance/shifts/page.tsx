@@ -7,6 +7,7 @@ import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isTod
 import { ja } from "date-fns/locale";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { isHolidayOrWeekend } from "@/lib/dateUtils";
 
 export default function ShiftManagePage() {
   const { data: session, status } = useSession();
@@ -116,7 +117,7 @@ export default function ShiftManagePage() {
     const endParts = endTime.split(":");
 
     const newShifts = days
-      .filter(day => !isWeekend(day)) // 平日のみ
+      .filter(day => !isHolidayOrWeekend(day).isHoliday) // 土日祝日を除外
       .map(day => {
         const baseDate = new Date(day);
         return {
@@ -601,10 +602,10 @@ export default function ShiftManagePage() {
                     end: endOfMonth(currentMonth)
                 });
                 
-                // 平日かつ既存シフトがない日を抽出
+                // 平日かつ祝日でない、かつ既存シフトがない日を抽出
                 const targetDates = days.filter(day => {
-                    const isWp = !isWeekend(day);
-                    const hasShift = shifts.some(s => s.staffId === (session?.user as any).staffId && isSameDay(new Date(s.date), day));
+                    const isWp = !isHolidayOrWeekend(day).isHoliday;
+                    const hasShift = shifts.some(s => s.staffId === bulkEditStaff.id && isSameDay(new Date(s.date), day));
                     return isWp && !hasShift;
                 });
 

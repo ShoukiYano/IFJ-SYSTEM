@@ -30,28 +30,77 @@ export function calculateDueDate(
  * 本来は内閣府公表のCSV等を使うべきだが、デモ用に主要な祝日と週末を判定
  */
 export function isHolidayOrWeekend(date: Date): { isHoliday: boolean; reason?: string } {
-  if (isSaturday(date)) return { isHoliday: true, reason: "土曜日" };
-  if (isSunday(date)) return { isHoliday: true, reason: "日曜日" };
+  const isSat = isSaturday(date);
+  const isSun = isSunday(date);
+  if (isSat) return { isHoliday: true, reason: "土曜日" };
+  if (isSun) return { isHoliday: true, reason: "日曜日" };
 
-  const dateStr = format(date, "MM-dd");
-  const holidays: Record<string, string> = {
-    "01-01": "元日",
-    "01-02": "正月休み",
-    "01-03": "正月休み",
-    "02-11": "建国記念の日",
-    "02-23": "天皇誕生日",
-    "04-29": "昭和の日",
-    "05-03": "憲法記念日",
-    "05-04": "みどりの日",
-    "05-05": "こどもの日",
-    "08-11": "山の日",
-    "11-03": "文化の日",
-    "11-23": "勤労感謝の日",
-    "12-31": "大晦日",
+  const year = date.getFullYear();
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+  const dayOfWeek = date.getDay(); // 0: Sun, 1: Mon, ...
+
+  // -- 1. 祝判定ロジック --
+  const checkHoliday = (d: Date): string | null => {
+    const y = d.getFullYear();
+    const m = d.getMonth() + 1;
+    const dayOfMonth = d.getDate();
+    const dow = d.getDay();
+    const dateStr = format(d, "MM-dd");
+
+    // 固定祝日
+    if (dateStr === "01-01") return "元日";
+    if (dateStr === "02-11") return "建国記念の日";
+    if (dateStr === "02-23") return "天皇誕生日";
+    if (dateStr === "04-29") return "昭和の日";
+    if (dateStr === "05-03") return "憲法記念日";
+    if (dateStr === "05-04") return "みどりの日";
+    if (dateStr === "05-05") return "こどもの日";
+    if (dateStr === "08-11") return "山の日";
+    if (dateStr === "11-03") return "文化の日";
+    if (dateStr === "11-23") return "勤労感謝の日";
+
+    // 春分の日 (簡易計算式: 2000-2099)
+    const vernalDay = Math.floor(20.8431 + 0.242194 * (y - 1980) - Math.floor((y - 1980) / 4));
+    if (m === 3 && dayOfMonth === vernalDay) return "春分の日";
+
+    // 秋分の日 (簡易計算式: 2000-2099)
+    const autumnalDay = Math.floor(23.2488 + 0.242194 * (y - 1980) - Math.floor((y - 1980) / 4));
+    if (m === 9 && dayOfMonth === autumnalDay) return "秋分の日";
+
+    // ハッピーマンデー
+    if (dow === 1) {
+      if (m === 1 && dayOfMonth >= 8 && dayOfMonth <= 14) return "成人の日";
+      if (m === 7 && dayOfMonth >= 15 && dayOfMonth <= 21) return "海の日";
+      if (m === 9 && dayOfMonth >= 15 && dayOfMonth <= 21) return "敬老の日";
+      if (m === 10 && dayOfMonth >= 8 && dayOfMonth <= 14) return "スポーツの日";
+    }
+
+    return null;
   };
 
-  if (holidays[dateStr]) {
-    return { isHoliday: true, reason: holidays[dateStr] };
+  // 本日の祝日判定
+  const holidayName = checkHoliday(date);
+  if (holidayName) return { isHoliday: true, reason: holidayName };
+
+  // 振替休日の判定 (祝日が日曜日の場合、翌月曜日以降の最初の平日が休み)
+  if (dayOfWeek !== 0) { // 日曜日以外
+    let checkDay = new Date(date);
+    // 前日まで遡る
+    while (true) {
+        checkDay.setDate(checkDay.getDate() - 1);
+        const name = checkHoliday(checkDay);
+        const dow = checkDay.getDay();
+        if (name && dow === 0) return { isHoliday: true, reason: "振替休日" };
+        if (!name) break; // 祝日が途切れたら終了
+    }
+  }
+
+  // 国民の休日 (祝日に挟まれた平日)
+  if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+    const yesterday = new Date(date); yesterday.setDate(yesterday.getDate() - 1);
+    const tomorrow = new Date(date); tomorrow.setDate(tomorrow.getDate() + 1);
+    if (checkHoliday(yesterday) && checkHoliday(tomorrow)) return { isHoliday: true, reason: "国民の休日" };
   }
 
   return { isHoliday: false };
