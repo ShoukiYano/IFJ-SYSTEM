@@ -491,9 +491,10 @@ export default function ShiftManagePage() {
                     </div>
                   </td>
                   {eachDayOfInterval({ start: startOfMonth(currentMonth), end: endOfMonth(currentMonth) }).map(day => {
-                    const shift = shifts.find(s => s.staffId === staff.id && format(new Date(s.date), "yyyy-MM-dd") === format(day, "yyyy-MM-dd"));
-                    const pending = pendingShifts.find(ps => ps.staffId === staff.id && format(new Date(ps.date), "yyyy-MM-dd") === format(day, "yyyy-MM-dd"));
-                    const myReq = !isAdmin ? myPendingRequests.find(r => format(new Date(r.targetDate), "yyyy-MM-dd") === format(day, "yyyy-MM-dd")) : null;
+                    const dateStr = format(day, "yyyy-MM-dd");
+                    const shift = shifts.find(s => (isAdmin ? s.staffId === staff.id : true) && format(new Date(s.date), "yyyy-MM-dd") === dateStr);
+                    const pending = pendingShifts.find(ps => (isAdmin ? ps.staffId === staff.id : true) && format(new Date(ps.date), "yyyy-MM-dd") === dateStr);
+                    const myReq = !isAdmin ? myPendingRequests.find(r => format(new Date(r.targetDate), "yyyy-MM-dd") === dateStr) : null;
                     const active = pending || shift || myReq;
 
                     return (
@@ -558,9 +559,10 @@ export default function ShiftManagePage() {
           <div className="grid grid-cols-1 gap-3">
             {eachDayOfInterval({ start: startOfMonth(currentMonth), end: endOfMonth(currentMonth) }).map(day => {
               const staffId = staffs[0]?.id;
-              const shift = shifts.find(s => s.staffId === staffId && format(new Date(s.date), "yyyy-MM-dd") === format(day, "yyyy-MM-dd"));
-              const pending = pendingShifts.find(ps => ps.staffId === staffId && format(new Date(ps.date), "yyyy-MM-dd") === format(day, "yyyy-MM-dd"));
-              const myReq = myPendingRequests.find(r => format(new Date(r.targetDate), "yyyy-MM-dd") === format(day, "yyyy-MM-dd"));
+              const dateStr = format(day, "yyyy-MM-dd");
+              const shift = shifts.find(s => (isAdmin ? s.staffId === staffId : true) && format(new Date(s.date), "yyyy-MM-dd") === dateStr);
+              const pending = pendingShifts.find(ps => (isAdmin ? ps.staffId === staffId : true) && format(new Date(ps.date), "yyyy-MM-dd") === dateStr);
+              const myReq = myPendingRequests.find(r => format(new Date(r.targetDate), "yyyy-MM-dd") === dateStr);
               const active = pending || shift || myReq;
               const isW = isWeekend(day);
               const holidayInfo = isHolidayOrWeekend(day);
@@ -1070,8 +1072,9 @@ function BulkConfirmModal({ isOpen, onClose, onConfirm, shifts, month, existingS
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">勤務予定表明細</p>
                     <div className="space-y-1.5">
                         {daysInMonth.map((d: Date, idx: number) => {
-                            const pending = shifts.find((s: any) => format(new Date(s.date), "yyyy-MM-dd") === format(d, "yyyy-MM-dd"));
-                            const existing = existingShifts.find((s: any) => format(new Date(s.date), "yyyy-MM-dd") === format(d, "yyyy-MM-dd"));
+                            const dateStr = format(d, "yyyy-MM-dd");
+                            const pending = shifts.find((s: any) => format(new Date(s.date), "yyyy-MM-dd") === dateStr);
+                            const existing = existingShifts.find((s: any) => format(new Date(s.date), "yyyy-MM-dd") === dateStr);
                             
                             // 最終的な表示内容を決定: pendingがあればそれを優先、なければ既存、なければ公休
                             const activeShift = pending || existing;
