@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Clock, MapPin, AlertCircle, CheckCircle2, Loader2, ArrowRight, Calendar, FileText } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { format, isSunday, isSaturday } from "date-fns";
 import { ja } from "date-fns/locale";
 
@@ -88,12 +89,26 @@ export default function AttendancePage() {
     }
   };
 
-  const onPunchClick = () => {
-    if (isClockedIn) {
-      setShowCheckOutModal(true);
-    } else {
-      handlePunch();
+  const onClockInClick = () => {
+    // ブロックチェック
+    if (isPreviousReportMissing) {
+      const dateStr = lastWorkingDate ? format(new Date(lastWorkingDate), "M月d日") : "前回";
+      alert(`${dateStr}の退勤報告がされていません。退勤報告してから出勤打刻するようにしてください。`);
+      return;
     }
+    
+    // 未退勤レコード（前日以前）のチェック
+    if (record && record.date && format(new Date(record.date), "yyyy-MM-dd") < format(new Date(), "yyyy-MM-dd") && !record.clockOut) {
+       const dateStr = format(new Date(record.date), "M月d日");
+       alert(`${dateStr}の退勤がされていません。退勤打刻してから新たな出勤打刻するようにしてください。`);
+       return;
+    }
+
+    handlePunch();
+  };
+
+  const onClockOutClick = () => {
+    setShowCheckOutModal(true);
   };
 
 
@@ -146,42 +161,67 @@ export default function AttendancePage() {
       )}
 
       {/* 打刻アクション */}
-      <div className="grid grid-cols-1 gap-4">
-        {!isFinished ? (
-          <button
-            onClick={onPunchClick}
-            disabled={punching || (isPreviousReportMissing && !isClockedIn)}
-            className={`
-              relative overflow-hidden h-32 rounded-[2rem] flex flex-col items-center justify-center transition-all
-              ${isClockedIn 
-                ? "bg-slate-900 text-white shadow-xl shadow-slate-300 active:scale-95" 
-                : "bg-white text-slate-800 border-2 border-slate-200 hover:border-indigo-600 active:bg-slate-50 disabled:opacity-50 disabled:active:scale-100"
-              }
-            `}
-          >
-            {punching ? (
-              <Loader2 className="animate-spin" size={32} />
-            ) : (
-              <>
-                <Clock size={32} className={isClockedIn ? "text-indigo-400" : "text-slate-400"} />
-                <span className="text-xl font-black mt-2">
-                  {isClockedIn ? "退勤打刻" : "出勤打刻"}
+      <div className="grid grid-cols-2 gap-4">
+        <button
+          onClick={onClockInClick}
+          disabled={punching || isClockedIn || isFinished || (isPreviousReportMissing && !isClockedIn)}
+          className={cn(
+            "relative overflow-hidden h-32 rounded-[2rem] flex flex-col items-center justify-center transition-all border-2",
+            isClockedIn || isFinished
+              ? "bg-slate-50 text-slate-300 border-slate-100 cursor-not-allowed"
+              : "bg-white text-slate-800 border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/30 active:scale-95 transition-all shadow-sm"
+          )}
+        >
+          {punching && !isClockedIn ? (
+            <Loader2 className="animate-spin" size={32} />
+          ) : (
+            <>
+              <div className={cn("p-3 rounded-2xl mb-2", isClockedIn || isFinished ? "bg-slate-100 text-slate-300" : "bg-emerald-50 text-emerald-600")}>
+                <Clock size={24} />
+              </div>
+              <span className="text-lg font-black">出勤打刻</span>
+            </>
+          )}
+        </button>
+
+        <button
+          onClick={onClockOutClick}
+          disabled={punching || !isClockedIn || isFinished}
+          className={cn(
+            "relative overflow-hidden h-32 rounded-[2rem] flex flex-col items-center justify-center transition-all",
+            !isClockedIn || isFinished
+              ? "bg-slate-50 text-slate-300 border-2 border-slate-100 cursor-not-allowed"
+              : "bg-slate-900 text-white shadow-xl shadow-slate-300 active:scale-95"
+          )}
+        >
+          {punching && isClockedIn ? (
+            <Loader2 className="animate-spin" size={32} />
+          ) : (
+            <>
+              <div className={cn("p-3 rounded-2xl mb-2", !isClockedIn || isFinished ? "bg-slate-100 text-slate-300" : "bg-indigo-500 text-white")}>
+                <Clock size={24} />
+              </div>
+              <span className="text-lg font-black">退勤打刻</span>
+              {isClockedIn && record?.clockIn && (
+                <span className="text-[10px] font-bold uppercase opacity-60 mt-1">
+                  In: {format(new Date(record.clockIn), "HH:mm")}
                 </span>
-                {isClockedIn && record.clockIn && (
-                  <span className="text-[10px] font-bold uppercase opacity-60 mt-1">
-                    Clock-in: {format(new Date(record.clockIn), "HH:mm")}
-                  </span>
-                )}
-              </>
-            )}
-          </button>
-        ) : (
-          <div className="bg-emerald-50 border border-emerald-100 h-32 rounded-[2rem] flex flex-col items-center justify-center text-emerald-800 animate-in zoom-in duration-300">
-            <CheckCircle2 size={32} />
-            <span className="text-xl font-black mt-2">本日の業務終了</span>
-            <span className="text-[10px] font-bold uppercase opacity-60 mt-1">
-               {format(new Date(record.clockIn), "HH:mm")} - {format(new Date(record.clockOut), "HH:mm")}
-            </span>
+              )}
+            </>
+          )}
+        </button>
+
+        {isFinished && (
+          <div className="col-span-2 bg-emerald-50 border border-emerald-100 p-6 rounded-[2rem] flex items-center justify-center gap-4 text-emerald-800 animate-in zoom-in duration-300">
+            <div className="p-3 bg-white rounded-2xl shadow-sm text-emerald-500">
+              <CheckCircle2 size={24} />
+            </div>
+            <div>
+              <span className="text-lg font-black block">本日の業務終了</span>
+              <span className="text-[10px] font-bold uppercase opacity-60">
+                 実績: {format(new Date(record.clockIn), "HH:mm")} - {format(new Date(record.clockOut), "HH:mm")}
+              </span>
+            </div>
           </div>
         )}
       </div>
@@ -437,10 +477,11 @@ function ShiftRequestModal({ isOpen, onClose, onSuccess }: { isOpen: boolean, on
   );
 }
 
-function CheckOutModal({ onClose, onConfirm, record, shift, currentTime, loading }: any) {
+ function CheckOutModal({ onClose, onConfirm, record, shift, currentTime, loading }: any) {
   const [clockInTime, setClockInTime] = useState(format(new Date(record.clockIn), "HH:mm"));
   const [clockOutTime, setClockOutTime] = useState(format(currentTime, "HH:mm"));
-  const [breakMinutes, setBreakMinutes] = useState(record.breakMinutes || 60);
+  const [breakStartTime, setBreakStartTime] = useState("12:00");
+  const [breakEndTime, setBreakEndTime] = useState("13:00");
   const [location, setLocation] = useState(record.location || "");
   const [note, setNote] = useState(record.note || "");
   const [content, setContent] = useState(record.workReport?.content || "");
@@ -464,10 +505,16 @@ function CheckOutModal({ onClose, onConfirm, record, shift, currentTime, loading
       outDate.setDate(outDate.getDate() + 1);
     }
 
+    // 休憩時間の算出
+    const [bStartH, bStartM] = breakStartTime.split(":").map(Number);
+    const [bEndH, bEndM] = breakEndTime.split(":").map(Number);
+    let breakDuration = (bEndH * 60 + bEndM) - (bStartH * 60 + bStartM);
+    if (breakDuration < 0) breakDuration += 1440; // 日跨ぎ対応
+
     onConfirm({
       clockIn: inDate.toISOString(),
       clockOut: outDate.toISOString(),
-      breakMinutes,
+      breakMinutes: breakDuration,
       location,
       note,
       content,
@@ -529,23 +576,23 @@ function CheckOutModal({ onClose, onConfirm, record, shift, currentTime, loading
 
           <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">休憩時間 (分)</label>
+                <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">休憩 開始</label>
                 <input 
-                  type="number" 
+                  type="time" 
                   required
                   className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-bold focus:border-indigo-500 outline-none transition-all"
-                  value={breakMinutes}
-                  onChange={(e) => setBreakMinutes(Number(e.target.value))}
+                  value={breakStartTime}
+                  onChange={(e) => setBreakStartTime(e.target.value)}
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">稼働場所</label>
+                <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">休憩 終了</label>
                 <input 
-                  type="text" 
-                  placeholder="例: 客先常駐"
+                  type="time" 
+                  required
                   className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-bold focus:border-indigo-500 outline-none transition-all"
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
+                  value={breakEndTime}
+                  onChange={(e) => setBreakEndTime(e.target.value)}
                 />
               </div>
           </div>
