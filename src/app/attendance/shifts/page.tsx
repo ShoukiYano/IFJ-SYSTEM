@@ -199,38 +199,11 @@ export default function ShiftManagePage() {
       type: "WORKING"
     };
 
-    if (isAdmin) {
-      setPendingShifts(prev => [
-        ...prev.filter(ps => !(ps.staffId === editingCell.staffId && format(new Date(ps.date), "yyyy-MM-dd") === format(editingCell.date, "yyyy-MM-dd"))),
-        newShift
-      ]);
-      setEditingCell(null);
-    } else {
-      // 一般ユーザー：直接保存
-      if (!window.confirm(`${format(baseDate, "M/d(E)", { locale: ja })} に ${startTime} - ${endTime} のシフトを登録しますか？`)) {
-        return;
-      }
-      setSaving(true);
-      try {
-        const res = await fetch("/api/shifts/bulk", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ shifts: [newShift] })
-        });
-        if (res.ok) {
-          alert("登録しました");
-          fetchData();
-          setEditingCell(null);
-        } else {
-          const err = await res.json();
-          alert(err.error || "登録に失敗しました");
-        }
-      } catch (e) {
-        alert("通信エラーが発生しました");
-      } finally {
-        setSaving(false);
-      }
-    }
+    setPendingShifts(prev => [
+      ...prev.filter(ps => !(ps.staffId === editingCell.staffId && format(new Date(ps.date), "yyyy-MM-dd") === format(editingCell.date, "yyyy-MM-dd"))),
+      newShift
+    ]);
+    setEditingCell(null);
   };
 
   const handleDeleteShift = () => {
@@ -241,6 +214,10 @@ export default function ShiftManagePage() {
         { staffId: editingCell.staffId, date: editingCell.date, isDeleted: true } // 削除フラグ
     ]);
     setEditingCell(null);
+  };
+
+  const handleClearPending = () => {
+    setPendingShifts([]);
   };
 
   const handleSave = async () => {
@@ -342,6 +319,35 @@ export default function ShiftManagePage() {
                 </span>
               )}
             </button>
+          )}
+
+          {!isAdmin && pendingShifts.length > 0 && (
+            <div className="flex items-center gap-4 bg-indigo-600 px-6 py-3 rounded-2xl shadow-xl shadow-indigo-100 animate-in slide-in-from-top-4">
+               <div className="flex flex-col">
+                  <span className="text-[10px] text-indigo-100 font-bold uppercase tracking-widest text-left">Pending</span>
+                  <span className="text-white font-black text-sm">{pendingShifts.length}件の未登録シフト</span>
+               </div>
+               <div className="flex gap-2">
+                 <button 
+                  onClick={() => {
+                    setShowBulkConfirm({ 
+                      start: "---", 
+                      end: "---", 
+                      dates: pendingShifts.map(ps => new Date(ps.date)) 
+                    });
+                  }}
+                  className="bg-white text-indigo-600 px-4 py-2 rounded-xl font-black text-xs hover:bg-indigo-50 transition-all shadow-sm"
+                 >
+                   内容を確認して登録
+                 </button>
+                 <button 
+                  onClick={handleClearPending}
+                  className="bg-indigo-500 text-white px-4 py-2 rounded-xl font-black text-xs hover:bg-indigo-400 transition-all border border-indigo-400/50"
+                 >
+                   破棄
+                 </button>
+               </div>
+            </div>
           )}
 
           <div className="flex items-center bg-white rounded-2xl border border-slate-100 p-1 shadow-sm">
@@ -588,7 +594,7 @@ export default function ShiftManagePage() {
                 setIsBulkRegister(false);
                 setBulkEditStaff(null);
             }}
-            onSave={async (start: string, end: string) => {
+            onSave={(start: string, end: string) => {
                 // 対象日の計算
                 const days = eachDayOfInterval({
                     start: startOfMonth(currentMonth),
@@ -607,7 +613,28 @@ export default function ShiftManagePage() {
                     return;
                 }
 
-                setShowBulkConfirm({ start, end, dates: targetDates });
+                // 一般ユーザー用の一括登録処理（仮追加）
+                const startParts = start.split(":");
+                const endParts = end.split(":");
+                
+                const newAddedShifts = targetDates.map(day => {
+                    const baseDate = new Date(day);
+                    return {
+                        staffId: (session?.user as any).staffId,
+                        date: day,
+                        startTime: new Date(new Date(baseDate).setHours(parseInt(startParts[0]), parseInt(startParts[1]), 0, 0)),
+                        endTime: new Date(new Date(baseDate).setHours(parseInt(endParts[0]), parseInt(endParts[1]), 0, 0)),
+                        type: "WORKING"
+                    };
+                });
+
+                setPendingShifts(prev => {
+                   const filtered = prev.filter(ps => !targetDates.some(td => isSameDay(new Date(ps.date), td)));
+                   return [...filtered, ...newAddedShifts];
+                });
+                
+                setIsBulkRegister(false);
+                setBulkEditStaff(null);
             }}
             staffName={bulkEditStaff.name}
             month={format(currentMonth, "yyyy年 M月")}
@@ -633,20 +660,14 @@ export default function ShiftManagePage() {
             onConfirm={async () => {
                 setSaving(true);
                 try {
-                    const { start, end, dates } = showBulkConfirm;
-                    const startParts = start.split(":");
-                    const endParts = end.split(":");
                     
-                    const newShifts = dates.map(day => {
-                        const baseDate = new Date(day);
-                        return {
-                            staffId: (session?.user as any).staffId,
-                            date: day,
-                            startTime: new Date(new Date(baseDate).setHours(parseInt(startParts[0]), parseInt(startParts[1]), 0, 0)),
-                            endTime: new Date(new Date(baseDate).setHours(parseInt(endParts[0]), parseInt(endParts[1]), 0, 0)),
-                            type: "WORKING"
-                        };
-                    });
+                    const newShifts = pendingShifts.map(ps => ({
+                        staffId: ps.staffId,
+                        date: ps.date,
+                        startTime: ps.startTime,
+                        endTime: ps.endTime,
+                        type: "WORKING"
+                    }));
 
                     const res = await fetch("/api/shifts/bulk", {
                         method: "POST",
@@ -655,11 +676,10 @@ export default function ShiftManagePage() {
                     });
                     
                     if (res.ok) {
-                        alert("一括登録が完了しました。");
+                        alert("登録が完了しました。");
                         fetchData();
+                        setPendingShifts([]);
                         setShowBulkConfirm(null);
-                        setIsBulkRegister(false);
-                        setBulkEditStaff(null);
                     } else {
                         const err = await res.json();
                         alert(err.error || "登録に失敗しました");
