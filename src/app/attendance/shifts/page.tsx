@@ -577,7 +577,12 @@ export default function ShiftManagePage() {
                         }
                       } else {
                         const clockInTime = new Date(record.clockIn);
-                        if (clockInTime <= shiftStart) {
+                        
+                        // 時間のみを比較 (分単位に変換して正確に判定)
+                        const clockInMin = clockInTime.getHours() * 60 + clockInTime.getMinutes();
+                        const shiftStartMin = shiftStart.getHours() * 60 + shiftStart.getMinutes();
+
+                        if (clockInMin <= shiftStartMin) {
                           // 開始時間までに打刻済みの場合
                           highlightClass = "ring-2 ring-blue-500 bg-blue-50 border-blue-200 text-blue-700";
                         } else {
@@ -741,6 +746,7 @@ export default function ShiftManagePage() {
           staffName={staffs.find(s => s.id === editingCell.staffId)?.name}
           date={editingCell.date}
           currentShift={editingCell.shift}
+          record={editingCell.record}
           isEmployeeDirectRegister={!isAdmin}
         />
       )}
