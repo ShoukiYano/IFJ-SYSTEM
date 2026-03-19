@@ -474,15 +474,15 @@ export default function ShiftManagePage() {
       {/* デスクトップ表示（テーブル形式） */}
       <div className="hidden md:block bg-white rounded-[2.5rem] shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse min-w-[1200px]">
+          <table className="w-full text-left border-collapse min-w-[2000px]">
             <thead>
               <tr className="bg-slate-50/50">
                 <th className="p-6 text-[10px] font-black uppercase text-slate-400 tracking-widest sticky left-0 bg-slate-50/50 z-10 w-64 border-r border-slate-100">従業員名 / アクション</th>
                 {isAdmin && (
                   <>
-                    <th className="p-6 text-[10px] font-black uppercase text-slate-400 tracking-widest bg-slate-50/50 z-10 w-48 border-r border-slate-100">クライアント</th>
-                    <th className="p-6 text-[10px] font-black uppercase text-slate-400 tracking-widest bg-slate-50/50 z-10 w-32 border-r border-slate-100 text-center">エリア</th>
-                    <th className="p-6 text-[10px] font-black uppercase text-slate-400 tracking-widest bg-slate-50/50 z-10 w-32 border-r border-slate-100">担当者</th>
+                    <th className="p-6 text-[10px] font-black uppercase text-slate-400 tracking-widest bg-slate-50/50 z-10 min-w-[180px] border-r border-slate-100">クライアント</th>
+                    <th className="p-6 text-[10px] font-black uppercase text-slate-400 tracking-widest bg-slate-50/50 z-10 min-w-[120px] border-r border-slate-100 text-center">エリア</th>
+                    <th className="p-6 text-[10px] font-black uppercase text-slate-400 tracking-widest bg-slate-50/50 z-10 min-w-[120px] border-r border-slate-100">担当者</th>
                   </>
                 )}
                 {eachDayOfInterval({ start: startOfMonth(currentMonth), end: endOfMonth(currentMonth) }).map(day => (
@@ -535,11 +535,11 @@ export default function ShiftManagePage() {
                   {isAdmin && (
                     <>
                       <td className="p-6 border-r border-slate-100">
-                        <span className="text-xs font-bold text-slate-600">{staff.client?.name || "-"}</span>
+                        <span className="text-xs font-bold text-slate-600 whitespace-nowrap">{staff.client?.name || "-"}</span>
                       </td>
                       <td className="p-6 border-r border-slate-100 text-center">
                         <span className={cn(
-                          "px-2 py-1 rounded-lg text-[10px] font-black border",
+                          "px-2 py-1 rounded-lg text-[10px] font-black border whitespace-nowrap inline-block",
                           staff.area === "KANTO" ? "bg-indigo-50 text-indigo-700 border-indigo-100" :
                           staff.area === "KANSAI" ? "bg-emerald-50 text-emerald-700 border-emerald-100" :
                           "bg-amber-50 text-amber-700 border-amber-100"
@@ -550,7 +550,7 @@ export default function ShiftManagePage() {
                         </span>
                       </td>
                       <td className="p-6 border-r border-slate-100">
-                        <span className="text-xs font-bold text-slate-600 italic opacity-60">{staff.manager || "-"}</span>
+                        <span className="text-xs font-bold text-slate-600 italic opacity-60 whitespace-nowrap">{staff.manager || "-"}</span>
                       </td>
                     </>
                   )}
