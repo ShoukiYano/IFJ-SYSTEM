@@ -620,7 +620,7 @@ export default function ShiftManagePage() {
                 const newAddedShifts = targetDates.map(day => {
                     const baseDate = new Date(day);
                     return {
-                        staffId: (session?.user as any).staffId,
+                        staffId: bulkEditStaff.id,
                         date: day,
                         startTime: new Date(new Date(baseDate).setHours(parseInt(startParts[0]), parseInt(startParts[1]), 0, 0)),
                         endTime: new Date(new Date(baseDate).setHours(parseInt(endParts[0]), parseInt(endParts[1]), 0, 0)),
