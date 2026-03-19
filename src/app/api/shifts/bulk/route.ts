@@ -38,19 +38,7 @@ export async function POST(req: Request) {
           return NextResponse.json({ error: "削除には申請が必要です" }, { status: 403 });
         }
 
-        // 既存シフトがあるかチェック
-        const date = startOfDay(new Date(s.date));
-        const existing = await (prisma as any).shift.findUnique({
-          where: {
-            staffId_date: {
-              staffId: staff.id,
-              date: date
-            }
-          }
-        });
-        if (existing) {
-          return NextResponse.json({ error: `${format(date, "yyyy-MM-dd")} のシフトは既に存在します。変更には申請が必要です。` }, { status: 403 });
-        }
+        // 既存シフトの有無に関わらず、自分のシフトであれば上書き（Upsert）を許可する
       }
     }
 

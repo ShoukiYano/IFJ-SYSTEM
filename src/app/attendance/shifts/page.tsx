@@ -769,6 +769,7 @@ export default function ShiftManagePage() {
             shifts={showBulkConfirm.shifts}
             month={showBulkConfirm.month}
             existingShifts={shifts}
+            isLoading={saving}
         />
       )}
     </div>
@@ -1045,7 +1046,7 @@ function BulkRequestModal({ isOpen, onClose, onSave, staffName, month }: any) {
     );
 }
 
-function BulkConfirmModal({ isOpen, onClose, onConfirm, shifts, month, existingShifts = [] }: any) {
+function BulkConfirmModal({ isOpen, onClose, onConfirm, shifts, month, existingShifts = [], isLoading = false }: any) {
     // 月の日数をすべて取得
     const daysInMonth = eachDayOfInterval({
         start: startOfMonth(month),
@@ -1109,9 +1110,13 @@ function BulkConfirmModal({ isOpen, onClose, onConfirm, shifts, month, existingS
                 <div className="flex flex-col gap-3 pt-4">
                     <button 
                         onClick={onConfirm}
-                        className="w-full bg-indigo-600 text-white py-5 rounded-2xl font-black shadow-xl shadow-indigo-200 hover:bg-indigo-700 hover:-translate-y-0.5 transition-all"
+                        disabled={isLoading}
+                        className={cn(
+                            "w-full bg-indigo-600 text-white py-5 rounded-2xl font-black shadow-xl shadow-indigo-200 hover:bg-indigo-700 hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2",
+                            isLoading && "opacity-50 cursor-not-allowed"
+                        )}
                     >
-                        この内容で確定登録する
+                        {isLoading ? <Loader2 className="animate-spin" size={24} /> : "この内容で確定登録する"}
                     </button>
                     <button 
                         onClick={onClose}
