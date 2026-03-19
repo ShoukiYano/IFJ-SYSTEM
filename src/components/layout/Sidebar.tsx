@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { LayoutDashboard, FileText, Users, Settings, PlusCircle, HelpCircle, LogOut, Book, Building2, X, Bell, Megaphone, HardDrive, History } from "lucide-react";
+import { LayoutDashboard, FileText, Users, Settings, PlusCircle, HelpCircle, LogOut, Book, Building2, X, Bell, Megaphone, HardDrive, History, FileCheck } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useSession, signOut } from "next-auth/react";
@@ -56,6 +56,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
     { label: "見積書管理", icon: FileText, href: "/quotations", feature: "invoice" },
     { label: "請求書管理", icon: PlusCircle, href: "/invoices", feature: "invoice" },
     { label: "勤怠管理", icon: FileText, href: isTenantAdmin ? "/attendance/manage" : "/attendance", feature: "attendance" },
+    { label: "勤怠集計", icon: FileCheck, href: "/attendance/summary", feature: "attendance" },
     { label: "シフト管理", icon: PlusCircle, href: "/attendance/shifts", feature: "attendance" },
     { label: "要員管理", icon: Users, href: "/staff" },
     { label: "取引先管理", icon: Users, href: "/clients" },

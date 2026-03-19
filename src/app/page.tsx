@@ -6,6 +6,7 @@ import { InvoiceTable } from "@/components/invoices/InvoiceTable";
 import { BulkZipDownload } from "@/components/invoices/BulkZipDownload";
 import { formatCurrency } from "@/lib/utils";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { StatusBoard } from "@/components/attendance/StatusBoard";
 
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -268,7 +269,7 @@ export default function DashboardPage() {
       )}
 
       {/* Main Stats Area */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
         {/* Left: Key Metrics */}
         <div className="lg:col-span-1 space-y-6">
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
@@ -350,6 +351,11 @@ export default function DashboardPage() {
               </AreaChart>
             </ResponsiveContainer>
           </div>
+        </div>
+
+        {/* Status Board */}
+        <div className="lg:col-span-1">
+          <StatusBoard />
         </div>
       </div>
 
