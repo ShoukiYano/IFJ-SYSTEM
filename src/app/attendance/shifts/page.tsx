@@ -534,8 +534,8 @@ export default function ShiftManagePage() {
                   {isAdmin && (
                     <>
                       <td className="p-2 border-r border-slate-100">
-                        <div className="text-[9px] font-bold text-slate-700 leading-tight whitespace-nowrap overflow-hidden text-ellipsis max-w-[120px]" title={staff.client?.name}>{staff.client?.name || "-"}</div>
-                        <div className="text-[8px] font-bold text-slate-400 italic opacity-60 whitespace-nowrap overflow-hidden text-ellipsis max-w-[120px]" title={staff.manager}>{staff.manager || "-"}</div>
+                        <div className="text-[9px] font-black text-slate-800 leading-tight whitespace-nowrap overflow-hidden text-ellipsis max-w-[120px]" title={staff.client?.name}>{staff.client?.name || "-"}</div>
+                        <div className="text-[8px] font-bold text-slate-500 whitespace-nowrap overflow-hidden text-ellipsis max-w-[120px]" title={staff.manager}>{staff.manager || "-"}</div>
                       </td>
                       <td className="p-2 border-r border-slate-100 text-center">
                         <span className={cn(
