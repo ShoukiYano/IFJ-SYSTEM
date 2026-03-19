@@ -26,7 +26,7 @@ export default function ShiftManagePage() {
   const [myPendingRequests, setMyPendingRequests] = useState<any[]>([]);
   const [showRequests, setShowRequests] = useState(false);
   const [isBulkRegister, setIsBulkRegister] = useState(false);
-  const [showBulkConfirm, setShowBulkConfirm] = useState<{ start: string; end: string; dates: Date[] } | null>(null);
+  const [showBulkConfirm, setShowBulkConfirm] = useState<{ start: string; end: string; shifts: any[] } | null>(null);
 
   // 編集モーダル用
   const [editingCell, setEditingCell] = useState<{ staffId: string; date: Date; shift: any } | null>(null);
@@ -334,7 +334,7 @@ export default function ShiftManagePage() {
                     setShowBulkConfirm({ 
                       start: "---", 
                       end: "---", 
-                      dates: pendingShifts.map(ps => new Date(ps.date)) 
+                      shifts: pendingShifts
                     });
                   }}
                   className="bg-white text-indigo-600 px-4 py-2 rounded-xl font-black text-xs hover:bg-indigo-50 transition-all shadow-sm"
@@ -661,19 +661,18 @@ export default function ShiftManagePage() {
             onConfirm={async () => {
                 setSaving(true);
                 try {
-                    
-                    const newShifts = pendingShifts.map(ps => ({
-                        staffId: ps.staffId,
-                        date: ps.date,
-                        startTime: ps.startTime,
-                        endTime: ps.endTime,
-                        type: "WORKING"
-                    }));
-
                     const res = await fetch("/api/shifts/bulk", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ shifts: newShifts })
+                        body: JSON.stringify({ 
+                            shifts: showBulkConfirm.shifts.map(s => ({
+                                staffId: s.staffId,
+                                date: s.date,
+                                startTime: s.startTime,
+                                endTime: s.endTime,
+                                type: "WORKING"
+                            }))
+                        })
                     });
                     
                     if (res.ok) {
@@ -693,7 +692,7 @@ export default function ShiftManagePage() {
             }}
             start={showBulkConfirm.start}
             end={showBulkConfirm.end}
-            dates={showBulkConfirm.dates}
+            shifts={showBulkConfirm.shifts}
         />
       )}
     </div>
@@ -970,7 +969,9 @@ function BulkRequestModal({ isOpen, onClose, onSave, staffName, month }: any) {
     );
 }
 
-function BulkConfirmModal({ isOpen, onClose, onConfirm, start, end, dates }: any) {
+function BulkConfirmModal({ isOpen, onClose, onConfirm, start, end, shifts }: any) {
+    const isMixed = start === "---" || end === "---";
+
     return (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-[60] p-6">
             <div className="bg-white rounded-[2.5rem] w-full max-w-md shadow-2xl p-10 space-y-8 animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
@@ -980,17 +981,19 @@ function BulkConfirmModal({ isOpen, onClose, onConfirm, start, end, dates }: any
                     </div>
                     <h3 className="text-2xl font-black text-slate-900 leading-tight">一括登録の最終確認</h3>
                     <p className="text-slate-500 font-bold">
-                        以下の <span className="text-indigo-600">{dates.length}日間</span> に <span className="text-indigo-600 bg-indigo-50 px-2 py-1 rounded-lg">{start} - {end}</span> を一括登録します。よろしいですか？
+                        以下の <span className="text-indigo-600">{shifts.length}日間</span> {isMixed ? "のシフト" : <>に <span className="text-indigo-600 bg-indigo-50 px-2 py-1 rounded-lg">{start} - {end}</span></>} を一括登録します。よろしいですか？
                     </p>
                 </div>
 
                 <div className="flex-1 overflow-y-auto bg-slate-50 rounded-3xl border-2 border-slate-100 p-6 space-y-2 min-h-[200px]">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">登録対象日</p>
-                    <div className="grid grid-cols-2 gap-2">
-                        {dates.map((d: Date) => (
-                            <div key={d.toISOString()} className="bg-white px-3 py-2 rounded-xl border border-slate-100 text-xs font-black text-slate-700 flex items-center justify-between">
-                                {format(d, "M/d (E)", { locale: ja })}
-                                <span className="size-1.5 rounded-full bg-indigo-400"></span>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">登録対象内容</p>
+                    <div className="space-y-2">
+                        {shifts.map((s: any, idx: number) => (
+                            <div key={idx} className="bg-white px-4 py-3 rounded-2xl border border-slate-100 text-xs font-bold text-slate-700 flex items-center justify-between shadow-sm">
+                                <span>{format(new Date(s.date), "M/d (E)", { locale: ja })}</span>
+                                <span className="text-indigo-600 font-black">
+                                    {format(new Date(s.startTime), "HH:mm")} - {format(new Date(s.endTime), "HH:mm")}
+                                </span>
                             </div>
                         ))}
                     </div>
