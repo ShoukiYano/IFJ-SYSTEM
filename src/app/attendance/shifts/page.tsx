@@ -41,6 +41,7 @@ export default function ShiftManagePage() {
 
   const role = (session?.user as any)?.role;
   const isAdmin = role && role !== "TENANT_USER";
+  const hasAttendanceFeature = (session?.user as any)?.hasAttendanceFeature === true;
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -97,6 +98,10 @@ export default function ShiftManagePage() {
 
   useEffect(() => {
     if (status === "authenticated") {
+      if (!hasAttendanceFeature) {
+        router.push("/");
+        return;
+      }
       fetchData();
     }
   }, [status, fetchData]);

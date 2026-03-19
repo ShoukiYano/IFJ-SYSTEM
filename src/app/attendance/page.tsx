@@ -5,6 +5,8 @@ import { Clock, MapPin, AlertCircle, CheckCircle2, Loader2, ArrowRight, Calendar
 import { cn } from "@/lib/utils";
 import { format, isSunday, isSaturday } from "date-fns";
 import { ja } from "date-fns/locale";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 export default function AttendancePage() {
   const [loading, setLoading] = useState(true);
@@ -14,10 +16,17 @@ export default function AttendancePage() {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [showCheckOutModal, setShowCheckOutModal] = useState(false);
   const [showShiftRequestModal, setShowShiftRequestModal] = useState(false);
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  const hasAttendanceFeature = (session?.user as any)?.hasAttendanceFeature === true;
   const [requests, setRequests] = useState<any[]>([]);
 
   useEffect(() => {
     const init = async () => {
+      if (status === "authenticated" && !hasAttendanceFeature) {
+        router.push("/");
+        return;
+      }
       await fetchStatus();
       await fetchWeeklyShifts();
       await fetchRequests();

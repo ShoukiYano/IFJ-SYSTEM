@@ -26,6 +26,7 @@ export default function AttendanceSummaryPage() {
   const { data: session } = useSession();
   const role = (session?.user as any)?.role;
   const isAdmin = role === "TENANT_ADMIN" || role === "SYSTEM_ADMIN";
+  const hasAttendanceFeature = (session?.user as any)?.hasAttendanceFeature === true;
   
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [summaryData, setSummaryData] = useState<any[]>([]);
@@ -135,12 +136,12 @@ export default function AttendanceSummaryPage() {
     window.location.href = `/api/attendance/summary/export?staffId=${staff.staffId}&month=${monthStr}`;
   };
 
-  if (!isAdmin) {
+  if (!isAdmin || !hasAttendanceFeature) {
     return (
-      <div className="p-8 text-center">
+      <div className="p-8 text-center border border-dashed border-slate-200 rounded-[3rem] bg-slate-50/50">
         <AlertCircle className="mx-auto text-slate-300 mb-4" size={48} />
-        <h2 className="text-xl font-black text-slate-800">アクセス権限がありません</h2>
-        <p className="text-slate-500 mt-2">このページは管理者のみ閲覧可能です。</p>
+        <h2 className="text-xl font-black text-slate-800">アクセス権限がないか、機能が有効ではありません</h2>
+        <p className="text-slate-500 mt-2 font-bold">管理者権限および勤怠管理機能の有効化が必要です。</p>
       </div>
     );
   }

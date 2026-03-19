@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Plus, Users, FileText, TrendingUp, Settings, Calendar, AlertTriangle, ChevronRight, Search } from "lucide-react";
 import { InvoiceTable } from "@/components/invoices/InvoiceTable";
 import { BulkZipDownload } from "@/components/invoices/BulkZipDownload";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, cn } from "@/lib/utils";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { StatusBoard } from "@/components/attendance/StatusBoard";
 
@@ -14,6 +14,8 @@ import { useRouter } from "next/navigation";
 export default function DashboardPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const hasAttendanceFeature = (session?.user as any)?.hasAttendanceFeature === true;
+  const hasInvoiceFeature = (session?.user as any)?.hasInvoiceFeature !== false;
 
   useEffect(() => {
     if (status === "authenticated") {
@@ -121,7 +123,7 @@ export default function DashboardPage() {
 
     // 勤怠サマリー取得
     const fetchAttendance = async () => {
-      if (status !== "authenticated" || (session?.user as any)?.role === "TENANT_USER") return;
+      if (status !== "authenticated" || (session?.user as any)?.role === "TENANT_USER" || !hasAttendanceFeature) return;
       try {
         const res = await fetch("/api/attendance/summary");
         if (res.ok) {
@@ -269,7 +271,10 @@ export default function DashboardPage() {
       )}
 
       {/* Main Stats Area */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+      <div className={cn(
+        "grid grid-cols-1 gap-8",
+        hasAttendanceFeature ? "lg:grid-cols-4" : "lg:grid-cols-3"
+      )}>
         {/* Left: Key Metrics */}
         <div className="lg:col-span-1 space-y-6">
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
@@ -354,9 +359,11 @@ export default function DashboardPage() {
         </div>
 
         {/* Status Board */}
-        <div className="lg:col-span-1">
-          <StatusBoard />
-        </div>
+        {hasAttendanceFeature && (
+          <div className="lg:col-span-1">
+            <StatusBoard />
+          </div>
+        )}
       </div>
 
       {/* Table Section */}

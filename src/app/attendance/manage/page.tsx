@@ -20,6 +20,11 @@ export default function AttendanceManagePage() {
   useEffect(() => {
     if (status === "authenticated") {
       const role = (session?.user as any)?.role;
+      const hasAttendanceFeature = (session?.user as any)?.hasAttendanceFeature === true;
+      if (!hasAttendanceFeature) {
+        router.push("/");
+        return;
+      }
       if (role === "TENANT_USER") {
         router.push("/attendance");
         return;
