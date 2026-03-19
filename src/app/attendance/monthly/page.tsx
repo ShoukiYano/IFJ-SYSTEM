@@ -115,13 +115,21 @@ export default function MonthlyAttendancePage() {
                     <td className="px-8 py-6 font-bold text-slate-600 tabular-nums">{row.daysWorked}日</td>
                     <td className="px-8 py-6 text-sm text-slate-400 font-mono italic">{row.minHours} - {row.maxHours}</td>
                     <td className="px-8 py-6">
-                      <div className="text-lg font-black text-slate-900 tabular-nums">{row.totalHours.toFixed(1)}</div>
+                      <div className="flex flex-col">
+                        <div className="flex items-baseline gap-0.5">
+                          <span className="text-xl font-black text-slate-900 tabular-nums">{row.totalHours.toFixed(1)}</span>
+                          <span className="text-[10px] font-black text-slate-400 ml-0.5">時間</span>
+                        </div>
+                      </div>
                     </td>
                     <td className="px-8 py-6">
                       <StatusLabel status={row.status} />
                     </td>
-                    <td className="px-8 py-6 text-right font-black text-slate-900">
-                      ¥{(row.unitPrice).toLocaleString()}
+                    <td className="px-8 py-6 text-right">
+                      <div className="flex flex-col items-end">
+                        <div className="font-black text-slate-900">¥{(row.unitPrice).toLocaleString()}</div>
+                        <div className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">推定単価</div>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -136,9 +144,9 @@ export default function MonthlyAttendancePage() {
 
 function StatusLabel({ status }: { status: string }) {
   const configs: any = {
-    NORMAL: { label: "適正", class: "bg-emerald-100 text-emerald-700" },
-    SHORTAGE: { label: "不足", class: "bg-rose-100 text-rose-700 shadow-sm shadow-rose-100 ring-2 ring-rose-50", icon: TrendingDown },
-    OVERTIME: { label: "超過", class: "bg-amber-100 text-amber-700 shadow-sm shadow-amber-100 ring-2 ring-amber-50", icon: TrendingUp },
+    NORMAL: { label: "適正範囲", class: "bg-emerald-50 text-emerald-600 border-emerald-100" },
+    SHORTAGE: { label: "不足", class: "bg-rose-50 text-rose-600 border-rose-100 shadow-sm shadow-rose-100 ring-2 ring-rose-50/50", icon: TrendingDown },
+    OVERTIME: { label: "超過", class: "bg-amber-50 text-amber-600 border-amber-100 shadow-sm shadow-amber-100 ring-2 ring-amber-50/50", icon: TrendingUp },
   };
 
   const config = configs[status] || configs.NORMAL;

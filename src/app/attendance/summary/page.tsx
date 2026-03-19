@@ -196,7 +196,7 @@ export default function AttendanceSummaryPage() {
         </div>
         <div className="bg-indigo-600 p-6 rounded-[2.5rem] shadow-xl shadow-indigo-100 flex items-center justify-between text-white">
            <div>
-             <div className="text-[10px] font-black uppercase opacity-60 tracking-widest">Target Staff</div>
+             <div className="text-[10px] font-black uppercase opacity-70 tracking-widest">対象人数</div>
              <div className="text-3xl font-black">{filteredData.length} <span className="text-sm">名</span></div>
            </div>
            <Users size={32} className="opacity-20" />
@@ -209,12 +209,12 @@ export default function AttendanceSummaryPage() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50/50">
-                <th className="p-6 text-[10px] font-black uppercase text-slate-400 tracking-widest border-r border-slate-100">従業員 / 客先</th>
-                <th className="p-6 text-[10px] font-black uppercase text-slate-400 tracking-widest border-r border-slate-100 text-center">出勤日数</th>
-                <th className="p-6 text-[10px] font-black uppercase text-slate-400 tracking-widest border-r border-slate-100 text-center">合計時間</th>
-                <th className="p-6 text-[10px] font-black uppercase text-slate-400 tracking-widest border-r border-slate-100 text-center">時間判定</th>
-                <th className="p-6 text-[10px] font-black uppercase text-slate-400 tracking-widest border-r border-slate-100 text-center">承認ステータス</th>
-                <th className="p-6 text-[10px] font-black uppercase text-slate-400 tracking-widest text-right">アクション</th>
+                <th className="p-6 text-[10px] font-black uppercase text-slate-500 tracking-widest border-r border-slate-100">従業員 / 客先</th>
+                <th className="p-6 text-[10px] font-black uppercase text-slate-500 tracking-widest border-r border-slate-100 text-center">出勤日数</th>
+                <th className="p-6 text-[10px] font-black uppercase text-slate-500 tracking-widest border-r border-slate-100 text-center">合計時間</th>
+                <th className="p-6 text-[10px] font-black uppercase text-slate-500 tracking-widest border-r border-slate-100 text-center">時間判定</th>
+                <th className="p-6 text-[10px] font-black uppercase text-slate-500 tracking-widest border-r border-slate-100 text-center">承認ステータス</th>
+                <th className="p-6 text-[10px] font-black uppercase text-slate-500 tracking-widest text-right">アクション</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -240,28 +240,36 @@ export default function AttendanceSummaryPage() {
                     <div className="text-xs font-bold text-slate-400 mt-0.5">{staff.clientName || "客先未設定"}</div>
                   </td>
                   <td className="p-6 border-r border-slate-100 text-center">
-                    <div className="flex items-center justify-center gap-1.5">
-                      <span className="text-2xl font-black text-slate-800">{staff.daysWorked}</span>
-                      <span className="text-[10px] font-black text-slate-300 uppercase">/ {staff.daysShifted} days</span>
+                    <div className="flex flex-col items-center">
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-3xl font-black text-slate-800">{staff.daysWorked}</span>
+                        <span className="text-xs font-bold text-slate-400">/ {staff.daysShifted}</span>
+                        <span className="text-[10px] font-black text-slate-400 ml-0.5">日</span>
+                      </div>
+                      <div className="text-[10px] font-black text-slate-400 uppercase tracking-tighter mt-1">出勤実績</div>
                     </div>
                   </td>
                   <td className="p-6 border-r border-slate-100 text-center">
                     <div className="flex flex-col items-center">
-                      <span className="text-2xl font-black text-indigo-600">{staff.totalHours}</span>
-                      <span className="text-[10px] font-black text-slate-300 uppercase">Total Hours</span>
+                      <div className="flex items-baseline gap-0.5">
+                        <span className="text-3xl font-black text-indigo-600">{staff.totalHours}</span>
+                        <span className="text-[10px] font-black text-indigo-400 ml-0.5">時間</span>
+                      </div>
+                      <div className="text-[10px] font-black text-slate-400 uppercase tracking-tighter mt-1">合計稼働</div>
                     </div>
                   </td>
                   <td className="p-6 border-r border-slate-100 text-center">
                     <div className={cn(
-                      "inline-block px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider",
-                      staff.hourStatus === "NORMAL" ? "bg-emerald-50 text-emerald-600" :
-                      staff.hourStatus === "OVERTIME" ? "bg-rose-50 text-rose-600" :
-                      "bg-amber-50 text-amber-600"
+                      "inline-flex items-center px-4 py-1.5 rounded-2xl text-[10px] font-black tracking-widest border shadow-sm",
+                      staff.hourStatus === "NORMAL" ? "bg-emerald-50 text-emerald-600 border-emerald-100" :
+                      staff.hourStatus === "OVERTIME" ? "bg-amber-50 text-amber-600 border-amber-100" :
+                      "bg-rose-50 text-rose-600 border-rose-100"
                     )}>
-                      {staff.hourStatus}
+                      {staff.hourStatus === "NORMAL" ? "適正範囲" :
+                       staff.hourStatus === "OVERTIME" ? "超過" : "不足"}
                     </div>
                     <div className="text-[9px] font-bold text-slate-400 mt-2">
-                       {staff.minHours}h - {staff.maxHours}h
+                       目安: {staff.minHours}h - {staff.maxHours}h
                     </div>
                   </td>
                   <td className="p-6 border-r border-slate-100 text-center">
@@ -270,10 +278,10 @@ export default function AttendanceSummaryPage() {
                       staff.approvalStatus === "APPROVED" ? "text-emerald-500" :
                       staff.approvalStatus === "SUBMITTED" ? "text-indigo-600" :
                       staff.approvalStatus === "REMANDED" ? "text-rose-500" :
-                      "text-slate-300"
+                      "text-slate-400"
                     )}>
                       {staff.approvalStatus === "APPROVED" ? <CheckCircle2 size={20} /> : <Clock size={20} />}
-                      <span className="text-xs font-black uppercase tracking-widest">
+                      <span className="text-xs font-black tracking-widest">
                         {staff.approvalStatus === "APPROVED" ? "承認済み" :
                          staff.approvalStatus === "SUBMITTED" ? "提出済み" :
                          staff.approvalStatus === "REMANDED" ? "差戻し中" : "未承認"}
@@ -357,19 +365,24 @@ export default function AttendanceSummaryPage() {
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="bg-slate-50/50">
-                      <th className="p-4 text-[10px] font-black uppercase text-slate-400 border-r border-slate-100 w-24">日付</th>
-                      <th className="p-4 text-[10px] font-black uppercase text-slate-400 border-r border-slate-100 text-center">予定</th>
-                      <th className="p-4 text-[10px] font-black uppercase text-slate-400 border-r border-slate-100 text-center">実績 (出退勤)</th>
-                      <th className="p-4 text-[10px] font-black uppercase text-slate-400 border-r border-slate-100 text-center">休憩</th>
-                      <th className="p-4 text-[10px] font-black uppercase text-slate-400 border-r border-slate-100">作業報告</th>
-                      <th className="p-4 text-[10px] font-black uppercase text-slate-400 text-center w-24">状態</th>
+                      <th className="p-4 text-[10px] font-black uppercase text-slate-500 border-r border-slate-100 w-24">日付</th>
+                      <th className="p-4 text-[10px] font-black uppercase text-slate-500 border-r border-slate-100 text-center">予定</th>
+                      <th className="p-4 text-[10px] font-black uppercase text-slate-500 border-r border-slate-100 text-center">実績 (出退勤)</th>
+                      <th className="p-4 text-[10px] font-black uppercase text-slate-500 border-r border-slate-100 text-center">休憩</th>
+                      <th className="p-4 text-[10px] font-black uppercase text-slate-500 border-r border-slate-100">作業報告</th>
+                      <th className="p-4 text-[10px] font-black uppercase text-slate-500 text-center w-24">状態</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-50">
                     {loadingDetails ? (
-                       <tr><td colSpan={6} className="p-20 text-center text-slate-400 font-bold animate-pulse italic">Loading details...</td></tr>
+                       <tr><td colSpan={6} className="p-20 text-center">
+                         <div className="flex flex-col items-center gap-2">
+                           <div className="w-8 h-8 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+                           <p className="text-slate-400 font-black animate-pulse">詳細を読み込み中...</p>
+                         </div>
+                       </td></tr>
                     ) : dailyDetails.length === 0 ? (
-                       <tr><td colSpan={6} className="p-20 text-center text-slate-400 font-bold italic">No data found.</td></tr>
+                       <tr><td colSpan={6} className="p-20 text-center text-slate-400 font-bold">データが見つかりません。</td></tr>
                     ) : dailyDetails.map((day: any) => {
                        const record = day.record;
                        const shift = day.active;
@@ -392,10 +405,10 @@ export default function AttendanceSummaryPage() {
                                    {format(new Date(record.clockIn), "HH:mm")} - {record.clockOut ? format(new Date(record.clockOut), "HH:mm") : "??"}
                                  </span>
                                  {record.hasDiscrepancy && (
-                                   <span className="text-[8px] font-black uppercase text-amber-500 bg-amber-50 px-1 rounded mt-0.5 tracking-tighter">Gap Detect</span>
+                                   <span className="text-[8px] font-black text-amber-600 bg-amber-50 px-1 rounded mt-0.5 tracking-tighter">差異あり</span>
                                  )}
                                </div>
-                             ) : <span className="text-slate-200">--:--</span>}
+                             ) : <span className="text-slate-300 font-bold">--:--</span>}
                           </td>
                           <td className="p-4 border-r border-slate-100 text-center">
                              <div className="text-xs font-bold text-slate-500">{record?.breakMinutes ?? "-"} <span className="text-[9px] opacity-40">m</span></div>
@@ -418,9 +431,12 @@ export default function AttendanceSummaryPage() {
                                record?.status === "APPROVED" ? "text-emerald-500" :
                                record?.status === "SUBMITTED" ? "text-indigo-500" :
                                record?.status === "REMANDED" ? "text-rose-500" :
-                               "text-slate-200"
+                               "text-slate-400"
                              )}>
-                               {record?.status || "-"}
+                               {record?.status === "APPROVED" ? "完了" :
+                                record?.status === "SUBMITTED" ? "提出済" :
+                                record?.status === "REMANDED" ? "差戻し" :
+                                record?.status === "STAMPED" ? "作成中" : "未着手"}
                              </div>
                           </td>
                         </tr>
@@ -433,17 +449,17 @@ export default function AttendanceSummaryPage() {
 
             {/* モーダルフッター */}
             <div className="p-8 border-t border-slate-100 bg-slate-50/30 flex items-center justify-between">
-               <div className="flex items-center gap-6">
-                  <div className="text-center">
-                     <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Worked Hours</div>
-                     <div className="text-2xl font-black text-indigo-600 leading-tight">{selectedStaff.totalHours}h</div>
-                  </div>
-                  <div className="h-8 w-px bg-slate-200"></div>
-                  <div className="text-center">
-                     <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Attendance</div>
-                     <div className="text-2xl font-black text-slate-800 leading-tight">{selectedStaff.daysWorked} <span className="text-xs opacity-40">/ {selectedStaff.daysShifted}</span></div>
-                  </div>
-               </div>
+                <div className="flex items-center gap-6">
+                   <div className="text-center">
+                      <div className="text-[9px] font-black text-slate-500 uppercase tracking-widest">合計実働時間</div>
+                      <div className="text-2xl font-black text-indigo-600 leading-tight">{selectedStaff.totalHours} <span className="text-sm">時間</span></div>
+                   </div>
+                   <div className="h-8 w-px bg-slate-200"></div>
+                   <div className="text-center">
+                      <div className="text-[9px] font-black text-slate-500 uppercase tracking-widest">出勤日数</div>
+                      <div className="text-2xl font-black text-slate-800 leading-tight">{selectedStaff.daysWorked} <span className="text-xs opacity-60">/ {selectedStaff.daysShifted}日</span></div>
+                   </div>
+                </div>
 
                <div className="flex items-center gap-3">
                   <button 

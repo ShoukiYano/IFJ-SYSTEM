@@ -47,33 +47,33 @@ export function StatusBoard() {
           <Clock className="text-indigo-600" size={20} />
           リアルタイム稼働状況
         </h3>
-        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-white px-3 py-1 rounded-full border border-slate-100 shadow-sm">
-          Live Update
+        <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest bg-white px-3 py-1 rounded-full border border-slate-100 shadow-sm">
+          ライブ更新中
         </div>
       </div>
 
       <div className="p-4 bg-slate-50/50 grid grid-cols-4 gap-2 border-b border-slate-50">
         <div className="bg-white p-3 rounded-2xl flex flex-col items-center">
-          <div className="text-[9px] font-black text-indigo-500 uppercase">Working</div>
+          <div className="text-[9px] font-black text-indigo-600 uppercase">稼働中</div>
           <div className="text-xl font-black text-indigo-700">{counts.WORKING}</div>
         </div>
         <div className="bg-white p-3 rounded-2xl flex flex-col items-center">
-          <div className="text-[9px] font-black text-rose-500 uppercase">Late</div>
+          <div className="text-[9px] font-black text-rose-600 uppercase">遅刻</div>
           <div className="text-xl font-black text-rose-700">{counts.LATE}</div>
         </div>
         <div className="bg-white p-3 rounded-2xl flex flex-col items-center">
-          <div className="text-[9px] font-black text-amber-500 uppercase">Waiting</div>
+          <div className="text-[9px] font-black text-amber-600 uppercase">待機</div>
           <div className="text-xl font-black text-amber-700">{counts.WAITING}</div>
         </div>
         <div className="bg-white p-3 rounded-2xl flex flex-col items-center">
-          <div className="text-[9px] font-black text-emerald-500 uppercase">Done</div>
+          <div className="text-[9px] font-black text-emerald-600 uppercase">完了</div>
           <div className="text-xl font-black text-emerald-700">{counts.FINISHED}</div>
         </div>
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar max-h-[400px]">
         {data.length === 0 ? (
-          <div className="text-center py-10 text-slate-400 font-bold italic">No active staff today</div>
+          <div className="text-center py-10 text-slate-400 font-bold italic">本日の予定はありません</div>
         ) : data.filter(s => s.status !== "FREE").map((staff: any) => (
           <div key={staff.staffId} className="flex items-center justify-between p-3 bg-white border border-slate-100 rounded-2xl hover:shadow-md transition-all group">
             <div className="flex items-center gap-3">
