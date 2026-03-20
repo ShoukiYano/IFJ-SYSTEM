@@ -32,6 +32,7 @@ import {
   Mail,
   Lock,
   Link,
+  LayoutDashboard,
 } from "lucide-react";
 
 // -------- サブコンポーネント --------
@@ -120,26 +121,60 @@ const SECTIONS: Section[] = [
 
         <div className="border border-slate-200 rounded-2xl overflow-hidden">
           <div className="bg-slate-50 px-5 py-3 border-b border-slate-200">
-            <h3 className="text-xs font-black text-slate-500 uppercase tracking-wider">画面一覧</h3>
+            <h3 className="text-xs font-black text-slate-500 uppercase tracking-wider">画面構成（カテゴリー別）</h3>
           </div>
           <table className="w-full text-sm">
+            <thead>
+              <tr className="bg-slate-50 border-b border-slate-200 text-[10px] font-black uppercase text-slate-400">
+                <th className="px-5 py-2 text-left">カテゴリー</th>
+                <th className="px-3 py-2 text-left">画面名</th>
+                <th className="px-3 py-2 text-left">主な機能</th>
+              </tr>
+            </thead>
             <tbody>
               {[
-                { page: "ダッシュボード", path: "/", desc: "売上統計・最近の請求書・契約更新アラート" },
-                { page: "見積書管理", path: "/quotations", desc: "見積書の作成・編集・PDF出力" },
-                { page: "請求書管理", path: "/invoices", desc: "請求書の検索・一覧・ステータス管理" },
-                { page: "取引先管理", path: "/clients", desc: "取引先企業・エンジニア情報・契約期間管理" },
-                { page: "操作マニュアル", path: "/manual", desc: "このページ" },
-                { page: "システム設定", path: "/settings", desc: "会社情報・登録番号・実績承認番号の設定" },
+                { cat: "メイン", page: "ダッシュボード", desc: "売上統計・最近の請求書・通知の確認" },
+                { cat: "請求システム", page: "見積書管理", desc: "見積書の作成・PDF出力" },
+                { cat: "請求システム", page: "請求書管理", desc: "請求書の検索・一覧・ステータス管理" },
+                { cat: "勤怠システム", page: "勤怠管理", desc: "日次・月次の勤怠入力と管理" },
+                { cat: "勤怠システム", page: "勤怠集計", desc: "月次の実績確認・締め作業" },
+                { cat: "勤怠システム", page: "シフト管理", desc: "予定（シフト）の登録と承認" },
+                { cat: "マスタ管理", page: "要員管理", desc: "エンジニア情報の登録・契約期間管理" },
+                { cat: "マスタ管理", page: "取引先管理", desc: "請求先企業の基本情報管理" },
+                { cat: "その他", page: "システム設定", desc: "自社情報・登録番号・銀行口座の設定" },
               ].map((row, i) => (
                 <tr key={i} className="border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-colors">
-                  <td className="px-5 py-3 font-bold text-slate-800 w-36">{row.page}</td>
-                  <td className="px-3 py-3"><code className="text-xs bg-slate-100 px-2 py-0.5 rounded text-blue-600">{row.path}</code></td>
-                  <td className="px-3 py-3 text-slate-500 text-xs">{row.desc}</td>
+                  <td className="px-5 py-3"><Badge color="slate">{row.cat}</Badge></td>
+                  <td className="px-3 py-3 font-bold text-slate-800 text-xs">{row.page}</td>
+                  <td className="px-3 py-3 text-slate-500 text-[11px]">{row.desc}</td>
                 </tr>
               ))}
             </tbody>
           </table>
+        </div>
+
+        <div className="bg-blue-600 text-white p-6 rounded-2xl space-y-3 shadow-xl shadow-blue-600/10">
+          <h3 className="font-black flex items-center gap-2 text-lg">
+            <LayoutDashboard size={20} />
+            新しいナビゲーションの使い方
+          </h3>
+          <p className="text-sm opacity-90 leading-relaxed">
+            サイドバーがカテゴリーごとに整理され、より使いやすくなりました。
+          </p>
+          <ul className="text-xs space-y-2 opacity-80">
+            <li className="flex items-center gap-2">
+              <ChevronRight size={14} className="shrink-0" />
+              カテゴリー名（例：請求システム）をクリックすると、詳細メニューが展開されます。
+            </li>
+            <li className="flex items-center gap-2">
+              <ChevronRight size={14} className="shrink-0" />
+              現在開いているページが含まれるカテゴリーは、自動的に展開された状態で表示されます。
+            </li>
+            <li className="flex items-center gap-2">
+              <ChevronRight size={14} className="shrink-0" />
+              各テナントの設定で無効化されている機能（例：勤怠管理を使わない等）のカテゴリーは、自動的に非表示になります。
+            </li>
+          </ul>
         </div>
       </div>
     ),
