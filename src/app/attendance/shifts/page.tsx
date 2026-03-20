@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Calendar as CalendarIcon, Users, ChevronLeft, ChevronRight, Save, Loader2, Copy, Trash2, AlertCircle, Clock } from "lucide-react";
+import { Calendar as CalendarIcon, Users, ChevronLeft, ChevronRight, Save, Loader2, Copy, Trash2, AlertCircle, Clock, CheckCircle2 as CheckCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, addMonths, subMonths, isWeekend, startOfWeek, endOfWeek, isSameDay } from "date-fns";
 import { ja } from "date-fns/locale";
@@ -18,9 +18,10 @@ export default function ShiftManagePage() {
   const [shifts, setShifts] = useState<any[]>([]);
   const [attendanceRecords, setAttendanceRecords] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [loading, setLoading] = useState(true);
+   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [isImpersonating, setIsImpersonating] = useState(false);
+  const [mobileSelectedStaffId, setMobileSelectedStaffId] = useState<string | null>(null);
   
   // 編集中のシフト（一時保存用）
   const [pendingShifts, setPendingShifts] = useState<any[]>([]);
@@ -60,6 +61,9 @@ export default function ShiftManagePage() {
           setStaffs(sData);
           setShifts(shData);
           setAttendanceRecords(arData);
+          if (sData.length > 0 && !mobileSelectedStaffId) {
+            setMobileSelectedStaffId(sData[0].id);
+          }
         }
       } else {
         // TENANT_USER: 自分自身の情報を staffs にセットする（テーブル構造を維持するため）
@@ -377,14 +381,53 @@ export default function ShiftManagePage() {
             <button 
               onClick={handleSave}
               disabled={saving || pendingShifts.length === 0}
-              className="bg-indigo-600 text-white px-8 py-3 rounded-2xl font-black shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all flex items-center justify-center gap-2 disabled:opacity-30"
+              className="bg-indigo-600 text-white px-6 py-3 rounded-2xl font-black shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all flex items-center justify-center gap-2 disabled:opacity-30"
             >
-              {saving ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
-              <span className="text-sm">{pendingShifts.length > 0 ? `保存 (${pendingShifts.length})` : "保存"}</span>
+              {saving ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
+              <span className="text-sm">{pendingShifts.length > 0 ? (
+                <>
+                  <span className="hidden sm:inline">保存</span> ({pendingShifts.length})
+                </>
+              ) : "保存"}</span>
             </button>
           )}
         </div>
       </div>
+
+      {/* Admin Mobile Staff Selector */}
+      {isAdmin && (
+        <div className="md:hidden space-y-4">
+          <div className="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-3">
+            <Users className="text-indigo-400 shrink-0" size={20} />
+            <select 
+              className="w-full bg-transparent border-none outline-none font-black text-slate-800 text-sm appearance-none cursor-pointer"
+              value={mobileSelectedStaffId || ""}
+              onChange={(e) => setMobileSelectedStaffId(e.target.value)}
+            >
+              {staffs.map(s => (
+                <option key={s.id} value={s.id}>{s.name} のシフトを管理</option>
+              ))}
+            </select>
+          </div>
+          
+          <div className="flex gap-2">
+            <button 
+              onClick={() => mobileSelectedStaffId && handleSetDefault(mobileSelectedStaffId)}
+              className="flex-1 bg-white border border-indigo-100 text-indigo-600 py-3 rounded-2xl font-black text-xs hover:bg-indigo-50 transition-all shadow-sm flex items-center justify-center gap-2"
+            >
+              <Copy size={14} /> 平日一括登録
+            </button>
+            {pendingShifts.length > 0 && (
+               <button 
+                onClick={handleClearPending}
+                className="flex-1 bg-rose-50 text-rose-500 py-3 rounded-2xl font-black text-xs hover:bg-rose-100 transition-all border border-rose-100/50"
+               >
+                 <Trash2 size={14} className="inline mr-1" /> 変更を破棄
+               </button>
+            )}
+          </div>
+        </div>
+      )}
 
       {isAdmin && showRequests && (
         <div className="bg-amber-50 border border-amber-200 rounded-[2.5rem] p-8 animate-in slide-in-from-top-4 duration-300">
@@ -640,9 +683,9 @@ export default function ShiftManagePage() {
         </div>
       </div>
  
-      {/* モバイル表示（カード形式 - 一般ユーザー向け） */}
-      {!isAdmin && (
-        <div className="md:hidden space-y-4">
+      {/* モバイル表示（カード形式 - 管理者・一般ユーザー共通） */}
+      <div className="md:hidden space-y-4">
+        {!isAdmin && (
           <div className="flex items-center justify-between px-2">
             <h3 className="text-lg font-black text-slate-800">月間予定リスト</h3>
             <button 
@@ -653,54 +696,65 @@ export default function ShiftManagePage() {
               平日に一括登録
             </button>
           </div>
-          <div className="grid grid-cols-1 gap-3">
-            {eachDayOfInterval({ start: startOfMonth(currentMonth), end: endOfMonth(currentMonth) }).map(day => {
-              const staffId = staffs[0]?.id;
-              const dateStr = format(day, "yyyy-MM-dd");
-              const shift = shifts.find(s => (isAdmin ? s.staffId === staffId : true) && format(new Date(s.date), "yyyy-MM-dd") === dateStr);
-              const pending = pendingShifts.find(ps => (isAdmin ? ps.staffId === staffId : true) && format(new Date(ps.date), "yyyy-MM-dd") === dateStr);
-              const myReq = myPendingRequests.find(r => format(new Date(r.targetDate), "yyyy-MM-dd") === dateStr);
-              const active = pending || shift || myReq;
-              const holidayInfo = isHolidayOrWeekend(day);
+        )}
+        <div className="grid grid-cols-1 gap-3">
+          {eachDayOfInterval({ start: startOfMonth(currentMonth), end: endOfMonth(currentMonth) }).map(day => {
+            const staffId = isAdmin ? mobileSelectedStaffId! : staffs[0]?.id;
+            const dateStr = format(day, "yyyy-MM-dd");
+            const shift = shifts.find(s => (isAdmin ? s.staffId === staffId : true) && format(new Date(s.date), "yyyy-MM-dd") === dateStr);
+            const pending = pendingShifts.find(ps => (isAdmin ? ps.staffId === staffId : true) && format(new Date(ps.date), "yyyy-MM-dd") === dateStr);
+            const myReq = !isAdmin ? myPendingRequests.find(r => format(new Date(r.targetDate), "yyyy-MM-dd") === dateStr) : null;
+            const active = pending || shift || myReq;
+            const holidayInfo = isHolidayOrWeekend(day);
+            const record = isAdmin ? attendanceRecords.find(r => r.staffId === staffId && format(new Date(r.date), "yyyy-MM-dd") === dateStr) : null;
 
-              return (
-                <div 
-                  key={day.toISOString()}
-                  onClick={() => {
+            return (
+              <div 
+                key={day.toISOString()}
+                onClick={() => {
+                  if (isAdmin) {
+                    if (active?.isDeleted) {
+                      openEditModal(staffId, day, null, record);
+                    } else {
+                      openEditModal(staffId, day, active, record);
+                    }
+                  } else {
                     if (active && !active.isDeleted) {
                       setRequestingCell({ date: day, currentShift: active });
                     } else {
                       setEditingCell({ staffId, date: day, shift: null });
                     }
-                  }}
-                  className={cn(
-                    "bg-white rounded-[2rem] p-5 border-2 flex items-center justify-between transition-all active:scale-[0.98] shadow-sm",
-                    pending ? "border-indigo-600 bg-indigo-50/50" : 
-                    myReq ? "border-amber-400 bg-amber-50/30" :
-                    "border-slate-50"
-                  )}
-                >
-                  <div className="flex items-center gap-4">
-                    <div className={cn(
-                      "size-12 rounded-2xl flex flex-col items-center justify-center font-black shadow-sm",
-                      isToday(day) ? "bg-indigo-600 text-white ring-4 ring-indigo-50" :
-                      holidayInfo.isHoliday || day.getDay() === 0 ? "bg-rose-50 text-rose-600" :
-                      day.getDay() === 6 ? "bg-indigo-50 text-indigo-600" :
-                      "bg-slate-50 text-slate-500"
-                    )}>
-                      <span className="text-[10px] uppercase leading-none mb-0.5">{format(day, "EEE", { locale: ja })}</span>
-                      <span className="text-lg leading-none">{format(day, "d")}</span>
-                    </div>
-                    <div>
-                      <div className="text-slate-400 text-[10px] font-black uppercase tracking-widest">{format(day, "yyyy年 M月")}</div>
-                      <div className="font-black text-slate-800">
-                        {holidayInfo.isHoliday ? holidayInfo.reason : format(day, "E", { locale: ja }) + "曜日"}
-                      </div>
+                  }
+                }}
+                className={cn(
+                  "bg-white rounded-[2rem] p-5 border-2 flex items-center justify-between transition-all active:scale-[0.98] shadow-sm",
+                  pending ? "border-indigo-600 bg-indigo-50/50" : 
+                  myReq ? "border-amber-400 bg-amber-50/30" :
+                  "border-slate-50"
+                )}
+              >
+                <div className="flex items-center gap-4">
+                  <div className={cn(
+                    "size-12 rounded-2xl flex flex-col items-center justify-center font-black shadow-sm",
+                    isToday(day) ? "bg-indigo-600 text-white ring-4 ring-indigo-50" :
+                    holidayInfo.isHoliday || day.getDay() === 0 ? "bg-rose-50 text-rose-600" :
+                    day.getDay() === 6 ? "bg-indigo-50 text-indigo-600" :
+                    "bg-slate-50 text-slate-500"
+                  )}>
+                    <span className="text-[10px] uppercase leading-none mb-0.5">{format(day, "EEE", { locale: ja })}</span>
+                    <span className="text-lg leading-none">{format(day, "d")}</span>
+                  </div>
+                  <div>
+                    <div className="text-slate-400 text-[10px] font-black uppercase tracking-widest">{format(day, "yyyy年 M月")}</div>
+                    <div className="font-black text-slate-800">
+                      {holidayInfo.isHoliday ? holidayInfo.reason : format(day, "E", { locale: ja }) + "曜日"}
                     </div>
                   </div>
+                </div>
 
+                <div className="flex flex-col items-end gap-1">
                   {active && !active.isDeleted ? (
-                    <div className="text-right">
+                    <>
                       {pending && <div className="text-[9px] text-indigo-600 font-black mb-1">登録前</div>}
                       {myReq && <div className="text-[9px] text-amber-600 font-black mb-1">申請中</div>}
                       <div className={cn(
@@ -711,18 +765,23 @@ export default function ShiftManagePage() {
                         <span className="mx-1 opacity-20">-</span>
                         {format(new Date(active.endTime || active.requestEndTime), "HH:mm")}
                       </div>
-                    </div>
+                    </>
                   ) : (
                     <div className="size-10 rounded-xl bg-slate-50 border-2 border-dashed border-slate-200 flex items-center justify-center text-slate-300">
                       <Clock size={18} />
                     </div>
                   )}
+                  {isAdmin && record?.clockIn && (
+                    <div className="text-[9px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100 flex items-center gap-1">
+                      <CheckCircle size={10} /> {format(new Date(record.clockIn), "HH:mm")}
+                    </div>
+                  )}
                 </div>
-              );
-            })}
-          </div>
+              </div>
+            );
+          })}
         </div>
-      )}
+      </div>
       
       {isAdmin && (
         <div className="bg-indigo-50 border border-indigo-100 p-6 rounded-[2rem] flex items-start gap-4">

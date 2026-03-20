@@ -17,7 +17,8 @@ import {
   Filter,
   Calendar,
   X,
-  MessageSquare
+  MessageSquare,
+  Loader2
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
@@ -203,8 +204,8 @@ export default function AttendanceSummaryPage() {
         </div>
       </div>
 
-      {/* 集計テーブル */}
-      <div className="bg-white rounded-[2.5rem] shadow-2xl shadow-slate-200/50 border border-slate-100 overflow-hidden">
+      {/* 集計テーブル (Desktop) */}
+      <div className="hidden md:block bg-white rounded-[2.5rem] shadow-2xl shadow-slate-200/50 border border-slate-100 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -339,6 +340,87 @@ export default function AttendanceSummaryPage() {
         </div>
       </div>
 
+      {/* 集計カード (Mobile) */}
+      <div className="md:hidden space-y-4">
+        {loading ? (
+          <div className="p-10 text-center text-slate-400 font-bold">集計中...</div>
+        ) : filteredData.length === 0 ? (
+          <div className="p-10 text-center text-slate-400 font-bold">データなし</div>
+        ) : filteredData.map(staff => (
+          <div key={staff.staffId} className="bg-white rounded-3xl p-6 shadow-xl shadow-slate-200/30 border border-slate-100 space-y-4">
+            <div className="flex justify-between items-start">
+              <div>
+                <div className="font-black text-slate-800 text-lg">{staff.name}</div>
+                <div className="text-xs font-bold text-slate-400">{staff.clientName || "客先未設定"}</div>
+              </div>
+              <div className={cn(
+                "px-3 py-1 rounded-full text-[9px] font-black tracking-widest border shadow-sm",
+                staff.hourStatus === "NORMAL" ? "bg-emerald-50 text-emerald-600 border-emerald-100" :
+                staff.hourStatus === "OVERTIME" ? "bg-amber-50 text-amber-600 border-amber-100" :
+                "bg-rose-50 text-rose-600 border-rose-100"
+              )}>
+                {staff.hourStatus === "NORMAL" ? "適正" : staff.hourStatus === "OVERTIME" ? "超過" : "不足"}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 bg-slate-50 p-4 rounded-2xl">
+              <div>
+                <div className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">出勤日数</div>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-xl font-black text-slate-800">{staff.daysWorked}</span>
+                  <span className="text-[10px] font-bold text-slate-400">/ {staff.daysShifted}日</span>
+                </div>
+              </div>
+              <div>
+                <div className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">合計稼働</div>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-xl font-black text-indigo-600">{staff.totalHours}</span>
+                  <span className="text-[10px] font-bold text-indigo-400">h</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between pt-2">
+              <div className={cn(
+                "flex items-center gap-1.5",
+                staff.approvalStatus === "APPROVED" ? "text-emerald-500" : "text-slate-400"
+              )}>
+                {staff.approvalStatus === "APPROVED" ? <CheckCircle2 size={16} /> : <Clock size={16} />}
+                <span className="text-[10px] font-black tracking-widest uppercase">
+                  {staff.approvalStatus === "APPROVED" ? "承認済" : "未承認"}
+                </span>
+              </div>
+              <div className="flex gap-2">
+                <button 
+                  onClick={() => handleExportCSV(staff)}
+                  disabled={staff.approvalStatus !== "APPROVED"}
+                  className="p-3 bg-slate-100 text-slate-600 rounded-xl disabled:opacity-30"
+                >
+                  <Download size={18} />
+                </button>
+                <button 
+                  onClick={() => openDetail(staff)}
+                  className="p-3 bg-indigo-50 text-indigo-600 rounded-xl"
+                >
+                  <ArrowRight size={18} />
+                </button>
+              </div>
+            </div>
+            
+            {staff.approvalStatus !== "APPROVED" && (
+              <button 
+                onClick={() => handleApproveMonth(staff.staffId)}
+                disabled={processingId === staff.staffId}
+                className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black text-xs shadow-lg shadow-indigo-100 flex items-center justify-center gap-2"
+              >
+                {processingId === staff.staffId ? <Loader2 className="animate-spin" size={16} /> : <FileCheck size={16} />}
+                今月分を承認
+              </button>
+            )}
+          </div>
+        ))}
+      </div>
+
       {/* 詳細モーダル */}
       {selectedStaff && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
@@ -359,8 +441,8 @@ export default function AttendanceSummaryPage() {
               </button>
             </div>
 
-            {/* モーダルコンテンツ (テーブル) */}
-            <div className="flex-1 overflow-y-auto p-8 pt-4 custom-scrollbar">
+            {/* モーダルコンテンツ (Desktop Table) */}
+            <div className="hidden md:block flex-1 overflow-y-auto p-8 pt-4 custom-scrollbar">
               <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
                 <table className="w-full text-left border-collapse">
                   <thead>
@@ -445,6 +527,54 @@ export default function AttendanceSummaryPage() {
                   </tbody>
                 </table>
               </div>
+            </div>
+
+            {/* モーダルコンテンツ (Mobile Cards) */}
+            <div className="md:hidden flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
+              {loadingDetails ? (
+                <div className="p-10 text-center text-slate-400 font-bold">読み込み中...</div>
+              ) : dailyDetails.length === 0 ? (
+                <div className="p-10 text-center text-slate-400 font-bold">データなし</div>
+              ) : dailyDetails.map((day: any) => {
+                const record = day.record;
+                const shift = day.active;
+                return (
+                  <div key={day.date} className="bg-slate-50 rounded-2xl p-4 border border-slate-100 space-y-3">
+                    <div className="flex justify-between items-center">
+                      <div className="font-black text-slate-800">{format(new Date(day.date), "M/d (E)", { locale: ja })}</div>
+                      <div className={cn(
+                        "text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border",
+                        record?.status === "APPROVED" ? "bg-emerald-50 text-emerald-500 border-emerald-100" :
+                        record?.status === "SUBMITTED" ? "bg-indigo-50 text-indigo-500 border-indigo-100" :
+                        "bg-white text-slate-400 border-slate-100"
+                      )}>
+                        {record?.status === "APPROVED" ? "完了" : record?.status === "SUBMITTED" ? "提出済" : "未承認"}
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="bg-white p-2 rounded-xl border border-slate-100/50">
+                        <div className="text-[7px] font-black text-slate-400 uppercase mb-1">実働時間</div>
+                        <div className="text-xs font-black text-indigo-600">
+                          {record?.clockIn ? `${format(new Date(record.clockIn), "HH:mm")} - ${record.clockOut ? format(new Date(record.clockOut), "HH:mm") : "??"}` : "--:--"}
+                        </div>
+                      </div>
+                      <div className="bg-white p-2 rounded-xl border border-slate-100/50">
+                        <div className="text-[7px] font-black text-slate-400 uppercase mb-1">シフト予定</div>
+                        <div className="text-xs font-bold text-slate-400">
+                          {shift ? `${format(new Date(shift.startTime), "HH:mm")} - ${format(new Date(shift.endTime), "HH:mm")}` : "なし"}
+                        </div>
+                      </div>
+                    </div>
+
+                    {record?.workReport?.content && (
+                      <div className="text-[10px] text-slate-600 bg-white/50 p-2 rounded-lg border border-slate-100/50 line-clamp-2">
+                        {record.workReport.content}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
 
             {/* モーダルフッター */}

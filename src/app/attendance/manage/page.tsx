@@ -101,8 +101,8 @@ export default function AttendanceManagePage() {
         <StatCard title="承認待ち報告" value={summary.pendingReportsCount} icon={FileText} color="bg-indigo-500" />
       </div>
 
-      {/* 従業員リスト */}
-      <div className="bg-white rounded-[2.5rem] shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden">
+      {/* 従業員リスト (Desktop Table) */}
+      <div className="hidden md:block bg-white rounded-[2.5rem] shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden">
         <div className="p-8 border-b border-slate-50 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <h2 className="text-xl font-black text-slate-900">従業員稼働状況</h2>
           <div className="flex items-center gap-4">
@@ -195,6 +195,65 @@ export default function AttendanceManagePage() {
             </tbody>
           </table>
         </div>
+      </div>
+
+      {/* 従業員リスト (Mobile Cards) */}
+      <div className="md:hidden space-y-4">
+         <div className="flex items-center gap-3 px-2">
+           <Search size={18} className="text-slate-400" />
+           <input 
+             type="text" 
+             placeholder="名前で検索..." 
+             className="bg-transparent border-none outline-none font-bold text-slate-700 w-full"
+             value={search}
+             onChange={e => setSearch(e.target.value)}
+           />
+         </div>
+         {filteredStaffs.map((staff: any) => (
+           <div key={staff.id} className="bg-white rounded-3xl p-6 shadow-xl shadow-slate-200/30 border border-slate-100 space-y-4">
+             <div className="flex justify-between items-start">
+               <div className="flex items-center gap-3">
+                 <div className="size-10 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold text-xs">
+                   {staff.name.charAt(0)}
+                 </div>
+                 <div>
+                   <div className="font-black text-slate-900">{staff.name}</div>
+                   <div className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">{staff.type}</div>
+                 </div>
+               </div>
+               <StatusBadge 
+                 status={staff.todayRecord?.status || "DATED"} 
+                 onClick={() => staff.todayRecord && setSelectedRecord({ ...staff.todayRecord, staffName: staff.name })}
+               />
+             </div>
+
+             <div className="grid grid-cols-2 gap-3 bg-slate-50 p-4 rounded-2xl">
+               <div>
+                 <div className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">本人打刻</div>
+                 <div className="text-sm font-black text-slate-700">
+                    {staff.todayRecord?.clockIn ? (
+                      format(new Date(staff.todayRecord.clockIn), "HH:mm") + " - " + (staff.todayRecord.clockOut ? format(new Date(staff.todayRecord.clockOut), "HH:mm") : "--:--")
+                    ) : "未打刻"}
+                 </div>
+               </div>
+               <div>
+                 <div className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">シフト予定</div>
+                 <div className="text-sm font-bold text-slate-400">
+                    {staff.todayShift ? (
+                      format(new Date(staff.todayShift.startTime), "HH:mm") + " - " + format(new Date(staff.todayShift.endTime), "HH:mm")
+                    ) : "なし"}
+                 </div>
+               </div>
+             </div>
+
+             {staff.todayRecord?.hasDiscrepancy && (
+                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 text-rose-600 rounded-lg border border-rose-100">
+                  <AlertTriangle size={14} />
+                  <span className="text-[10px] font-black uppercase tracking-widest">シフト差異あり</span>
+                </div>
+             )}
+           </div>
+         ))}
       </div>
 
       {/* 承認モーダル */}
