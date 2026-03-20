@@ -345,21 +345,29 @@ export default function EditInvoicePage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 p-4 sm:p-8">
+    <div className="min-h-screen bg-slate-50 p-4 sm:p-8 pb-32 sm:pb-8"> {/* Added extra padding for mobile sticky footer */}
       <div className="max-w-5xl mx-auto">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6 sm:mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8 sticky top-0 bg-slate-50/80 backdrop-blur-md z-30 py-2 -mx-4 px-4 sm:static sm:bg-transparent sm:backdrop-blur-none sm:py-0 sm:mx-0 sm:px-0">
           <div className="flex items-center gap-3">
             <button onClick={() => router.back()} className="p-2 hover:bg-slate-200 rounded-full transition-colors">
               <ChevronLeft size={24} />
             </button>
-            <h1 className="text-2xl sm:text-3xl font-black text-slate-900">請求書の編集</h1>
+            <h1 className="text-xl sm:text-3xl font-black text-slate-900">請求書の編集</h1>
+          </div>
+          <div className="hidden sm:flex gap-3">
+            <button
+              onClick={handleSubmit}
+              className="bg-blue-600 text-white px-6 py-2 rounded-xl font-bold flex items-center gap-2 hover:bg-blue-700 shadow-lg shadow-blue-500/20 transition-all"
+            >
+              <Save size={18} /> 保存する
+            </button>
           </div>
         </div>
 
         <div className="grid grid-cols-1 gap-6 sm:gap-8">
           {/* 基本設定 */}
           <section className="bg-white p-4 sm:p-8 rounded-xl shadow-sm border border-slate-200">
-            <h2 className="text-lg font-bold mb-6 flex items-center gap-2 border-b pb-2">
+            <h2 className="text-base sm:text-lg font-bold mb-6 flex items-center gap-2 border-b pb-2">
               <FileText size={20} className="text-blue-600" /> 基本情報
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

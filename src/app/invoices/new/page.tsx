@@ -410,21 +410,29 @@ export default function NewInvoicePage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 p-4 sm:p-8">
+    <div className="min-h-screen bg-slate-50 p-4 sm:p-8 pb-32 sm:pb-8"> {/* Added extra padding for mobile sticky footer */}
       <div className="max-w-5xl mx-auto">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6 sm:mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8 sticky top-0 bg-slate-50/80 backdrop-blur-md z-30 py-2 -mx-4 px-4 sm:static sm:bg-transparent sm:backdrop-blur-none sm:py-0 sm:mx-0 sm:px-0">
           <div className="flex items-center gap-3">
             <a href="/" className="p-2 hover:bg-slate-200 rounded-full transition-colors">
               <ChevronLeft size={24} />
             </a>
-            <h1 className="text-2xl sm:text-3xl font-black text-slate-900">請求書作成</h1>
+            <h1 className="text-xl sm:text-3xl font-black text-slate-900">請求書作成</h1>
+          </div>
+          <div className="hidden sm:flex gap-3">
+            <button
+              onClick={handleSubmit}
+              className="bg-blue-600 text-white px-6 py-2 rounded-xl font-bold flex items-center gap-2 hover:bg-blue-700 shadow-lg shadow-blue-500/20 transition-all"
+            >
+              <Save size={18} /> 保存する
+            </button>
           </div>
         </div>
 
         <div className="grid grid-cols-1 gap-6 sm:gap-8">
           {/* 基本設定 */}
           <section className="bg-white p-4 sm:p-8 rounded-xl shadow-sm border border-slate-200">
-            <h2 className="text-lg font-bold mb-6 flex items-center gap-2 border-b pb-2">
+            <h2 className="text-base sm:text-lg font-bold mb-6 flex items-center gap-2 border-b pb-2">
               <FileText size={20} className="text-blue-600" /> 基本情報
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -992,9 +1000,9 @@ export default function NewInvoicePage() {
             </div>
           </section>
 
-          {/* 備考 & 保存 */}
-          <div className="flex flex-col md:flex-row gap-8 items-start">
-            <section className="bg-white p-8 rounded-xl shadow-sm border border-slate-200 flex-1 w-full">
+          {/* 備考 & 保存 (Desktop) */}
+          <div className="flex flex-col md:flex-row gap-8 items-start mb-8 sm:mb-0">
+            <section className="bg-white p-6 sm:p-8 rounded-xl shadow-sm border border-slate-200 flex-1 w-full">
               <h2 className="text-xs font-bold text-slate-700 uppercase mb-4 tracking-wider">備考欄</h2>
               <textarea
                 className="w-full h-32 p-4 bg-slate-50 border border-slate-100 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20 text-sm"
@@ -1003,7 +1011,7 @@ export default function NewInvoicePage() {
               />
             </section>
 
-            <div className="w-full md:w-64 space-y-4">
+            <div className="hidden sm:block w-64 space-y-4">
               <button
                 onClick={handleSubmit}
                 className="w-full bg-blue-600 text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-blue-700 shadow-xl shadow-blue-500/20 transition-all hover:-translate-y-1"
@@ -1015,6 +1023,21 @@ export default function NewInvoicePage() {
               </button>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Mobile Sticky Footer */}
+      <div className="sm:hidden fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-lg border-t border-slate-200 p-4 z-40 shadow-[0_-8px_30px_rgb(0,0,0,0.04)]">
+        <div className="flex gap-3 max-w-lg mx-auto">
+          <button
+            onClick={handleSubmit}
+            className="flex-1 bg-blue-600 text-white py-3.5 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-blue-700 active:scale-95 transition-all shadow-lg shadow-blue-500/25"
+          >
+            <Save size={20} /> 保存する
+          </button>
+          <button className="px-5 bg-slate-100 text-slate-600 rounded-2xl font-bold border border-slate-200 active:scale-95 transition-all">
+            下書き
+          </button>
         </div>
       </div>
       {/* 複数シート選択モーダル */}

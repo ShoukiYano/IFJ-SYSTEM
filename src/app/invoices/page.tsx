@@ -115,25 +115,25 @@ export default function InvoicesPage() {
             {showDeleted ? "削除された請求書を管理・復元します。" : "発行済みの請求書を管理します。"}
           </p>
         </div>
-        <div className="flex flex-wrap gap-3 w-full sm:w-auto">
+        <div className="flex flex-wrap gap-2 w-full sm:w-auto">
           {!showDeleted && (
             <button
               onClick={() => setIsBatchModalOpen(true)}
-              className="flex-1 sm:flex-none justify-center bg-white text-blue-600 border border-blue-200 px-4 sm:px-6 py-2 rounded-lg font-bold flex items-center gap-2 hover:bg-blue-50 transition-all shadow-sm text-sm"
+              className="flex-1 sm:flex-none justify-center bg-white text-blue-600 border border-blue-200 px-3 sm:px-6 py-2 rounded-lg font-bold flex items-center gap-2 hover:bg-blue-50 transition-all shadow-sm text-xs sm:text-sm"
             >
-              <ListChecks size={18} /> 一括作成
+              <ListChecks size={16} className="sm:size-[18px]" /> <span className="hidden xs:inline">一括作成</span><span className="xs:hidden">一括</span>
             </button>
           )}
           <button
             onClick={() => { setShowDeleted(!showDeleted); setSelectedIds([]); }}
-            className={`flex-1 sm:flex-none justify-center px-4 sm:px-6 py-2 rounded-lg font-bold flex items-center gap-2 transition-all shadow-sm text-sm ${showDeleted ? "bg-slate-800 text-white hover:bg-slate-900" : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
+            className={`flex-1 sm:flex-none justify-center px-3 sm:px-6 py-2 rounded-lg font-bold flex items-center gap-2 transition-all shadow-sm text-xs sm:text-sm ${showDeleted ? "bg-slate-800 text-white hover:bg-slate-900" : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
               }`}
           >
-            <Trash2 size={18} /> {showDeleted ? "一覧に戻る" : "ゴミ箱"}
+            <Trash2 size={16} className="sm:size-[18px]" /> {showDeleted ? "戻る" : "ゴミ箱"}
           </button>
           {!showDeleted && (
-            <a href="/invoices/new" className="flex-1 sm:flex-none justify-center bg-blue-600 text-white px-4 sm:px-6 py-2 rounded-lg font-bold flex items-center gap-2 hover:bg-blue-700 transition-all shadow-md text-sm">
-              <Plus size={18} /> 新規作成
+            <a href="/invoices/new" className="flex-1 sm:flex-none justify-center bg-blue-600 text-white px-3 sm:px-6 py-2 rounded-lg font-bold flex items-center gap-2 hover:bg-blue-700 transition-all shadow-md text-xs sm:text-sm">
+              <Plus size={16} className="sm:size-[18px]" /> 新規作成
             </a>
           )}
         </div>

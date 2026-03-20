@@ -160,14 +160,19 @@ export const InvoiceTable = ({
                   type="checkbox" 
                   checked={selectedIds.includes(invoice.id)}
                   onChange={() => toggleOne(invoice.id)}
-                  className="size-4 rounded border-slate-300 text-blue-600"
+                  className="size-4 rounded border-slate-300 text-blue-600 self-start mt-1"
                 />
-                <div>
-                  <div className="text-sm font-bold text-slate-900">{invoice.invoiceNumber}</div>
-                  <div className="text-xs text-slate-500">{invoice.client.name}</div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <div className="text-sm font-bold text-slate-900 truncate">{invoice.invoiceNumber}</div>
+                    {invoice.templateType === 'SES' && (
+                      <span className="px-1.5 py-0.5 bg-blue-100 text-blue-700 text-[10px] rounded font-bold uppercase tracking-wider">SES</span>
+                    )}
+                  </div>
+                  <div className="text-xs text-slate-500 truncate">{invoice.client.name}</div>
                 </div>
               </div>
-              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+              <span className={`shrink-0 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
                 invoice.status === 'PAID' ? 'bg-emerald-100 text-emerald-800' :
                 invoice.status === 'ISSUED' ? 'bg-blue-100 text-blue-800' :
                 'bg-slate-100 text-slate-800'

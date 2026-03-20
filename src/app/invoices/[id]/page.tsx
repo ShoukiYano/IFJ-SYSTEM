@@ -105,42 +105,60 @@ export default function InvoiceDetailPage() {
   return (
     <div className="min-h-screen bg-slate-50 p-4 sm:p-8">
       <div className="max-w-5xl mx-auto">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6 sm:mb-8">
-          <div className="flex items-center gap-2 min-w-0">
-            <a href="/" className="p-2 hover:bg-slate-200 rounded-full transition-colors shrink-0">
-              <ChevronLeft size={24} />
-            </a>
-            <h1 className="text-xl sm:text-3xl font-black text-slate-900 truncate">{data.invoiceNumber} の詳細</h1>
+        <div className="flex flex-col gap-4 mb-6 sm:mb-8">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <a href="/" className="p-2 hover:bg-slate-200 rounded-full transition-colors shrink-0">
+                <ChevronLeft size={24} />
+              </a>
+              <h1 className="text-xl sm:text-3xl font-black text-slate-900 truncate">{data.invoiceNumber}</h1>
+            </div>
+            <div className="flex items-center gap-2 sm:hidden">
+              <a
+                href={`/invoices/${params.id}/edit`}
+                className="p-2.5 bg-amber-50 text-amber-700 border border-amber-200 rounded-xl hover:bg-amber-100 transition-colors"
+              >
+                <Edit size={20} />
+              </a>
+              <button
+                onClick={() => setIsEmailModalOpen(true)}
+                className="p-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-600/20"
+              >
+                <Mail size={20} />
+              </button>
+            </div>
           </div>
+
           <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={() => setShowPreview(!showPreview)}
-              className="px-4 py-2 bg-white border border-slate-200 rounded-lg font-bold flex items-center gap-2 hover:bg-slate-50 transition-colors"
+              className="px-4 py-2 bg-white border border-slate-200 rounded-lg font-bold flex items-center gap-2 hover:bg-slate-50 transition-colors text-sm"
             >
-              <Eye size={20} /> {showPreview ? "詳細を閉じる" : "プレビュー"}
+              <Eye size={18} /> {showPreview ? "閉じる" : "プレビュー"}
             </button>
 
+            <div className="hidden sm:flex items-center gap-2">
+              <a
+                href={`/invoices/${params.id}/edit`}
+                className="px-4 py-2 bg-amber-50 text-amber-700 border border-amber-200 rounded-lg font-bold flex items-center gap-2 hover:bg-amber-100 transition-colors text-sm"
+              >
+                <Edit size={18} /> 編集
+              </a>
 
-            <a
-              href={`/invoices/${params.id}/edit`}
-              className="px-4 py-2 bg-amber-50 text-amber-700 border border-amber-200 rounded-lg font-bold flex items-center gap-2 hover:bg-amber-100 transition-colors"
-            >
-              <Edit size={20} /> 編集
-            </a>
-
-            <button
-              onClick={() => setIsEmailModalOpen(true)}
-              className="px-4 py-2 bg-indigo-600 text-white rounded-lg font-bold flex items-center gap-2 hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-600/20"
-            >
-              <Mail size={20} /> メール送信
-            </button>
+              <button
+                onClick={() => setIsEmailModalOpen(true)}
+                className="px-4 py-2 bg-indigo-600 text-white rounded-lg font-bold flex items-center gap-2 hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-600/20 text-sm"
+              >
+                <Mail size={18} /> メール送信
+              </button>
+            </div>
 
             <button
               onClick={handleDuplicate}
               disabled={updating}
-              className="px-4 py-2 bg-slate-100 text-slate-700 border border-slate-200 rounded-lg font-bold flex items-center gap-2 hover:bg-slate-200 transition-colors"
+              className="px-4 py-2 bg-slate-100 text-slate-700 border border-slate-200 rounded-lg font-bold flex items-center gap-2 hover:bg-slate-200 transition-colors text-sm"
             >
-              <Copy size={20} /> 複製
+              <Copy size={18} /> 複製
             </button>
 
             <PDFActionButtons invoice={data} company={company} />
@@ -171,54 +189,101 @@ export default function InvoiceDetailPage() {
               </div>
             </section>
 
-            <section className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-x-auto">
-              <table className="w-full text-left min-w-[500px]">
-                <thead>
-                  <tr className="bg-slate-50 border-b border-slate-100 text-xs font-bold text-slate-500 uppercase">
-                    {data.templateType === "SES" ? (
-                      <>
-                        <th className="px-6 py-4">年月</th>
-                        <th className="px-6 py-4">該当者</th>
-                        <th className="px-6 py-4">内容 / 項目</th>
-                      </>
-                    ) : (
-                      <th className="px-6 py-4">内容 / 項目</th>
-                    )}
-                    <th className="px-6 py-4 text-center">数量 / 時間</th>
-                    <th className="px-6 py-4 text-right">単価</th>
-                    <th className="px-6 py-4 text-right">金額</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-50">
-                  {data.items.map((item: any) => (
-                    <tr key={item.id}>
+            <section className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+              <h2 className="text-xs font-bold text-slate-500 uppercase p-6 border-b tracking-widest bg-slate-50/50">明細項目</h2>
+              
+              {/* Desktop Table View */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full text-left">
+                  <thead>
+                    <tr className="bg-slate-50/80 border-b border-slate-100 text-[10px] font-bold text-slate-400 uppercase">
                       {data.templateType === "SES" ? (
                         <>
-                          <td className="px-6 py-4 text-sm text-slate-600">{item.serviceMonth || "-"}</td>
-                          <td className="px-6 py-4 text-sm text-slate-600">{item.personName || "-"}</td>
-                          <td className="px-6 py-4 text-sm font-medium">
-                            {item.description}
-                            {(Number(item.overtimeAmount) > 0 || Number(item.deductionAmount) > 0) && (
-                              <div className="text-[10px] mt-1 space-x-2">
-                                {Number(item.overtimeAmount) > 0 && <span className="text-emerald-600">超過: +{formatCurrency(Number(item.overtimeAmount))}</span>}
-                                {Number(item.deductionAmount) > 0 && <span className="text-rose-600">控除: -{formatCurrency(Number(item.deductionAmount))}</span>}
-                              </div>
-                            )}
-                          </td>
+                          <th className="px-6 py-3 font-black">年月</th>
+                          <th className="px-6 py-3 font-black">該当者</th>
+                          <th className="px-6 py-3 font-black">内容 / 項目</th>
                         </>
                       ) : (
-                        <td className="px-6 py-4 text-sm font-medium">{item.description}</td>
+                        <th className="px-6 py-3 font-black">内容 / 項目</th>
                       )}
-                      <td className="px-6 py-4 text-sm text-center text-slate-600">
-                        {Number(item.quantity)}
-                        <span className="text-[10px] ml-0.5">{item.unit || ""}</span>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-right text-slate-600 font-mono">{formatCurrency(Number(item.unitPrice))}</td>
-                      <td className="px-6 py-4 text-sm text-right font-bold tabular-nums">{formatCurrency(Number(item.amount))}</td>
+                      <th className="px-6 py-3 text-center font-black">数量 / 時間</th>
+                      <th className="px-6 py-3 text-right font-black">単価</th>
+                      <th className="px-6 py-3 text-right font-black">金額</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-slate-50">
+                    {data.items.map((item: any) => (
+                      <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
+                        {data.templateType === "SES" ? (
+                          <>
+                            <td className="px-6 py-4 text-sm text-slate-600">{item.serviceMonth || "-"}</td>
+                            <td className="px-6 py-4 text-sm text-slate-600 font-bold">{item.personName || "-"}</td>
+                            <td className="px-6 py-4 text-sm">
+                              <div className="text-slate-900">{item.description}</div>
+                              {(Number(item.overtimeAmount) > 0 || Number(item.deductionAmount) > 0) && (
+                                <div className="text-[10px] mt-1 space-x-2">
+                                  {Number(item.overtimeAmount) > 0 && <span className="text-emerald-600 font-bold bg-emerald-50 px-1.5 py-0.5 rounded">超過: +{formatCurrency(Number(item.overtimeAmount))}</span>}
+                                  {Number(item.deductionAmount) > 0 && <span className="text-rose-600 font-bold bg-rose-50 px-1.5 py-0.5 rounded">控除: -{formatCurrency(Number(item.deductionAmount))}</span>}
+                                </div>
+                              )}
+                            </td>
+                          </>
+                        ) : (
+                          <td className="px-6 py-4 text-sm font-medium text-slate-900">{item.description}</td>
+                        )}
+                        <td className="px-6 py-4 text-sm text-center text-slate-600 font-mono">
+                          {Number(item.quantity)}
+                          <span className="text-[10px] ml-0.5 text-slate-400">{item.unit || ""}</span>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-right text-slate-600 font-mono italic">{formatCurrency(Number(item.unitPrice))}</td>
+                        <td className="px-6 py-4 text-sm text-right font-black text-slate-900 tabular-nums">{formatCurrency(Number(item.amount))}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile Card View */}
+              <div className="md:hidden divide-y divide-slate-100">
+                {data.items.map((item: any, idx: number) => (
+                  <div key={item.id} className="p-4 space-y-3">
+                    <div className="flex justify-between items-start gap-4">
+                      <div className="space-y-1 min-w-0">
+                        {data.templateType === "SES" && (
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-black bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">{item.serviceMonth}</span>
+                            <span className="text-xs font-bold text-slate-900 truncate">{item.personName}</span>
+                          </div>
+                        )}
+                        <div className="text-sm font-bold text-slate-700 leading-tight">{item.description}</div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <div className="text-sm font-black text-slate-900 tabular-nums">{formatCurrency(Number(item.amount))}</div>
+                        <div className="text-[10px] text-slate-400 font-mono mt-0.5">
+                          {formatCurrency(Number(item.unitPrice))} × {item.quantity}{item.unit}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {(Number(item.overtimeAmount) > 0 || Number(item.deductionAmount) > 0) && (
+                      <div className="flex flex-wrap gap-2 pt-1">
+                        {Number(item.overtimeAmount) > 0 && (
+                          <div className="text-[10px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-full flex items-center gap-1">
+                            <span>超過</span>
+                            <span>+{formatCurrency(Number(item.overtimeAmount))}</span>
+                          </div>
+                        )}
+                        {Number(item.deductionAmount) > 0 && (
+                          <div className="text-[10px] font-bold text-rose-600 bg-rose-50 border border-rose-100 px-2 py-0.5 rounded-full flex items-center gap-1">
+                            <span>控除</span>
+                            <span>−{formatCurrency(Number(item.deductionAmount))}</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
             </section>
           </div>
 
