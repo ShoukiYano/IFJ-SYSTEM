@@ -2,7 +2,7 @@
 
 import React from "react";
 import { format } from "date-fns";
-import { Edit, FileText, Copy, Trash2 } from "lucide-react";
+import { Edit, FileText, Copy, Trash2, CheckCircle } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 
 interface Invoice {
@@ -24,6 +24,8 @@ export const InvoiceTable = ({
   onEdit, 
   onPrint, 
   onDuplicate,
+  onRestore,
+  showDeleted = false,
   selectedIds = [],
   onSelectionChange
 }: { 
@@ -31,6 +33,8 @@ export const InvoiceTable = ({
   onEdit: (id: string) => void, 
   onPrint: (inv: any) => void, 
   onDuplicate: (id: string) => void,
+  onRestore?: (id: string) => void,
+  showDeleted?: boolean,
   selectedIds?: string[],
   onSelectionChange?: (ids: string[]) => void
 }) => {
@@ -100,26 +104,44 @@ export const InvoiceTable = ({
                 </td>
                 <td className="px-6 py-4 text-sm text-slate-900 font-medium">{invoice.client.name}</td>
                 <td className="px-6 py-4 hidden sm:table-cell">
-                  <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                    invoice.status === 'PAID' ? 'bg-emerald-100 text-emerald-800' :
-                    invoice.status === 'ISSUED' ? 'bg-blue-100 text-blue-800' :
-                    'bg-slate-100 text-slate-800'
-                  }`}>
-                    {invoice.status === 'PAID' ? '支払済' :
-                     invoice.status === 'ISSUED' ? '発行済' : '下書き'}
-                  </span>
+                  {showDeleted ? (
+                    <span className="px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-red-100 text-red-800">
+                      削除済み
+                    </span>
+                  ) : (
+                    <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                      invoice.status === 'PAID' ? 'bg-emerald-100 text-emerald-800' :
+                      invoice.status === 'ISSUED' ? 'bg-blue-100 text-blue-800' :
+                      'bg-slate-100 text-slate-800'
+                    }`}>
+                      {invoice.status === 'PAID' ? '支払済' :
+                       invoice.status === 'ISSUED' ? '発行済' : '下書き'}
+                    </span>
+                  )}
                 </td>
                 <td className="px-6 py-4 text-center">
                   <div className="flex items-center justify-center gap-2">
-                    <a href={`/invoices/${invoice.id}/edit`} title="編集" className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-blue-600 transition-all">
-                      <Edit size={18} />
-                    </a>
-                    <button onClick={() => onPrint(invoice)} title="PDF表示" className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-rose-600 transition-all">
-                      <FileText size={18} />
-                    </button>
-                    <button onClick={() => onDuplicate(invoice.id)} title="複製" className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-emerald-600 transition-all">
-                      <Copy size={18} />
-                    </button>
+                    {showDeleted ? (
+                      <button 
+                        onClick={() => onRestore?.(invoice.id)} 
+                        title="復元" 
+                        className="p-2 hover:bg-blue-50 rounded-lg text-blue-400 hover:text-blue-600 transition-all flex items-center gap-1 text-xs font-bold"
+                      >
+                        <CheckCircle size={18} /> 復元
+                      </button>
+                    ) : (
+                      <>
+                        <a href={`/invoices/${invoice.id}/edit`} title="編集" className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-blue-600 transition-all">
+                          <Edit size={18} />
+                        </a>
+                        <button onClick={() => onPrint(invoice)} title="PDF表示" className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-rose-600 transition-all">
+                          <FileText size={18} />
+                        </button>
+                        <button onClick={() => onDuplicate(invoice.id)} title="複製" className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-emerald-600 transition-all">
+                          <Copy size={18} />
+                        </button>
+                      </>
+                    )}
                   </div>
                 </td>
               </tr>
@@ -161,15 +183,26 @@ export const InvoiceTable = ({
             </div>
 
             <div className="flex justify-end gap-2 pt-1">
-              <a href={`/invoices/${invoice.id}/edit`} className="p-2 bg-slate-100 text-slate-600 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-all">
-                <Edit size={18} />
-              </a>
-              <button onClick={() => onPrint(invoice)} className="p-2 bg-slate-100 text-slate-600 rounded-lg hover:bg-rose-50 hover:text-rose-600 transition-all">
-                <FileText size={18} />
-              </button>
-              <button onClick={() => onDuplicate(invoice.id)} className="p-2 bg-slate-100 text-slate-600 rounded-lg hover:bg-emerald-50 hover:text-emerald-600 transition-all">
-                <Copy size={18} />
-              </button>
+              {showDeleted ? (
+                <button 
+                  onClick={() => onRestore?.(invoice.id)} 
+                  className="flex items-center gap-1 px-3 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold hover:bg-blue-700 transition-all"
+                >
+                  <CheckCircle size={16} /> 復元
+                </button>
+              ) : (
+                <>
+                  <a href={`/invoices/${invoice.id}/edit`} className="p-2 bg-slate-100 text-slate-600 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-all">
+                    <Edit size={18} />
+                  </a>
+                  <button onClick={() => onPrint(invoice)} className="p-2 bg-slate-100 text-slate-600 rounded-lg hover:bg-rose-50 hover:text-rose-600 transition-all">
+                    <FileText size={18} />
+                  </button>
+                  <button onClick={() => onDuplicate(invoice.id)} className="p-2 bg-slate-100 text-slate-600 rounded-lg hover:bg-emerald-50 hover:text-emerald-600 transition-all">
+                    <Copy size={18} />
+                  </button>
+                </>
+              )}
             </div>
           </div>
         ))}

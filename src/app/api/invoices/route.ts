@@ -45,6 +45,7 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const clientId = searchParams.get("clientId");
     const month = searchParams.get("month"); // YYYY-MM
+    const showDeleted = searchParams.get("showDeleted") === "true";
     const minDate = searchParams.get("minDate");
     const maxDate = searchParams.get("maxDate");
     const minAmount = searchParams.get("minAmount");
@@ -52,7 +53,7 @@ export async function GET(req: Request) {
 
     const where: any = {
       tenantId: context.tenantId,
-      deletedAt: null
+      deletedAt: showDeleted ? { not: null } : null
     };
 
     if (clientId) where.clientId = clientId;

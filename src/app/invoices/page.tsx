@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { Plus, Search, Filter, CheckCircle, Clock as ClockIcon, Download, ListChecks, Trash2 } from "lucide-react";
+import { Plus, Search, Filter, CheckCircle, Clock as ClockIcon, Download, ListChecks, Trash2, Edit, FileText, Copy } from "lucide-react";
 import { InvoiceTable } from "@/components/invoices/InvoiceTable";
 import BatchGenerateModal from "@/components/invoices/BatchGenerateModal";
 
@@ -18,6 +18,7 @@ export default function InvoicesPage() {
     maxAmount: "",
   });
   const [showFilters, setShowFilters] = useState(false);
+  const [showDeleted, setShowDeleted] = useState(false);
   const [isBatchModalOpen, setIsBatchModalOpen] = useState(false);
 
   const fetchInvoices = useCallback(async () => {
@@ -28,12 +29,13 @@ export default function InvoicesPage() {
     if (filters.maxDate) params.append("maxDate", filters.maxDate);
     if (filters.minAmount) params.append("minAmount", filters.minAmount);
     if (filters.maxAmount) params.append("maxAmount", filters.maxAmount);
+    if (showDeleted) params.append("showDeleted", "true");
 
     const res = await fetch(`/api/invoices?${params.toString()}`);
     const data = await res.json();
     setInvoices(Array.isArray(data) ? data : []);
     setLoading(false);
-  }, [filters]);
+  }, [filters, showDeleted]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -56,9 +58,33 @@ export default function InvoicesPage() {
       fetchInvoices();
     }
   };
+
+  const handleBulkRestore = async () => {
+    if (selectedIds.length === 0) return;
+    const confirmed = window.confirm(`選択した${selectedIds.length}件の請求書を復元しますか？`);
+    if (!confirmed) return;
+
+    const res = await fetch("/api/invoices/bulk-restore", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids: selectedIds }),
+    });
+
+    if (res.ok) {
+      setSelectedIds([]);
+      fetchInvoices();
+    } else {
+      alert("復元に失敗しました。");
+    }
+  };
+
   const handleBulkDelete = async () => {
     if (selectedIds.length === 0) return;
-    const confirmed = window.confirm(`選択した${selectedIds.length}件の請求書を削除しますか？\nこの操作は元に戻せません。`);
+    const message = showDeleted 
+      ? `選択した${selectedIds.length}件を完全に削除しますか？\n(※この環境では物理削除は未実装のため、現在は表示のみが消えます)` 
+      : `選択した${selectedIds.length}件の請求書を削除しますか？\n削除後はゴミ箱から復元可能です。`;
+    
+    const confirmed = window.confirm(message);
     if (!confirmed) return;
 
     const res = await fetch("/api/invoices/bulk-delete", {
@@ -79,19 +105,34 @@ export default function InvoicesPage() {
     <div className="space-y-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">請求書一覧</h2>
-          <p className="text-slate-500 text-sm">発行済みの請求書を管理します。</p>
+          <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+            {showDeleted ? "ゴミ箱" : "請求書一覧"}
+          </h2>
+          <p className="text-slate-500 text-sm">
+            {showDeleted ? "削除された請求書を管理・復元します。" : "発行済みの請求書を管理します。"}
+          </p>
         </div>
         <div className="flex flex-wrap gap-3 w-full sm:w-auto">
+          {!showDeleted && (
+            <button
+              onClick={() => setIsBatchModalOpen(true)}
+              className="flex-1 sm:flex-none justify-center bg-white text-blue-600 border border-blue-200 px-4 sm:px-6 py-2 rounded-lg font-bold flex items-center gap-2 hover:bg-blue-50 transition-all shadow-sm text-sm"
+            >
+              <ListChecks size={18} /> 一括作成
+            </button>
+          )}
           <button
-            onClick={() => setIsBatchModalOpen(true)}
-            className="flex-1 sm:flex-none justify-center bg-white text-blue-600 border border-blue-200 px-4 sm:px-6 py-2 rounded-lg font-bold flex items-center gap-2 hover:bg-blue-50 transition-all shadow-sm text-sm"
+            onClick={() => { setShowDeleted(!showDeleted); setSelectedIds([]); }}
+            className={`flex-1 sm:flex-none justify-center px-4 sm:px-6 py-2 rounded-lg font-bold flex items-center gap-2 transition-all shadow-sm text-sm ${showDeleted ? "bg-slate-800 text-white hover:bg-slate-900" : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
+              }`}
           >
-            <ListChecks size={18} /> 一括作成
+            <Trash2 size={18} /> {showDeleted ? "一覧に戻る" : "ゴミ箱"}
           </button>
-          <a href="/invoices/new" className="flex-1 sm:flex-none justify-center bg-blue-600 text-white px-4 sm:px-6 py-2 rounded-lg font-bold flex items-center gap-2 hover:bg-blue-700 transition-all shadow-md text-sm">
-            <Plus size={18} /> 新規作成
-          </a>
+          {!showDeleted && (
+            <a href="/invoices/new" className="flex-1 sm:flex-none justify-center bg-blue-600 text-white px-4 sm:px-6 py-2 rounded-lg font-bold flex items-center gap-2 hover:bg-blue-700 transition-all shadow-md text-sm">
+              <Plus size={18} /> 新規作成
+            </a>
+          )}
         </div>
       </div>
 
@@ -109,12 +150,14 @@ export default function InvoicesPage() {
               />
             </div>
             <div className="flex gap-2 w-full sm:w-auto">
-              <button
-                onClick={() => window.location.href = '/api/export/invoices'}
-                className="flex-1 sm:flex-none justify-center flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors"
-              >
-                <Download size={16} /> CSV
-              </button>
+              {!showDeleted && (
+                <button
+                  onClick={() => window.location.href = '/api/export/invoices'}
+                  className="flex-1 sm:flex-none justify-center flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors"
+                >
+                  <Download size={16} /> CSV
+                </button>
+              )}
               <button
                 onClick={() => setShowFilters(!showFilters)}
                 className={`flex-1 sm:flex-none justify-center flex items-center gap-2 px-4 py-2 border rounded-lg text-xs font-bold transition-colors ${showFilters ? "bg-blue-50 border-blue-200 text-blue-600" : "border-slate-200 text-slate-600 hover:bg-slate-50"
@@ -130,23 +173,34 @@ export default function InvoicesPage() {
               <span className="text-xs font-bold text-blue-700 px-2">{selectedIds.length}件選択中</span>
               <div className="hidden sm:block h-4 w-px bg-blue-200 mx-1"></div>
               <div className="flex gap-2 w-full sm:w-auto">
-                <button
-                  onClick={() => handleBulkUpdate('PAID')}
-                  className="flex-1 sm:flex-none justify-center px-3 py-1.5 bg-emerald-600 text-white text-[10px] font-bold rounded-md hover:bg-emerald-700 transition-colors flex items-center gap-1"
-                >
-                  <CheckCircle size={14} /> 入金済
-                </button>
-                <button
-                  onClick={() => handleBulkUpdate('ISSUED')}
-                  className="flex-1 sm:flex-none justify-center px-3 py-1.5 bg-blue-600 text-white text-[10px] font-bold rounded-md hover:bg-blue-700 transition-colors flex items-center gap-1"
-                >
-                  <ClockIcon size={14} /> 発行済
-                </button>
+                {showDeleted ? (
+                  <button
+                    onClick={handleBulkRestore}
+                    className="flex-1 sm:flex-none justify-center px-4 py-1.5 bg-blue-600 text-white text-[10px] font-bold rounded-md hover:bg-blue-700 transition-colors flex items-center gap-1"
+                  >
+                    <CheckCircle size={14} /> 一括復元
+                  </button>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => handleBulkUpdate('PAID')}
+                      className="flex-1 sm:flex-none justify-center px-3 py-1.5 bg-emerald-600 text-white text-[10px] font-bold rounded-md hover:bg-emerald-700 transition-colors flex items-center gap-1"
+                    >
+                      <CheckCircle size={14} /> 入金済
+                    </button>
+                    <button
+                      onClick={() => handleBulkUpdate('ISSUED')}
+                      className="flex-1 sm:flex-none justify-center px-3 py-1.5 bg-blue-600 text-white text-[10px] font-bold rounded-md hover:bg-blue-700 transition-colors flex items-center gap-1"
+                    >
+                      <ClockIcon size={14} /> 発行済
+                    </button>
+                  </>
+                )}
                 <button
                   onClick={handleBulkDelete}
                   className="flex-1 sm:flex-none justify-center px-3 py-1.5 bg-red-600 text-white text-[10px] font-bold rounded-md hover:bg-red-700 transition-colors flex items-center gap-1"
                 >
-                  <Trash2 size={14} /> 削除
+                  <Trash2 size={14} /> {showDeleted ? "破棄" : "削除"}
                 </button>
               </div>
             </div>
@@ -204,6 +258,11 @@ export default function InvoicesPage() {
           invoices={invoices}
           selectedIds={selectedIds}
           onSelectionChange={setSelectedIds}
+          showDeleted={showDeleted}
+          onRestore={(id) => {
+            setSelectedIds([id]);
+            handleBulkRestore();
+          }}
           onEdit={(id: string) => window.location.href = `/invoices/${id}/edit`}
           onPrint={(inv: any) => window.location.href = `/invoices/${inv.id}`}
           onDuplicate={(id: string) => {/* TODO */ }}

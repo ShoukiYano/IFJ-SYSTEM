@@ -113,18 +113,18 @@ const SECTIONS: Section[] = [
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {[
-            { num: "1", color: "bg-blue-600", icon: Users, title: "マスタ登録", desc: "取引先と要員（エンジニア）を登録" },
-            { num: "2", color: "bg-violet-600", icon: Clock, title: "勤怠・シフト", desc: "予定の登録と日次の打刻承認", feature: "attendance" },
-            { num: "3", color: "bg-slate-800", icon: PlusCircle, title: "請求書作成", desc: "月次実績をもとに請求書を発行", feature: "invoice" },
-            { num: "4", color: "bg-emerald-600", icon: Download, title: "明細・PDF出力", desc: "請求書や注文書のPDFをダウンロード", feature: "invoice" },
+            { color: "bg-blue-600", icon: Users, title: "マスタ登録", desc: "取引先と要員（エンジニア）を登録" },
+            { color: "bg-violet-600", icon: Clock, title: "勤怠・シフト", desc: "予定の登録と日次の打刻承認", feature: "attendance" },
+            { color: "bg-slate-800", icon: PlusCircle, title: "請求書作成", desc: "月次実績をもとに請求書を発行", feature: "invoice" },
+            { color: "bg-emerald-600", icon: Download, title: "明細・PDF出力", desc: "請求書や注文書のPDFをダウンロード", feature: "invoice" },
           ].filter(item => {
             if (item.feature === "invoice" && !features.hasInvoiceFeature) return false;
             if (item.feature === "attendance" && !features.hasAttendanceFeature) return false;
             return true;
-          }).map(item => (
-            <div key={item.num} className={`${item.color} text-white p-5 rounded-2xl relative overflow-hidden`}>
+          }).map((item, index) => (
+            <div key={index} className={`${item.color} text-white p-5 rounded-2xl relative overflow-hidden`}>
               <div className="absolute -right-3 -bottom-3 opacity-10"><item.icon size={64} /></div>
-              <div className="text-xs font-bold opacity-60 mb-1">STEP {item.num}</div>
+              <div className="text-xs font-bold opacity-60 mb-1">STEP {index + 1}</div>
               <div className="font-black text-base mb-1">{item.title}</div>
               <p className="text-[11px] opacity-80">{item.desc}</p>
             </div>
@@ -976,7 +976,7 @@ const SECTIONS: Section[] = [
           },
           {
             q: "削除した請求書は復元できますか？",
-            a: "現在のバージョンでは復元機能はありません。削除前に PDF でバックアップすることをお勧めします。",
+            a: "はい、可能です。「請求書一覧」画面にある「ゴミ箱」ボタンから、削除済みの請求書を確認・復元できます。",
           },
           {
             q: "複数ユーザーで利用できますか？",
