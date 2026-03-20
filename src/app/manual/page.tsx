@@ -34,6 +34,7 @@ import {
   Link,
   LayoutDashboard,
 } from "lucide-react";
+import { useSession } from "next-auth/react";
 
 // -------- サブコンポーネント --------
 
@@ -86,7 +87,8 @@ interface Section {
   title: string;
   icon: React.ElementType;
   color: string;
-  content: React.ReactNode;
+  content: (features: any) => React.ReactNode;
+  feature?: "invoice" | "attendance";
 }
 
 const SECTIONS: Section[] = [
@@ -96,7 +98,7 @@ const SECTIONS: Section[] = [
     title: "システム概要・基本の流れ",
     icon: Lightbulb,
     color: "blue",
-    content: (
+    content: (features) => (
       <div className="space-y-6">
         <p className="text-slate-600 leading-relaxed">
           IFJ-SYSTEM は、SES ビジネス（エンジニア派遣）に特化した請求書・見積書管理システムです。<br />
@@ -106,10 +108,13 @@ const SECTIONS: Section[] = [
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {[
             { num: "1", color: "bg-blue-600", icon: Users, title: "取引先登録", desc: "請求先企業とエンジニアを登録" },
-            { num: "2", color: "bg-violet-600", icon: FileText, title: "見積書作成", desc: "必要に応じて見積書を発行" },
-            { num: "3", color: "bg-slate-800", icon: PlusCircle, title: "請求書作成", desc: "SES / 標準テンプレートで作成" },
-            { num: "4", color: "bg-emerald-600", icon: Download, title: "PDF出力", desc: "請求書・注文書などをダウンロード" },
-          ].map(item => (
+            { num: "2", color: "bg-violet-600", icon: FileText, title: "見積書作成", desc: "必要に応じて見積書を発行", feature: "invoice" },
+            { num: "3", color: "bg-slate-800", icon: PlusCircle, title: "請求書作成", desc: "SES / 標準テンプレートで作成", feature: "invoice" },
+            { num: "4", color: "bg-emerald-600", icon: Download, title: "PDF出力", desc: "請求書・注文書などをダウンロード", feature: "invoice" },
+          ].filter(item => {
+            if (item.feature === "invoice" && !features.hasInvoiceFeature) return false;
+            return true;
+          }).map(item => (
             <div key={item.num} className={`${item.color} text-white p-5 rounded-2xl relative overflow-hidden`}>
               <div className="absolute -right-3 -bottom-3 opacity-10"><item.icon size={64} /></div>
               <div className="text-xs font-bold opacity-60 mb-1">STEP {item.num}</div>
@@ -134,15 +139,19 @@ const SECTIONS: Section[] = [
             <tbody>
               {[
                 { cat: "メイン", page: "ダッシュボード", desc: "売上統計・最近の請求書・通知の確認" },
-                { cat: "請求システム", page: "見積書管理", desc: "見積書の作成・PDF出力" },
-                { cat: "請求システム", page: "請求書管理", desc: "請求書の検索・一覧・ステータス管理" },
-                { cat: "勤怠システム", page: "勤怠管理", desc: "日次・月次の勤怠入力と管理" },
-                { cat: "勤怠システム", page: "勤怠集計", desc: "月次の実績確認・締め作業" },
-                { cat: "勤怠システム", page: "シフト管理", desc: "予定（シフト）の登録と承認" },
+                { cat: "請求システム", page: "見積書管理", desc: "見積書の作成・PDF出力", feature: "invoice" },
+                { cat: "請求システム", page: "請求書管理", desc: "請求書の検索・一覧・ステータス管理", feature: "invoice" },
+                { cat: "勤怠システム", page: "勤怠管理", desc: "日次・月次の勤怠入力と管理", feature: "attendance" },
+                { cat: "勤怠システム", page: "勤怠集計", desc: "月次の実績確認・締め作業", feature: "attendance" },
+                { cat: "勤怠システム", page: "シフト管理", desc: "予定（シフト）の登録と承認", feature: "attendance" },
                 { cat: "マスタ管理", page: "要員管理", desc: "エンジニア情報の登録・契約期間管理" },
                 { cat: "マスタ管理", page: "取引先管理", desc: "請求先企業の基本情報管理" },
                 { cat: "その他", page: "システム設定", desc: "自社情報・登録番号・銀行口座の設定" },
-              ].map((row, i) => (
+              ].filter(row => {
+                if (row.feature === "invoice" && !features.hasInvoiceFeature) return false;
+                if (row.feature === "attendance" && !features.hasAttendanceFeature) return false;
+                return true;
+              }).map((row, i) => (
                 <tr key={i} className="border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-colors">
                   <td className="px-5 py-3"><Badge color="slate">{row.cat}</Badge></td>
                   <td className="px-3 py-3 font-bold text-slate-800 text-xs">{row.page}</td>
@@ -186,7 +195,7 @@ const SECTIONS: Section[] = [
     title: "ダッシュボード",
     icon: BarChart2,
     color: "violet",
-    content: (
+    content: (features) => (
       <div className="space-y-6">
         <p className="text-slate-600">ログイン直後に表示されるホーム画面です。売上状況の把握と請求書への素早いアクセスが可能です。</p>
 
@@ -260,7 +269,7 @@ const SECTIONS: Section[] = [
     title: "取引先・要員管理",
     icon: Users,
     color: "emerald",
-    content: (
+    content: (features) => (
       <div className="space-y-8">
         <p className="text-slate-600">請求先企業と、そこに派遣しているエンジニア（要員）の情報を管理します。</p>
 
@@ -369,7 +378,8 @@ const SECTIONS: Section[] = [
     title: "請求書 — 新規作成",
     icon: PlusCircle,
     color: "blue",
-    content: (
+    feature: "invoice",
+    content: (features) => (
       <div className="space-y-6">
         <p className="text-slate-600">「請求書管理」→「新規作成」、またはダッシュボードの「新規作成」ボタンから作成できます。</p>
 
@@ -434,7 +444,8 @@ const SECTIONS: Section[] = [
     title: "SES請求書 — 精算幅・自動計算",
     icon: Zap,
     color: "violet",
-    content: (
+    feature: "invoice",
+    content: (features) => (
       <div className="space-y-6">
         <p className="text-slate-600">SES テンプレートでは、稼働時間と精算幅（基準時間帯）をもとに超過・控除金額を自動計算できます。稼働時間を入力するだけでリアルタイムに金額が確認できます。</p>
 
@@ -558,7 +569,8 @@ const SECTIONS: Section[] = [
     title: "請求書管理 — 一覧・検索・操作",
     icon: Search,
     color: "slate",
-    content: (
+    feature: "invoice",
+    content: (features) => (
       <div className="space-y-6">
         <p className="text-slate-600">「請求書管理」ページで全請求書を一覧表示・絞り込み・ステータス変更できます。</p>
 
@@ -637,7 +649,8 @@ const SECTIONS: Section[] = [
     title: "請求書詳細 — PDF・注文書出力",
     icon: Printer,
     color: "emerald",
-    content: (
+    feature: "invoice",
+    content: (features) => (
       <div className="space-y-6">
         <p className="text-slate-600">請求書の行をクリックすると詳細画面が開き、PDF や関連書類を出力できます。</p>
 
@@ -687,7 +700,8 @@ const SECTIONS: Section[] = [
     title: "請求書メール送信・ダウンロードリンク",
     icon: Mail,
     color: "blue",
-    content: (
+    feature: "invoice",
+    content: (features) => (
       <div className="space-y-6">
         <p className="text-slate-600">
           請求書を直接メールで送信できます。受信者はリンクにアクセスするだけで、パスワード付きZIPとして請求書PDFをダウンロードできます。
@@ -773,7 +787,8 @@ const SECTIONS: Section[] = [
     title: "見積書管理",
     icon: FileText,
     color: "amber",
-    content: (
+    feature: "invoice",
+    content: (features) => (
       <div className="space-y-6">
         <p className="text-slate-600">「見積書管理」ページで見積書の作成・管理が可能です。</p>
 
@@ -806,7 +821,7 @@ const SECTIONS: Section[] = [
     title: "システム設定",
     icon: Settings,
     color: "slate",
-    content: (
+    content: (features) => (
       <div className="space-y-6">
         <p className="text-slate-600">PDF や請求書に印字される自社情報を設定します。最初に必ず設定してください。</p>
 
@@ -844,7 +859,7 @@ const SECTIONS: Section[] = [
     title: "よくある質問（FAQ）",
     icon: Info,
     color: "rose",
-    content: (
+    content: (features) => (
       <div className="space-y-4">
         {[
           {
@@ -890,9 +905,21 @@ const SECTIONS: Section[] = [
 // -------- メインページ --------
 
 export default function ManualPage() {
+  const { data: session } = useSession();
   const [active, setActive] = useState<string>("overview");
 
-  const currentSection = SECTIONS.find(s => s.id === active)!;
+  const features = {
+    hasInvoiceFeature: (session?.user as any)?.hasInvoiceFeature !== false,
+    hasAttendanceFeature: (session?.user as any)?.hasAttendanceFeature === true,
+  };
+
+  const filteredSections = SECTIONS.filter(sec => {
+    if (sec.feature === "invoice" && !features.hasInvoiceFeature) return false;
+    if (sec.feature === "attendance" && !features.hasAttendanceFeature) return false;
+    return true;
+  });
+
+  const currentSection = filteredSections.find(s => s.id === active) || filteredSections[0];
 
   const colorMap: Record<string, string> = {
     blue: "bg-blue-600 text-white",
@@ -921,7 +948,7 @@ export default function ManualPage() {
           <span className="text-lg font-black text-slate-800 tracking-tight">マニュアル</span>
         </div>
         <nav className="space-y-1">
-          {SECTIONS.map(sec => {
+          {filteredSections.map(sec => {
             const isActive = sec.id === active;
             return (
               <button
@@ -950,15 +977,15 @@ export default function ManualPage() {
           <div className="h-px bg-slate-100" />
         </div>
         <div className="max-w-2xl">
-          {currentSection.content}
+          {currentSection.content(features)}
         </div>
 
         {/* 前後ナビ */}
         <div className="flex justify-between mt-16 pt-8 border-t border-slate-200 max-w-2xl">
           {(() => {
-            const idx = SECTIONS.findIndex(s => s.id === active);
-            const prev = SECTIONS[idx - 1];
-            const next = SECTIONS[idx + 1];
+            const idx = filteredSections.findIndex(s => s.id === active);
+            const prev = filteredSections[idx - 1];
+            const next = filteredSections[idx + 1];
             return (
               <>
                 {prev ? (
