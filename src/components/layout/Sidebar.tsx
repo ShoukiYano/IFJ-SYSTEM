@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { LayoutDashboard, FileText, Users, Settings, PlusCircle, HelpCircle, LogOut, Book, Building2, X, Bell, Megaphone, HardDrive, History, FileCheck } from "lucide-react";
+import { LayoutDashboard, FileText, Users, Settings, PlusCircle, HelpCircle, LogOut, Book, Building2, X, Bell, Megaphone, HardDrive, History, FileCheck, ChevronDown, ChevronRight, Briefcase } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useSession, signOut } from "next-auth/react";
@@ -20,6 +20,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
     hasInvoiceFeature: (session?.user as any)?.hasInvoiceFeature !== false,
     hasAttendanceFeature: (session?.user as any)?.hasAttendanceFeature === true,
   });
+  const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
 
   useEffect(() => {
     const checkImpersonation = async () => {
@@ -51,33 +52,82 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
   const role = (session?.user as any)?.role;
   const isTenantAdmin = role === "TENANT_ADMIN" || (isImpersonating && role === "SYSTEM_ADMIN");
 
-  const menuItems = [
-    { label: "ダッシュボード", icon: LayoutDashboard, href: "/" },
-    { label: "見積書管理", icon: FileText, href: "/quotations", feature: "invoice" },
-    { label: "請求書管理", icon: PlusCircle, href: "/invoices", feature: "invoice" },
-    { label: "勤怠管理", icon: FileText, href: isTenantAdmin ? "/attendance/manage" : "/attendance", feature: "attendance" },
-    { label: "勤怠集計", icon: FileCheck, href: "/attendance/summary", feature: "attendance" },
-    { label: "シフト管理", icon: PlusCircle, href: "/attendance/shifts", feature: "attendance" },
-    { label: "要員管理", icon: Users, href: "/staff" },
-    { label: "取引先管理", icon: Users, href: "/clients" },
-    { label: "操作マニュアル", icon: Book, href: "/manual" },
-    { label: "ユーザー管理", icon: Users, href: "/settings/users" },
-    { label: "操作ログ", icon: FileText, href: "/settings/audit-logs" },
-    { label: "システム設定", icon: Settings, href: "/settings" },
+  const menuGroups = [
+    {
+      id: "main",
+      label: "メイン",
+      items: [
+        { label: "ダッシュボード", icon: LayoutDashboard, href: "/" },
+      ]
+    },
+    {
+      id: "billing",
+      label: "請求システム",
+      items: [
+        { label: "見積書管理", icon: FileText, href: "/quotations", feature: "invoice" },
+        { label: "請求書管理", icon: PlusCircle, href: "/invoices", feature: "invoice" },
+      ]
+    },
+    {
+      id: "attendance",
+      label: "勤怠システム",
+      items: [
+        { label: "勤怠管理", icon: FileText, href: isTenantAdmin ? "/attendance/manage" : "/attendance", feature: "attendance" },
+        { label: "勤怠集計", icon: FileCheck, href: "/attendance/summary", feature: "attendance" },
+        { label: "シフト管理", icon: PlusCircle, href: "/attendance/shifts", feature: "attendance" },
+      ]
+    },
+    {
+      id: "master",
+      label: "マスタ管理",
+      items: [
+        { label: "要員管理", icon: Briefcase, href: "/staff" },
+        { label: "取引先管理", icon: Building2, href: "/clients" },
+        { label: "ユーザー管理", icon: Users, href: "/settings/users" },
+      ]
+    },
+    {
+      id: "other",
+      label: "その他",
+      items: [
+        { label: "操作マニュアル", icon: Book, href: "/manual" },
+        { label: "操作ログ", icon: History, href: "/settings/audit-logs" },
+        { label: "システム設定", icon: Settings, href: "/settings" },
+      ]
+    }
   ];
 
-  const filteredMenuItems = menuItems.filter(item => {
-    // 1. Feature flag control
-    if ((item as any).feature === "invoice" && !effectiveFeatures.hasInvoiceFeature) return false;
-    if ((item as any).feature === "attendance" && !effectiveFeatures.hasAttendanceFeature) return false;
-
-    // 2. Role-based restriction for general users
-    if (role === "TENANT_USER") {
-      return ["勤怠管理", "シフト管理"].includes(item.label);
+  // 初期ロード時、現在のアクティブな項目が含まれるグループを展開する
+  useEffect(() => {
+    const activeGroupIds = menuGroups
+      .filter(group => group.items.some(item => pathname === item.href))
+      .map(group => group.id);
+    
+    if (activeGroupIds.length > 0) {
+      setExpandedGroups(prev => Array.from(new Set([...prev, ...activeGroupIds])));
     }
+  }, [pathname]);
 
-    return true;
-  });
+  const toggleGroup = (groupId: string) => {
+    setExpandedGroups(prev =>
+      prev.includes(groupId)
+        ? prev.filter(id => id !== groupId)
+        : [...prev, groupId]
+    );
+  };
+
+  const isGroupExpanded = (groupId: string) => expandedGroups.includes(groupId);
+
+  const filterItems = (items: any[]) => {
+    return items.filter(item => {
+      if (item.feature === "invoice" && !effectiveFeatures.hasInvoiceFeature) return false;
+      if (item.feature === "attendance" && !effectiveFeatures.hasAttendanceFeature) return false;
+      if (role === "TENANT_USER") {
+        return ["勤怠管理", "シフト管理"].includes(item.label);
+      }
+      return true;
+    });
+  };
 
   const adminItems = [
     { label: "システム管理", icon: LayoutDashboard, href: "/admin/dashboard" },
@@ -151,21 +201,73 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
         </div>
 
         <nav className="flex-1 space-y-1 overflow-y-auto pr-2 custom-scrollbar">
-          {showTenantMenu && filteredMenuItems.map((item) => (
-            <a
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium",
-                pathname === item.href
-                  ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20"
-                  : "hover:bg-slate-800 hover:text-white"
-              )}
-            >
-              <item.icon size={20} />
-              {item.label}
-            </a>
-          ))}
+          {showTenantMenu && menuGroups.map((group) => {
+            const visibleItems = filterItems(group.items);
+            if (visibleItems.length === 0) return null;
+
+            // 「メイン（ダッシュボード）」などは展開制御なしで常に表示するパターンも検討できるが、
+            // ユーザー要望に合わせてすべて同じ形式にする。
+            const isExpanded = isGroupExpanded(group.id);
+            const hasActiveItem = visibleItems.some(item => pathname === item.href);
+
+            return (
+              <div key={group.id} className="space-y-1">
+                {group.id === "main" ? (
+                  // ダッシュボードなどをグループヘッダーなしで出したい場合はここ
+                  visibleItems.map(item => (
+                    <a
+                      key={item.href}
+                      href={item.href}
+                      className={cn(
+                        "flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium",
+                        pathname === item.href
+                          ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20"
+                          : "hover:bg-slate-800 hover:text-white"
+                      )}
+                    >
+                      <item.icon size={20} />
+                      {item.label}
+                    </a>
+                  ))
+                ) : (
+                  <>
+                    <button
+                      onClick={() => toggleGroup(group.id)}
+                      className={cn(
+                        "w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all font-bold text-xs uppercase tracking-widest",
+                        isExpanded || hasActiveItem ? "text-white bg-slate-800/50" : "text-slate-500 hover:text-slate-300 hover:bg-slate-800/30"
+                      )}
+                    >
+                      <span className="flex items-center gap-2">
+                        {group.label}
+                      </span>
+                      {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                    </button>
+                    
+                    {isExpanded && (
+                      <div className="pl-4 space-y-1 animate-in slide-in-from-top-1 duration-200">
+                        {visibleItems.map((item) => (
+                          <a
+                            key={item.href}
+                            href={item.href}
+                            className={cn(
+                              "flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all text-sm font-medium",
+                              pathname === item.href
+                                ? "bg-blue-500/20 text-blue-400 border border-blue-500/30"
+                                : "hover:bg-slate-800/50 hover:text-white"
+                            )}
+                          >
+                            <item.icon size={18} />
+                            {item.label}
+                          </a>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            );
+          })}
 
           {showAdminMenu && (
             <div className="pt-4 mt-4 border-t border-slate-800">
