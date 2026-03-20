@@ -33,6 +33,12 @@ import {
   Lock,
   Link,
   LayoutDashboard,
+  Shield,
+  History,
+  Megaphone,
+  TrendingUp,
+  Building2,
+  FileUp,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 
@@ -107,12 +113,13 @@ const SECTIONS: Section[] = [
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {[
-            { num: "1", color: "bg-blue-600", icon: Users, title: "取引先登録", desc: "請求先企業とエンジニアを登録" },
-            { num: "2", color: "bg-violet-600", icon: FileText, title: "見積書作成", desc: "必要に応じて見積書を発行", feature: "invoice" },
-            { num: "3", color: "bg-slate-800", icon: PlusCircle, title: "請求書作成", desc: "SES / 標準テンプレートで作成", feature: "invoice" },
-            { num: "4", color: "bg-emerald-600", icon: Download, title: "PDF出力", desc: "請求書・注文書などをダウンロード", feature: "invoice" },
+            { num: "1", color: "bg-blue-600", icon: Users, title: "マスタ登録", desc: "取引先と要員（エンジニア）を登録" },
+            { num: "2", color: "bg-violet-600", icon: Clock, title: "勤怠・シフト", desc: "予定の登録と日次の打刻承認", feature: "attendance" },
+            { num: "3", color: "bg-slate-800", icon: PlusCircle, title: "請求書作成", desc: "月次実績をもとに請求書を発行", feature: "invoice" },
+            { num: "4", color: "bg-emerald-600", icon: Download, title: "明細・PDF出力", desc: "請求書や注文書のPDFをダウンロード", feature: "invoice" },
           ].filter(item => {
             if (item.feature === "invoice" && !features.hasInvoiceFeature) return false;
+            if (item.feature === "attendance" && !features.hasAttendanceFeature) return false;
             return true;
           }).map(item => (
             <div key={item.num} className={`${item.color} text-white p-5 rounded-2xl relative overflow-hidden`}>
@@ -146,6 +153,8 @@ const SECTIONS: Section[] = [
                 { cat: "勤怠システム", page: "シフト管理", desc: "予定（シフト）の登録と承認", feature: "attendance" },
                 { cat: "マスタ管理", page: "要員管理", desc: "エンジニア情報の登録・契約期間管理" },
                 { cat: "マスタ管理", page: "取引先管理", desc: "請求先企業の基本情報管理" },
+                { cat: "その他", page: "ユーザー管理", desc: "ログインユーザーと権限の設定" },
+                { cat: "その他", page: "操作ログ", desc: "システム内の操作履歴の確認" },
                 { cat: "その他", page: "システム設定", desc: "自社情報・登録番号・銀行口座の設定" },
               ].filter(row => {
                 if (row.feature === "invoice" && !features.hasInvoiceFeature) return false;
@@ -250,123 +259,73 @@ const SECTIONS: Section[] = [
           <Tip>取引先マスタで「定型請求対象」をONにしている企業が対象となります。</Tip>
           <Warn>最新の請求書が存在しない取引先はスキップされます。初回は手動で作成してください。</Warn>
         </div>
+          <div className="h-px bg-slate-100" />
 
-        {/* 契約更新アラート */}
-        <div className="space-y-3">
-          <h3 className="font-black text-slate-700 flex items-center gap-2"><AlertTriangle size={16} /> 契約更新アラート</h3>
-          <p className="text-sm text-slate-600">
-            取引先管理でエンジニアに「契約終了日」を登録しておくと、終了日の<strong>2ヶ月前から</strong>ダッシュボード上部に警告カードが表示されます。
-            カードの <ChevronRight size={12} className="inline" /> から取引先管理へ直接ジャンプできます。
+        <div className="space-y-3 border-t border-slate-100 pt-6">
+          <h3 className="font-black text-slate-700 flex items-center gap-2"><Megaphone size={16} className="text-indigo-600" /> お知らせ・通知機能</h3>
+          <p className="text-xs text-slate-500 leading-relaxed">
+            全ユーザー共通のお知らせはダッシュボード上部のメガホンアイコン、またはお知らせパネルに表示されます。
+            管理者からの重要な指示や、システムのメンテナンス情報などを確認してください。
+          </p>
+        </div>
+
+        <div className="bg-blue-600 text-white p-6 rounded-2xl space-y-3 shadow-xl shadow-blue-600/10">
+          <h3 className="font-black flex items-center gap-2 text-lg">
+            <TrendingUp size={20} />
+            売上・稼働のリアルタイム反映
+          </h3>
+          <p className="text-sm opacity-90 leading-relaxed">
+            ダッシュボードのグラフや「リアルタイム稼働状況」パネルは、データの更新（請求書発行や打刻）に伴い即座に変化します。
           </p>
         </div>
       </div>
     ),
   },
 
-  // ─── 3. 取引先・要員管理 ───
+  // ─── 3. マスタ管理（取引先・要員） ───
   {
     id: "clients",
-    title: "取引先・要員管理",
-    icon: Users,
+    title: "取引先管理",
+    icon: Building2,
     color: "emerald",
     content: (features) => (
-      <div className="space-y-8">
-        <p className="text-slate-600">請求先企業と、そこに派遣しているエンジニア（要員）の情報を管理します。</p>
-
-        {/* 取引先登録 */}
+      <div className="space-y-4">
+        <p className="text-slate-600">請求先となる企業情報を管理します。</p>
         <div className="space-y-3">
-          <h3 className="font-black text-slate-700 flex items-center gap-2"><PlusCircle size={18} className="text-emerald-500" /> 取引先（企業）を登録する</h3>
-          <div className="space-y-3">
-            <Step num={1}>左サイドバーの「取引先管理」をクリックします。</Step>
-            <Step num={2}>右上の <Badge color="green">+ 新規取引先</Badge> ボタンをクリックします。</Step>
-            <Step num={3}>モーダルが開くので、<strong>会社名</strong>（必須）、住所、電話番号、メールアドレスを入力します。</Step>
-            <Step num={4}>「保存」ボタンで登録完了です。</Step>
-          </div>
+          <Step num={1}>右上の <Badge color="green">+ 新規取引先</Badge> ボタンで登録を開始します。</Step>
+          <Step num={2}>会社名、住所、振込先、締め日・支払日などを設定します。</Step>
+          <Step num={3}>締め日・支払日を設定すると、請求書作成時に支払期限が自動計算されます。</Step>
+          <Step num={4}>「定型請求対象」をONにすると、ダッシュボードでの一括生成機能の対象になります。</Step>
+        </div>
+      </div>
+    ),
+  },
+  {
+    id: "staff",
+    title: "要員管理",
+    icon: Users,
+    color: "blue",
+    content: (features) => (
+      <div className="space-y-6">
+        <p className="text-slate-600">SES要員や自社エンジニアの情報を管理します。</p>
+        <div className="space-y-3 border-b border-slate-100 pb-4">
+          <h3 className="font-black text-slate-700">👤 要員の個別登録</h3>
+          <Step num={1}>右上の <Badge color="blue">新規登録</Badge> から行います。</Step>
+          <Step num={2}>区分（プロパー/BP）、エリア（関東/関西/名古屋）を指定します。</Step>
+          <Step num={3}>各要員に「単価」と「標準精算幅」を設定しておくと、請求書作成時に自動反映されます。</Step>
+          <Step num={4}>「契約開始日」と「更新間隔」を入力すると、ダッシュボードに更新アラートが表示されます。</Step>
         </div>
 
-        {/* 要員管理（個別） */}
-        <div className="space-y-3 pt-4 border-t border-slate-100">
-          <h3 className="font-black text-slate-700 flex items-center gap-2"><Users size={18} className="text-emerald-500" /> 要員を個別登録する</h3>
-          <div className="space-y-3">
-            <Step num={1}>取引先の詳細画面（または要員一覧の「新規登録」）から行います。</Step>
-            <Step num={2}><strong>区分</strong>（プロパー/BP）と<strong>エリア</strong>（関東/関西/名古屋）を選択します。</Step>
-            <Step num={3}>単価や精算幅を設定しておくと、請求書作成時に自動的に反映されます。</Step>
-            <Step num={4}>契約終了日を設定すると、2ヶ月前からダッシュボードにアラートが表示されます。</Step>
-          </div>
-          <Tip>要員を登録しておくと、SES請求書作成時に担当者名を選択リストから選べるようになります。</Tip>
+        <div className="space-y-3 border-b border-slate-100 pb-4">
+          <h3 className="font-black text-slate-700 flex items-center gap-2"><FileUp size={16} /> Excel一括インポート</h3>
+          <p className="text-xs text-slate-500 leading-relaxed">指定の形式で作成されたExcelを読み込み、複数の要員を一括で登録・更新できます。既存のエンジニア名と一致する場合は、二重登録を避けるためスキップまたは更新されます。</p>
+          <Step num={1}><Badge color="green">Excelインポート</Badge> をクリックし、ファイルを選択します。</Step>
+          <Step num={2}>読み込みプレビューを確認し、「実行」をクリックします。</Step>
         </div>
 
-        {/* Excelインポート */}
-        <div className="space-y-4 pt-4 border-t border-slate-100">
-          <h3 className="font-black text-slate-700 flex items-center gap-2 text-lg"><Upload size={20} className="text-emerald-600" /> Excel一括インポート</h3>
-          <p className="text-sm text-slate-600 leading-relaxed">
-            大量の要員データを一度に登録・更新できます。規定のフォーマットに合わせてExcelを作成してください。
-          </p>
-
-          <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-4">
-            <h4 className="font-bold text-sm text-slate-800 flex items-center gap-2">
-              <ListChecks size={16} className="text-blue-500" /> 推奨される列構成 (左から順)
-            </h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <div className="flex justify-between text-[11px] border-b border-slate-200 pb-1">
-                  <span className="font-mono text-slate-400">列B</span>
-                  <span className="font-bold">名前 (フルネーム)</span>
-                </div>
-                <div className="flex justify-between text-[11px] border-b border-slate-200 pb-1">
-                  <span className="font-mono text-slate-400">列C</span>
-                  <span className="font-bold">区分 (プロパー / BP)</span>
-                </div>
-                <div className="flex justify-between text-[11px] border-b border-slate-200 pb-1">
-                  <span className="font-mono text-slate-400">列D</span>
-                  <span className="font-bold">エリア (関東 / 関西 / 名古屋)</span>
-                </div>
-                <div className="flex justify-between text-[11px] border-b border-slate-200 pb-1">
-                  <span className="font-mono text-slate-400">列E</span>
-                  <span className="font-bold">取引先名</span>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <div className="flex justify-between text-[11px] border-b border-slate-200 pb-1">
-                  <span className="font-mono text-slate-400">列H</span>
-                  <span className="font-bold">単価 (数値のみ)</span>
-                </div>
-                <div className="flex justify-between text-[11px] border-b border-slate-200 pb-1">
-                  <span className="font-mono text-slate-400">列J</span>
-                  <span className="font-bold">精算下限 (例: 140)</span>
-                </div>
-                <div className="flex justify-between text-[11px] border-b border-slate-200 pb-1">
-                  <span className="font-mono text-slate-400">列K</span>
-                  <span className="font-bold">精算上限 (例: 180)</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            <h4 className="font-bold text-sm text-slate-700">✅ インポートの仕組みと注意点</h4>
-            <div className="space-y-3">
-              <Step num={1}><strong>重複の自動防止</strong>：既に登録済みの名前と同一の要員は、二重登録を避けるため自動的にスキップされます。</Step>
-              <Step num={2}><strong>取引先の自動紐付け</strong>：Excel内の取引先名がマスタに存在しない場合、システムが自動的に新しい取引先を作成します。</Step>
-              <Step num={3}><strong>型変換</strong>：「プロパー」という文字が含まれていれば自社社員、それ以外はBPとして取り込まれます。</Step>
-              <Step num={4}><strong>データの成型</strong>：数値項目（単価や時間）に「円」や「h」などの文字が入っていても、システム側で自動的に除去して数値として読み取ります。</Step>
-            </div>
-          </div>
-
-          <Warn>
-            Excelの1行目はヘッダーとして読み飛ばされます。データは2行目から入力してください。
-          </Warn>
-        </div>
-
-        {/* 一括削除 */}
-        <div className="space-y-3 pt-4 border-t border-slate-100">
-          <h3 className="font-black text-slate-700 flex items-center gap-2"><Trash2 size={18} className="text-rose-500" /> 要員の一括削除</h3>
-          <div className="space-y-3">
-            <Step num={1}>要員一覧の左端にあるチェックボックスで対象を選択します。</Step>
-            <Step num={2}>ヘッダーのチェックボックスをクリックすると、現在表示されている全要員を選択できます。</Step>
-            <Step num={3}>右上の <Badge color="rose">選択中(N)を削除</Badge> ボタンをクリックします。</Step>
-            <Step num={4}>確認ダイアログが表示されるので、問題なければ実行します。</Step>
-          </div>
+        <div className="space-y-3">
+          <h3 className="font-black text-slate-700 flex items-center gap-2"><Trash2 size={16} /> 一括削除</h3>
+          <p className="text-xs text-slate-500">左端のチェックボックスで複数名を選択し、一括で削除できます。</p>
         </div>
       </div>
     ),
@@ -783,6 +742,84 @@ const SECTIONS: Section[] = [
 
   // ─── 8. 見積書 ───
   {
+    id: "attendance-monitoring",
+    title: "勤怠管理 — モニタリング・承認",
+    icon: Clock,
+    color: "blue",
+    feature: "attendance",
+    content: (features) => (
+      <div className="space-y-6">
+        <p className="text-slate-600">スタッフのリアルタイムな打刻状況を確認し、日次の承認業務を行います。</p>
+        <div className="space-y-3">
+          <h3 className="font-black text-slate-700 flex items-center gap-2">📱 打刻モニタリング</h3>
+          <p className="text-sm text-slate-600">「勤怠管理」画面のメインパネルでは、スタッフ全員の現在の出勤・休憩・退勤状況がライブ更新されます。</p>
+          <ul className="text-xs space-y-1 list-disc list-inside text-slate-500">
+            <li>遅刻・未打刻の可能性があるスタッフは強調表示されます。</li>
+            <li>スタッフ名をクリックすると、個別の詳細履歴を確認できます。</li>
+          </ul>
+        </div>
+        <div className="space-y-3 pt-4 border-t border-slate-100">
+          <h3 className="font-black text-slate-700 flex items-center gap-2">✅ 打刻報告の承認</h3>
+          <p className="text-sm text-slate-600">スタッフからの打刻報告（申請）が「承認待ち」タブに表示されます。</p>
+          <Step num={1}>報告内容（出退勤時間、勤務区分、備考など）を確認します。</Step>
+          <Step num={2}>問題なければ <Badge color="blue">承認</Badge> をクリック、修正が必要な場合は <Badge color="rose">差戻し</Badge> を行います。</Step>
+        </div>
+      </div>
+    ),
+  },
+  {
+    id: "attendance-summary",
+    title: "勤怠集計 — 月次締め操作",
+    icon: ListChecks,
+    color: "emerald",
+    feature: "attendance",
+    content: (features) => (
+      <div className="space-y-6">
+        <p className="text-slate-600">月間の稼働実績を確定し、請求書作成のためのデータを準備します。</p>
+        <div className="space-y-3">
+          <h3 className="font-black text-slate-700">📊 稼働時間の集計</h3>
+          <div className="space-y-3">
+            <Step num={1}>「勤怠集計」で対象となる年月を選択します。</Step>
+            <Step num={2}>各スタッフの総稼働時間、精算幅に対する過不足（超過・控除）が自動計算されます。</Step>
+            <Step num={3}>個別の行をクリックすると、日ごとの詳細内訳を確認できます。</Step>
+          </div>
+        </div>
+        <div className="space-y-3 pt-4 border-t border-slate-100">
+          <h3 className="font-black text-slate-700">🔒 月次確定の流れ</h3>
+          <div className="space-y-3">
+            <Step num={1}>全ての打刻が本人申請・管理者承認されていることを確認します。</Step>
+            <Step num={2}>「月次確定」ボタン（または一括承認）をクリックすると、その月のデータがロックされます。</Step>
+          </div>
+          <Tip>集計結果は <Badge color="slate">Excel出力</Badge> が可能です。出力したファイルは請求書の「勤怠データ読込」でそのまま利用できます。</Tip>
+        </div>
+      </div>
+    ),
+  },
+  {
+    id: "attendance-shifts",
+    title: "シフト管理 — 予定登録",
+    icon: Calendar,
+    color: "amber",
+    feature: "attendance",
+    content: (features) => (
+      <div className="space-y-6">
+        <p className="text-slate-600">将来の勤務スケジュールや、休暇の予定を管理します。</p>
+        <div className="space-y-3">
+          <h3 className="font-black text-slate-700">🏠 スケジュールの登録</h3>
+          <div className="space-y-3">
+            <Step num={1}>「シフト管理」ページのカレンダーから日付を選択します。</Step>
+            <Step num={2}>勤務時間（開始・終了）と休憩時間を入力し、保存します。</Step>
+            <Step num={3}><Badge color="amber">標準シフトをコピー</Badge> 機能を使うと、月全体の平日分を一括で埋めることができます。</Step>
+          </div>
+        </div>
+        <div className="space-y-3 pt-4 border-t border-slate-100">
+          <h3 className="font-black text-slate-700">📣 変更申請への対応</h3>
+          <p className="text-sm text-slate-600">スタッフが自身の予定（シフト）を変更申請した場合、管理者に通知が届きます。管理画面上で「承認」を行うとスケジュールが正式に更新されます。</p>
+        </div>
+      </div>
+    ),
+  },
+  {
     id: "quotation",
     title: "見積書管理",
     icon: FileText,
@@ -815,7 +852,74 @@ const SECTIONS: Section[] = [
     ),
   },
 
-  // ─── 9. システム設定 ───
+  // ─── 9. ユーザー管理・操作ログ ───
+  {
+    id: "user-management",
+    title: "ユーザー管理・権限設定",
+    icon: Shield,
+    color: "slate",
+    content: (features) => (
+      <div className="space-y-6">
+        <p className="text-slate-600">システムを利用できるユーザーアカウントと、それぞれの権限を管理します。</p>
+        <div className="space-y-3">
+          <h3 className="font-black text-slate-700">👥 ユーザーの招待・追加</h3>
+          <Step num={1}>「ユーザー管理」画面で <Badge color="slate">+ ユーザー追加</Badge> をクリックします。</Step>
+          <Step num={2}>名前、メールアドレス、パスワード、および<strong>ロール（権限）</strong>を選択します。</Step>
+        </div>
+        <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
+          <div className="font-bold text-sm text-slate-700">🔐 ロールの種類</div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <div className="text-xs font-black text-slate-800 mb-1 flex items-center gap-1.5"><Badge color="blue">ADMIN</Badge> 管理者</div>
+              <p className="text-[11px] text-slate-500 leading-relaxed">全ての機能（請求作成、勤怠承認、ユーザー管理、システム設定）を利用できます。</p>
+            </div>
+            <div>
+              <div className="text-xs font-black text-slate-800 mb-1 flex items-center gap-1.5"><Badge color="slate">USER</Badge> 一般ユーザー</div>
+              <p className="text-[11px] text-slate-500 leading-relaxed">自身の勤怠入力やシフト管理、見積書作成などが可能です（一部制限あり）。</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    ),
+  },
+  {
+    id: "audit-logs",
+    title: "操作ログ — 監査履歴",
+    icon: History,
+    color: "slate",
+    content: (features) => (
+      <div className="space-y-6">
+        <p className="text-slate-600">データの作成・更新・削除など、誰がいつ何を行ったかの履歴を時系列で確認できます。</p>
+        <div className="space-y-3">
+          <h3 className="font-black text-slate-700 flex items-center gap-2">🔍 履歴の確認</h3>
+          <Step num={1}>「その他」メニューから「操作ログ」を選択します。</Step>
+          <Step num={2}>ログ一覧から、特定のアクション（例：請求書削除）やユーザーを特定できます。</Step>
+        </div>
+        <Tip>不正防止やトラブル時の原因究明に役立ててください。ログは自動記録され、変更することはできません。</Tip>
+      </div>
+    ),
+  },
+  {
+    id: "mail-templates",
+    title: "メールテンプレート設定",
+    icon: Mail,
+    color: "indigo",
+    content: (features) => (
+      <div className="space-y-6">
+        <p className="text-slate-600">請求書送付時などに使用するメールの件名・本文を自由に編集できます。</p>
+        <div className="space-y-3">
+          <h3 className="font-black text-slate-700">📝 テンプレートの編集</h3>
+          <Step num={1}>「システム設定」内の「メールテンプレート」を選択します。</Step>
+          <Step num={2}>編集したい項目を選び、内容を書き換えて保存します。</Step>
+          <p className="text-xs text-slate-500 leading-relaxed mt-2">
+            <code>{"{{clientName}}"}</code> や <code>{"{{invoiceNumber}}"}</code> などの変数を使用すると、送信時に自動的に情報が差し込まれます。
+          </p>
+        </div>
+      </div>
+    ),
+  },
+
+  // ─── 10. システム設定 ───
   {
     id: "settings",
     title: "システム設定",
