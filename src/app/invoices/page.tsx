@@ -81,7 +81,7 @@ export default function InvoicesPage() {
   const handleBulkDelete = async () => {
     if (selectedIds.length === 0) return;
     const message = showDeleted 
-      ? `選択した${selectedIds.length}件を完全に削除しますか？\n(※この環境では物理削除は未実装のため、現在は表示のみが消えます)` 
+      ? `選択した${selectedIds.length}件を完全に削除（破棄）しますか？\nこの操作を行うと、二度と復元できなくなります。` 
       : `選択した${selectedIds.length}件の請求書を削除しますか？\n削除後はゴミ箱から復元可能です。`;
     
     const confirmed = window.confirm(message);
@@ -90,7 +90,10 @@ export default function InvoicesPage() {
     const res = await fetch("/api/invoices/bulk-delete", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ids: selectedIds }),
+      body: JSON.stringify({ 
+        ids: selectedIds,
+        physical: showDeleted // ゴミ箱表示中なら物理削除
+      }),
     });
 
     if (res.ok) {

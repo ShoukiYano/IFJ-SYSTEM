@@ -9,13 +9,25 @@ export async function DELETE(req: Request) {
             return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
         }
 
-        const { ids } = await req.json();
+        const { ids, physical } = await req.json();
 
         if (!Array.isArray(ids) || ids.length === 0) {
             return NextResponse.json({ error: "削除するIDを指定してください" }, { status: 400 });
         }
 
-        // ソフトデリート（テナントIDで権限チェック）
+        if (physical === true) {
+            // 物理削除
+            const result = await prisma.invoice.deleteMany({
+                where: {
+                    id: { in: ids },
+                    tenantId: context.tenantId,
+                    deletedAt: { not: null }, // ゴミ箱にあるもののみ物理削除可能とする安全策
+                },
+            });
+            return NextResponse.json({ success: true, count: result.count, type: "physical" });
+        }
+
+        // ソフトデリート（論理削除）
         const result = await prisma.invoice.updateMany({
             where: {
                 id: { in: ids },
