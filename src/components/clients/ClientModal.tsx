@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { X, Save, Plus, Trash2, UserPlus, Edit2, Calendar } from "lucide-react";
+import { X, Save, Plus, Trash2, UserPlus, Edit2, Calendar, Search, Loader2 } from "lucide-react";
 
 interface Assignee {
   id: string;
@@ -40,6 +40,8 @@ export default function ClientModal({ isOpen, onClose, onSuccess, client }: Clie
   });
   const [editingAssigneeId, setEditingAssigneeId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [addressCandidates, setAddressCandidates] = useState<string[]>([]);
+  const [isSearchingZip, setIsSearchingZip] = useState(false);
 
   useEffect(() => {
     if (client) {
@@ -90,6 +92,37 @@ export default function ClientModal({ isOpen, onClose, onSuccess, client }: Clie
       }
     } catch (err) {
       console.error("Fetch assignees error:", err);
+    }
+  };
+
+  const handleZipCodeSearch = async () => {
+    const zip = formData.zipCode.replace(/[^\d]/g, "");
+    if (zip.length !== 7) {
+      alert("郵便番号は7桁で入力してください（ハイフンはあってもなくても構いません）");
+      return;
+    }
+
+    setIsSearchingZip(true);
+    setAddressCandidates([]);
+    try {
+      const res = await fetch(`https://zipcloud.ibsnet.co.jp/api/search?zipcode=${zip}`);
+      const data = await res.json();
+      if (data.status === 200 && data.results) {
+        const candidates = data.results.map((r: any) => `${r.address1}${r.address2}${r.address3}`);
+        if (candidates.length === 1) {
+          setFormData({ ...formData, address: candidates[0] });
+        } else {
+          setAddressCandidates(candidates);
+        }
+      } else if (data.message) {
+        alert(`エラー: ${data.message}`);
+      } else {
+        alert("該当する住所が見つかりませんでした");
+      }
+    } catch (err) {
+      alert("通信エラーが発生しました");
+    } finally {
+      setIsSearchingZip(false);
     }
   };
 
@@ -215,12 +248,43 @@ export default function ClientModal({ isOpen, onClose, onSuccess, client }: Clie
 
               <div>
                 <label className="text-xs font-bold text-slate-500 uppercase mb-1.5 block">郵便番号</label>
-                <input 
-                  type="text" placeholder="123-4567"
-                  className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none"
-                  value={formData.zipCode}
-                  onChange={e => setFormData({ ...formData, zipCode: e.target.value })}
-                />
+                <div className="flex gap-2">
+                  <input 
+                    type="text" placeholder="123-4567"
+                    className="flex-1 px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20"
+                    value={formData.zipCode}
+                    onChange={e => setFormData({ ...formData, zipCode: e.target.value })}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleZipCodeSearch}
+                    disabled={isSearchingZip || !formData.zipCode}
+                    className="px-4 py-2 bg-slate-100 text-slate-600 font-bold rounded-xl hover:bg-slate-200 transition-colors disabled:opacity-50 flex items-center gap-1 shrink-0"
+                  >
+                    {isSearchingZip ? <Loader2 className="animate-spin" size={16} /> : <Search size={16} />}
+                    検索
+                  </button>
+                </div>
+                {addressCandidates.length > 1 && (
+                  <div className="mt-2 p-3 bg-blue-50 border border-blue-100 rounded-xl animate-in fade-in slide-in-from-top-1 duration-200">
+                    <label className="text-[10px] font-bold text-blue-600 uppercase mb-2 block">候補を選択してください：</label>
+                    <div className="space-y-1.5">
+                      {addressCandidates.map((c, i) => (
+                        <button
+                          key={i}
+                          type="button"
+                          onClick={() => {
+                            setFormData({ ...formData, address: c });
+                            setAddressCandidates([]);
+                          }}
+                          className="w-full text-left px-3 py-1.5 bg-white hover:bg-blue-100 border border-blue-200 rounded-lg text-xs font-bold text-slate-700 transition-colors shadow-sm"
+                        >
+                          {c}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="md:col-span-2">
