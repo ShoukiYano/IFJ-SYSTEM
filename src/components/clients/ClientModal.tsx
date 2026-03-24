@@ -251,7 +251,7 @@ export default function ClientModal({ isOpen, onClose, onSuccess, client }: Clie
                 <div className="flex gap-2">
                   <input 
                     type="text" placeholder="123-4567"
-                    className="flex-1 px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20"
+                    className="min-w-0 flex-1 px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20"
                     value={formData.zipCode}
                     onChange={e => setFormData({ ...formData, zipCode: e.target.value })}
                   />
@@ -259,9 +259,9 @@ export default function ClientModal({ isOpen, onClose, onSuccess, client }: Clie
                     type="button"
                     onClick={handleZipCodeSearch}
                     disabled={isSearchingZip || !formData.zipCode}
-                    className="px-4 py-2 bg-slate-100 text-slate-600 font-bold rounded-xl hover:bg-slate-200 transition-colors disabled:opacity-50 flex items-center gap-1 shrink-0"
+                    className="px-3 py-2 bg-slate-100 text-slate-600 text-[10px] font-black rounded-xl hover:bg-slate-200 transition-colors disabled:opacity-50 flex items-center gap-1 shrink-0 whitespace-nowrap"
                   >
-                    {isSearchingZip ? <Loader2 className="animate-spin" size={16} /> : <Search size={16} />}
+                    {isSearchingZip ? <Loader2 className="animate-spin" size={12} /> : <Search size={12} />}
                     検索
                   </button>
                 </div>
