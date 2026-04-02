@@ -58,7 +58,7 @@ async function sendGmailOAuth2(options: SendMailOptions, tenantId: string) {
     const fromName = options.fromName || "請求書管理システム";
 
     let messageParts = [
-        `From: "${fromName}" <${token.email}>`,
+        `From: =?utf-8?B?${Buffer.from(fromName).toString('base64')}?= <${token.email}>`,
         `To: ${to}`,
         ...(options.cc ? [`Cc: ${Array.isArray(options.cc) ? options.cc.join(", ") : options.cc}`] : []),
         `Subject: =?utf-8?B?${Buffer.from(subject).toString('base64')}?=`,
