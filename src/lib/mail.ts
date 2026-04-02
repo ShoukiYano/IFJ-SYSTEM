@@ -109,7 +109,11 @@ async function sendGmailOAuth2(options: SendMailOptions, tenantId: string) {
         // console.log("[mail] Email sent successfully via Gmail API");
         return { success: true };
     } catch (apiError: any) {
-        console.error("[mail] Gmail API Send Error:", apiError);
+        console.error("[mail] Gmail API Send Error details:", {
+            message: apiError.message,
+            code: apiError.code,
+            errors: apiError.errors
+        });
         throw apiError;
     }
 }

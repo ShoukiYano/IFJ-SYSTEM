@@ -149,6 +149,36 @@ export default function SettingsPage() {
           )}
         </div>
 
+        {/* Diagnostic Section */}
+        {googleAccount && (
+          <div className="mt-6 pt-6 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <p className="text-xs font-bold text-slate-500 uppercase">接続テスト</p>
+              <p className="text-[10px] text-slate-400">現在の認証情報でGmail APIが正常に動作するか確認します。</p>
+            </div>
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  const res = await fetch("/api/auth/google/test", { method: "POST" });
+                  const data = await res.json();
+                  if (data.success) {
+                    alert(`接続成功！\n送信可能なアドレス: ${data.email}\n現在、Gmail経由の送信が可能です。`);
+                  } else {
+                    alert(`接続エラー: ${data.error}\n再度連携をお試しください。`);
+                  }
+                } catch (e) {
+                  alert("通信エラーが発生しました");
+                }
+              }}
+              className="px-4 py-2 bg-slate-100 text-slate-600 text-xs font-bold rounded-xl hover:bg-slate-200 transition-colors flex items-center gap-2"
+            >
+              <CheckCircle2 size={14} className="text-emerald-500" />
+              接続を検証する
+            </button>
+          </div>
+        )}
+
       </section>
 
       <form onSubmit={handleSubmit} className="space-y-8">
