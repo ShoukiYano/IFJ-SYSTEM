@@ -134,15 +134,24 @@ export async function sendMail(options: SendMailOptions) {
     }
 
     if (tenantId) {
-        try {
-            const result = await sendGmailOAuth2(options, tenantId);
-            // console.log("[mail] Email sent successfully via Google OAuth2");
-            return { success: true, data: result };
-        } catch (error) {
-            console.warn(`[mail] Gmail OAuth2 failed for tenant ${tenantId}. Falling back:`, error);
+        const token = await (prisma as any).googleOAuthToken.findUnique({
+            where: { tenantId }
+        });
+
+        if (token) {
+            try {
+                const result = await sendGmailOAuth2(options, tenantId);
+                return { success: true, data: result };
+            } catch (error: any) {
+                console.error(`[mail] Gmail OAuth2 failed for tenant ${tenantId}:`, error);
+                // Gmailが連携されているのに失敗した場合は、フォールバックせずにエラーを返す
+                // これにより、Resendの制限などの無関係なエラーで混乱するのを防ぐ
+                return { 
+                    success: false, 
+                    error: `Gmailでの送信に失敗しました: ${error.message || "不明なエラー"}\n再度設定画面で連携をお試しください。` 
+                };
+            }
         }
-    } else {
-        // console.log("[mail] No tenantId found, skipping Gmail OAuth2");
     }
 
     // SMTP Fallback (Legacy / App Password)
