@@ -32,10 +32,14 @@ export function SendInvoiceEmailModal({ isOpen, onClose, invoice }: Props) {
         if (isOpen) {
             fetchTemplates();
             fetchCompany();
-            setEmailData(prev => ({ ...prev, to: invoice.client.email || "" }));
+            setEmailData(prev => ({ 
+                ...prev, 
+                to: invoice.client.email || "",
+                cc: company?.defaultCc || prev.cc 
+            }));
             setSent(false);
         }
-    }, [isOpen, invoice]);
+    }, [isOpen, invoice, company]);
 
     const fetchTemplates = async () => {
         setLoading(true);

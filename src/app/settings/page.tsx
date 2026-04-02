@@ -148,6 +148,28 @@ export default function SettingsPage() {
             </button>
           )}
         </div>
+
+        {/* CC設定の追加 */}
+        <div className="mt-6 pt-6 border-t border-slate-100">
+          <label className="text-xs font-bold text-slate-700 uppercase block mb-2">請求書メール送信時のデフォルトCC</label>
+          <div className="flex gap-4 items-center">
+            <div className="relative flex-1">
+              <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+                <Mail size={16} />
+              </div>
+              <input
+                type="text"
+                placeholder="例）cc@example.com, manager@example.com"
+                className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20 text-sm"
+                value={formData.defaultCc || ""}
+                onChange={e => setFormData({ ...formData, defaultCc: e.target.value })}
+              />
+            </div>
+            <p className="text-[10px] text-slate-400 flex-1 leading-tight">
+              ここに設定したアドレスは、請求書送信画面のCC欄に初期値として自動設定されます。複数の場合はカンマ区切りで入力してください。
+            </p>
+          </div>
+        </div>
       </section>
 
       <form onSubmit={handleSubmit} className="space-y-8">

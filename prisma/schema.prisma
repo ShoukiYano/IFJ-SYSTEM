@@ -55,6 +55,7 @@ model Tenant {
   bankAccountName    String?
   logoUrl            String?
   stampUrl           String?
+  defaultCc          String?
   
   // 機能フラグ
   hasInvoiceFeature    Boolean   @default(true)
