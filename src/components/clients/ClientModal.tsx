@@ -21,6 +21,7 @@ export default function ClientModal({ isOpen, onClose, onSuccess, client }: Clie
   const [formData, setFormData] = useState({
     name: "",
     email: "",
+    ccEmail: "",
     tel: "",
     address: "",
     department: "",
@@ -48,6 +49,7 @@ export default function ClientModal({ isOpen, onClose, onSuccess, client }: Clie
       setFormData({
         name: client.name || "",
         email: client.email || "",
+        ccEmail: client.ccEmail || "",
         tel: client.tel || "",
         address: client.address || "",
         department: client.department || "",
@@ -64,6 +66,7 @@ export default function ClientModal({ isOpen, onClose, onSuccess, client }: Clie
       setFormData({
         name: "",
         email: "",
+        ccEmail: "",
         tel: "",
         address: "",
         department: "",
@@ -308,12 +311,22 @@ export default function ClientModal({ isOpen, onClose, onSuccess, client }: Clie
               </div>
 
               <div>
-                <label className="text-xs font-bold text-slate-500 uppercase mb-1.5 block">メールアドレス</label>
+                <label className="text-xs font-bold text-slate-500 uppercase mb-1.5 block">メールアドレス (宛先)</label>
                 <input 
                   type="email"
                   className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none"
                   value={formData.email}
                   onChange={e => setFormData({ ...formData, email: e.target.value })}
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-500 uppercase mb-1.5 block">CCメールアドレス (自動設定用)</label>
+                <input 
+                  type="email"
+                  className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none"
+                  value={formData.ccEmail}
+                  onChange={e => setFormData({ ...formData, ccEmail: e.target.value })}
                 />
               </div>
 

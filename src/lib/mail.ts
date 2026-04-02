@@ -194,7 +194,7 @@ export async function sendMail(options: SendMailOptions) {
                 subject: options.subject,
                 text: options.body,
                 replyTo: options.replyTo,
-                cc: Array.isArray(options.cc) ? options.cc.join(", ") : options.cc,
+                cc: options.cc ? (Array.isArray(options.cc) ? options.cc.join(", ") : options.cc) : undefined,
                 attachments: resendAttachments,
             });
 

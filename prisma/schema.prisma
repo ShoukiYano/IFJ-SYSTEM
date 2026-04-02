@@ -55,7 +55,6 @@ model Tenant {
   bankAccountName    String?
   logoUrl            String?
   stampUrl           String?
-  defaultCc          String?
   
   // 機能フラグ
   hasInvoiceFeature    Boolean   @default(true)
@@ -150,6 +149,7 @@ model Client {
   address            String?
   tel                String?
   email              String?
+  ccEmail            String?
   paymentTerms       String?
   closingDay         Int?      @default(31) // 締め日 (1-31, 31は月末)
   paymentMonthOffset Int?      @default(1)  // 支払月 (0:当月, 1:翌月, 2:翌々月)

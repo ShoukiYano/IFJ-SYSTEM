@@ -19,7 +19,6 @@ const tenantSchema = z.object({
   bankAccountName: z.string().nullable().optional(),
   logoUrl: z.string().nullable().optional(),
   stampUrl: z.string().nullable().optional(),
-  defaultCc: z.string().nullable().optional(),
 });
 
 export async function GET() {

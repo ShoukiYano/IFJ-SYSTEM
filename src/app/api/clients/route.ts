@@ -14,6 +14,7 @@ const clientSchema = z.object({
   address: z.string().optional(),
   tel: z.string().optional(),
   email: z.string().email("無効なメール形式です").optional().or(z.literal("")),
+  ccEmail: z.string().email("無効なメール形式です").optional().or(z.literal("")),
   closingDay: z.number().min(1).max(31).default(31),
   paymentMonthOffset: z.number().min(0).max(2).default(1),
   paymentDay: z.number().min(1).max(31).default(31),

@@ -35,11 +35,11 @@ export function SendInvoiceEmailModal({ isOpen, onClose, invoice }: Props) {
             setEmailData(prev => ({ 
                 ...prev, 
                 to: invoice.client.email || "",
-                cc: company?.defaultCc || prev.cc 
+                cc: invoice.client.ccEmail || prev.cc 
             }));
             setSent(false);
         }
-    }, [isOpen, invoice, company]);
+    }, [isOpen, invoice]);
 
     const fetchTemplates = async () => {
         setLoading(true);
