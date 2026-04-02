@@ -38,6 +38,10 @@ export async function POST() {
         const oauth2 = google.oauth2({ version: "v2", auth: oauth2Client });
         const userInfo = await oauth2.userinfo.get();
 
+        // Gmail API そのものが有効かどうかもチェック
+        const gmail = google.gmail({ version: "v1", auth: oauth2Client });
+        await gmail.users.labels.list({ userId: "me" });
+
         return NextResponse.json({ 
             success: true, 
             email: userInfo.data.email 
