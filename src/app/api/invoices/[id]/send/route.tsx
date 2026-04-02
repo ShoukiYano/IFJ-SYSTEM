@@ -16,7 +16,7 @@ export async function POST(
             return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
         }
 
-        const { subject, body, to, signature } = await req.json();
+        const { subject, body, to, cc, signature } = await req.json();
 
         if (!to || !subject || !body) {
             return NextResponse.json({ error: "宛先、件名、本文は必須です" }, { status: 400 });
@@ -80,6 +80,7 @@ URL: ${downloadUrl}
         // メール送信
         const result = await sendMail({
             to,
+            cc,
             subject,
             body: updatedBody,
             fromName: tenant?.name || "請求書管理システム",

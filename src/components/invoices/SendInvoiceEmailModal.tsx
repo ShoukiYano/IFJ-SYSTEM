@@ -23,6 +23,7 @@ export function SendInvoiceEmailModal({ isOpen, onClose, invoice }: Props) {
 
     const [emailData, setEmailData] = useState({
         to: "",
+        cc: "",
         subject: "",
         body: "",
     });
@@ -183,6 +184,16 @@ export function SendInvoiceEmailModal({ isOpen, onClose, invoice }: Props) {
                                         onChange={e => setEmailData({ ...emailData, to: e.target.value })}
                                         className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-indigo-500/10 outline-none transition"
                                         placeholder="example@client.com"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">CCメールアドレス（複数ある場合はカンマ区切り）</label>
+                                    <input
+                                        type="text"
+                                        value={emailData.cc}
+                                        onChange={e => setEmailData({ ...emailData, cc: e.target.value })}
+                                        className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-indigo-500/10 outline-none transition"
+                                        placeholder="cc@example.com, worker@example.com"
                                     />
                                 </div>
                                 <div>

@@ -13,6 +13,7 @@ export type SendMailOptions = {
     body: string;
     fromName?: string;
     replyTo?: string;
+    cc?: string | string[];
     tenantId?: string; // Explicitly pass tenantId if known
     attachments?: {
         filename: string;
@@ -59,6 +60,7 @@ async function sendGmailOAuth2(options: SendMailOptions, tenantId: string) {
     let messageParts = [
         `From: "${fromName}" <${token.email}>`,
         `To: ${to}`,
+        ...(options.cc ? [`Cc: ${Array.isArray(options.cc) ? options.cc.join(", ") : options.cc}`] : []),
         `Subject: =?utf-8?B?${Buffer.from(subject).toString('base64')}?=`,
         'MIME-Version: 1.0',
         `Content-Type: multipart/mixed; boundary="${boundary}"`,
@@ -157,6 +159,7 @@ export async function sendMail(options: SendMailOptions) {
                 subject: options.subject,
                 text: options.body,
                 replyTo: options.replyTo,
+                cc: options.cc,
                 attachments: options.attachments?.map(a => ({
                     filename: a.filename,
                     content: a.content,
@@ -191,6 +194,7 @@ export async function sendMail(options: SendMailOptions) {
                 subject: options.subject,
                 text: options.body,
                 replyTo: options.replyTo,
+                cc: Array.isArray(options.cc) ? options.cc.join(", ") : options.cc,
                 attachments: resendAttachments,
             });
 
