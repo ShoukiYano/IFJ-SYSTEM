@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { z } from "zod";
 import { getTenantContext } from "@/lib/tenantContext";
+import { createAuditLog } from "@/lib/audit";
 
 const clientSchema = z.object({
   name: z.string().min(1, "会社名は必須です"),
@@ -72,6 +73,16 @@ export async function POST(req: Request) {
         tenantId: context.tenantId,
       },
     });
+
+    // 監査ログ
+    await createAuditLog({
+        action: "CLIENT_CREATE",
+        resource: "client",
+        payload: { id: client.id, name: client.name },
+        tenantId: context.tenantId,
+        userId: context.userId
+    });
+
     return NextResponse.json(client);
   } catch (error) {
     if (error instanceof z.ZodError || (error as any).name === 'ZodError') {

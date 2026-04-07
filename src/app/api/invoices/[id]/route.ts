@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { z } from "zod";
 import { getTenantContext } from "@/lib/tenantContext";
+import { createAuditLog } from "@/lib/audit";
 
 const invoiceItemSchema = z.object({
   description: z.string().min(1),
@@ -134,6 +135,20 @@ export async function PUT(
         },
         include: { items: true },
       });
+    });
+
+    // 監査ログ
+    await createAuditLog({
+        action: "INVOICE_UPDATE",
+        resource: "invoice",
+        payload: { 
+            id: result.id, 
+            invoiceNumber: result.invoiceNumber,
+            totalAmount: result.totalAmount,
+            clientId: result.clientId
+        },
+        tenantId: context.tenantId,
+        userId: context.userId
     });
 
     return NextResponse.json(result);

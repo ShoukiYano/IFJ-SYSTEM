@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { z } from "zod";
 import { getTenantContext } from "@/lib/tenantContext";
+import { createAuditLog } from "@/lib/audit";
 
 const staffUpdateSchema = z.object({
   name: z.string().min(1, "名前は必須です").optional(),
@@ -71,6 +72,15 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
       },
     });
 
+    // 監査ログ
+    await createAuditLog({
+        action: "STAFF_UPDATE",
+        resource: "staff",
+        payload: { id: staff.id, name: staff.name },
+        tenantId: context.tenantId,
+        userId: context.userId
+    });
+
     return NextResponse.json(staff);
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -97,6 +107,15 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
         }
       },
       data: { deletedAt: new Date() },
+    });
+
+    // 監査ログ
+    await createAuditLog({
+        action: "STAFF_DELETE",
+        resource: "staff",
+        payload: { id: params.id },
+        tenantId: context.tenantId,
+        userId: context.userId
     });
 
     return NextResponse.json({ message: "削除しました" });

@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getTenantContext } from "@/lib/tenantContext";
+import { createAuditLog } from "@/lib/audit";
 
 export async function GET() {
     try {
@@ -42,6 +43,14 @@ export async function POST(req: Request) {
                 content,
                 isPublished: isPublished !== undefined ? isPublished : true,
             },
+        });
+
+        // 監査ログ
+        await createAuditLog({
+            action: "ANNOUNCEMENT_CREATE",
+            resource: "announcement",
+            payload: { id: announcement.id, title: announcement.title },
+            userId: context.userId
         });
 
         return NextResponse.json(announcement);

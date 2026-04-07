@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { z } from "zod";
 import { getTenantContext } from "@/lib/tenantContext";
+import { createAuditLog } from "@/lib/audit";
 
 const staffSchema = z.object({
   name: z.string().min(1, "名前は必須です"),
@@ -73,6 +74,15 @@ export async function POST(req: Request) {
       },
     });
 
+    // 監査ログ
+    await createAuditLog({
+        action: "STAFF_CREATE",
+        resource: "staff",
+        payload: { id: staff.id, name: staff.name },
+        tenantId: context.tenantId,
+        userId: context.userId
+    });
+
     return NextResponse.json(staff);
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -104,6 +114,15 @@ export async function DELETE(req: Request) {
       data: {
         deletedAt: new Date(),
       },
+    });
+
+    // 監査ログ
+    await createAuditLog({
+        action: "STAFF_BULK_DELETE",
+        resource: "staff",
+        payload: { ids, count: ids.length },
+        tenantId: context.tenantId,
+        userId: context.userId
     });
 
     return NextResponse.json({ message: `${ids.length}件の要員を削除しました` });

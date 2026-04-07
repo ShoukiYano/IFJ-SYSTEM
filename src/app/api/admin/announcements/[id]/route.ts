@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getTenantContext } from "@/lib/tenantContext";
+import { createAuditLog } from "@/lib/audit";
 
 export async function PATCH(
     req: Request,
@@ -27,6 +28,14 @@ export async function PATCH(
             },
         });
 
+        // 監査ログ
+        await createAuditLog({
+            action: "ANNOUNCEMENT_UPDATE",
+            resource: "announcement",
+            payload: { id: announcement.id, title: announcement.title },
+            userId: context.userId
+        });
+
         return NextResponse.json(announcement);
     } catch (error) {
         console.error("PATCH /api/admin/announcements/[id] error:", error);
@@ -48,6 +57,14 @@ export async function DELETE(
 
         await (prisma as any).announcement.delete({
             where: { id },
+        });
+
+        // 監査ログ
+        await createAuditLog({
+            action: "ANNOUNCEMENT_DELETE",
+            resource: "announcement",
+            payload: { id },
+            userId: context.userId
         });
 
         return NextResponse.json({ success: true });

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getTenantContext } from "@/lib/tenantContext";
+import { createAuditLog } from "@/lib/audit";
 
 export async function DELETE(req: Request) {
     try {
@@ -24,6 +25,16 @@ export async function DELETE(req: Request) {
                     deletedAt: { not: null }, // ゴミ箱にあるもののみ物理削除可能とする安全策
                 },
             });
+
+            // 監査ログ
+            await createAuditLog({
+                action: "INVOICE_PHYSICAL_DELETE",
+                resource: "invoice",
+                payload: { ids, count: result.count },
+                tenantId: context.tenantId,
+                userId: context.userId
+            });
+
             return NextResponse.json({ success: true, count: result.count, type: "physical" });
         }
 
@@ -37,6 +48,15 @@ export async function DELETE(req: Request) {
             data: {
                 deletedAt: new Date(),
             },
+        });
+
+        // 監査ログ
+        await createAuditLog({
+            action: "INVOICE_DELETE",
+            resource: "invoice",
+            payload: { ids, count: result.count },
+            tenantId: context.tenantId,
+            userId: context.userId
         });
 
         return NextResponse.json({ success: true, count: result.count });

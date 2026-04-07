@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getTenantContext } from "@/lib/tenantContext";
+import { createAuditLog } from "@/lib/audit";
 
 export async function GET() {
   try {
@@ -55,6 +56,14 @@ export async function POST(req: Request) {
         hasInvoiceFeature: hasInvoiceFeature ?? true,
         hasAttendanceFeature: hasAttendanceFeature ?? false,
       },
+    });
+
+    // 監査ログ
+    await createAuditLog({
+        action: "TENANT_CREATE",
+        resource: "tenant",
+        payload: { id: tenant.id, name: tenant.name },
+        userId: context.userId
     });
 
     return NextResponse.json(tenant);

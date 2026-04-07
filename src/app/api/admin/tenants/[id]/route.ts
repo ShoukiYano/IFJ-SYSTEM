@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getTenantContext } from "@/lib/tenantContext";
+import { createAuditLog } from "@/lib/audit";
 
 // 通用テナント詳細API
 export async function GET(
@@ -67,6 +68,14 @@ export async function PATCH(
       },
     });
 
+    // 監査ログ
+    await createAuditLog({
+        action: "TENANT_UPDATE",
+        resource: "tenant",
+        payload: { id: tenant.id, name: tenant.name },
+        userId: context.userId
+    });
+
     return NextResponse.json(tenant);
   } catch (error) {
     console.error("PATCH /api/admin/tenants/[id] error:", error);
@@ -87,6 +96,14 @@ export async function DELETE(
     // カスケード削除されることに注意（schemaでCascade設定済み）
     await (prisma as any).tenant.delete({
       where: { id: params.id },
+    });
+
+    // 監査ログ
+    await createAuditLog({
+        action: "TENANT_DELETE",
+        resource: "tenant",
+        payload: { id: params.id },
+        userId: context.userId
     });
 
     return NextResponse.json({ message: "削除しました" });

@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { z } from "zod";
 import { getTenantContext } from "@/lib/tenantContext";
+import { createAuditLog } from "@/lib/audit";
 
 const invoiceItemSchema = z.object({
   description: z.string().min(1),
@@ -149,6 +150,20 @@ export async function POST(req: Request) {
         },
       },
       include: { items: true, client: true },
+    });
+    
+    // 監査ログ
+    await createAuditLog({
+        action: "INVOICE_CREATE",
+        resource: "invoice",
+        payload: { 
+            id: invoice.id, 
+            invoiceNumber: invoice.invoiceNumber,
+            totalAmount: invoice.totalAmount,
+            clientId: invoice.clientId
+        },
+        tenantId: context.tenantId,
+        userId: context.userId
     });
 
     return NextResponse.json(invoice);
