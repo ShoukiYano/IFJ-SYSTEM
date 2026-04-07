@@ -83,30 +83,28 @@ const styles = StyleSheet.create({
   table: {
     display: "flex",
     width: "auto",
-    borderStyle: "solid",
-    borderWidth: 1,
-    borderRightWidth: 0,
-    borderBottomWidth: 0,
     marginTop: 10,
   },
   tableRow: {
     flexDirection: "row",
+    borderLeftWidth: 1,
+    borderLeftColor: "#000",
+    borderLeftStyle: "solid",
   },
   tableColHeader: {
     padding: 5,
     borderStyle: "solid",
-    borderWidth: 1,
-    borderLeftWidth: 0,
-    borderTopWidth: 0,
+    borderBottomWidth: 1,
+    borderRightWidth: 1,
+    borderTopWidth: 1,
     backgroundColor: "#f0f0f0",
     fontWeight: "bold",
   },
   tableCol: {
     padding: 5,
     borderStyle: "solid",
-    borderWidth: 1,
-    borderLeftWidth: 0,
-    borderTopWidth: 0,
+    borderBottomWidth: 1,
+    borderRightWidth: 1,
   },
   col1: { width: "15%" },
   col2: { width: "45%" },
@@ -169,7 +167,7 @@ export const OrderConfirmationDocument = ({ invoice, company }: any) => {
         </View>
 
         <View style={styles.table}>
-          <View style={styles.tableRow}>
+          <View style={styles.tableRow} fixed>
             <View style={[styles.tableColHeader, styles.col1]}><Text>年月</Text></View>
             <View style={[styles.tableColHeader, styles.col2]}><Text>内容 / 品目</Text></View>
             <View style={[styles.tableColHeader, styles.col3]}><Text>数量</Text></View>

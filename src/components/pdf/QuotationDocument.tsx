@@ -78,31 +78,28 @@ const styles = StyleSheet.create({
   table: {
     display: "flex",
     width: "auto",
-    borderStyle: "solid",
-    borderWidth: 1,
-    borderRightWidth: 0,
-    borderBottomWidth: 0,
     marginTop: 10,
   },
   tableRow: {
-    margin: "auto",
     flexDirection: "row",
+    borderLeftWidth: 1,
+    borderLeftColor: "#000",
+    borderLeftStyle: "solid",
   },
   tableColHeader: {
     padding: 5,
     borderStyle: "solid",
-    borderWidth: 1,
-    borderLeftWidth: 0,
-    borderTopWidth: 0,
+    borderBottomWidth: 1,
+    borderRightWidth: 1,
+    borderTopWidth: 1,
     backgroundColor: "#f0f0f0",
     fontWeight: "bold",
   },
   tableCol: {
     padding: 5,
     borderStyle: "solid",
-    borderWidth: 1,
-    borderLeftWidth: 0,
-    borderTopWidth: 0,
+    borderBottomWidth: 1,
+    borderRightWidth: 1,
   },
   col1: { width: "15%" },
   col2: { width: "40%" },
@@ -205,7 +202,7 @@ export const QuotationDocument = ({ quotation, company }: any) => {
         <View style={styles.table}>
           {quotation.templateType === "SES" ? (
             <>
-              <View style={styles.tableRow}>
+              <View style={styles.tableRow} fixed>
                 <View style={[styles.tableColHeader, styles.sesCol1]}><Text>年月</Text></View>
                 <View style={[styles.tableColHeader, styles.sesCol2]}><Text>該当者</Text></View>
                 <View style={[styles.tableColHeader, styles.sesCol3]}><Text>内容 / 品目</Text></View>
@@ -238,7 +235,7 @@ export const QuotationDocument = ({ quotation, company }: any) => {
             </>
           ) : (
             <>
-              <View style={[styles.tableRow]}>
+              <View style={[styles.tableRow]} fixed>
                 <View style={[styles.tableColHeader, styles.col1]}><Text>年月</Text></View>
                 <View style={[styles.tableColHeader, styles.col2]}><Text>内容 / 品目</Text></View>
                 <View style={[styles.tableColHeader, styles.col3]}><Text>数量</Text></View>
