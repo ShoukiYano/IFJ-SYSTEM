@@ -211,7 +211,7 @@ export const QuotationDocument = ({ quotation, company }: any) => {
                 <View style={[styles.tableColHeader, styles.sesCol6]}><Text>金額</Text></View>
               </View>
               {quotation.items.map((item: any, i: number) => (
-                <View key={i} style={styles.tableRow}>
+                <View key={i} style={styles.tableRow} wrap={false}>
                   <View style={[styles.tableCol, styles.sesCol1]}><Text>{item.serviceMonth || ""}</Text></View>
                   <View style={[styles.tableCol, styles.sesCol2]}><Text>{item.personName || ""}</Text></View>
                   <View style={[styles.tableCol, styles.sesCol3]}>
@@ -243,7 +243,7 @@ export const QuotationDocument = ({ quotation, company }: any) => {
                 <View style={[styles.tableColHeader, styles.col5]}><Text>金額</Text></View>
               </View>
               {quotation.items.map((item: any, i: number) => (
-                <View key={i} style={styles.tableRow}>
+                <View key={i} style={styles.tableRow} wrap={false}>
                   <View style={[styles.tableCol, styles.col1]}><Text></Text></View>
                   <View style={[styles.tableCol, styles.col2]}><Text>{item.description}</Text></View>
                   <View style={[styles.tableCol, styles.col3]}><Text>{Number(item.quantity || 0)}{item.unit || ""}</Text></View>
