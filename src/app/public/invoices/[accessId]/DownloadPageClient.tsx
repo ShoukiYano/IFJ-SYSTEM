@@ -56,7 +56,7 @@ export default function DownloadPageClient({
                 <h1 className="text-2xl font-bold text-gray-800 mb-6 text-center">請求書ダウンロード</h1>
                 <p className="text-gray-600 mb-6 text-center text-sm">
                     メールに記載されているパスワードを入力してください。<br />
-                    認証後、パスワード付きZIPをダウンロードできます。
+                    認証後、請求書(PDF)をダウンロードできます。
                 </p>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
