@@ -5,8 +5,9 @@ export const dynamic = "force-dynamic";
 
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     const context = await getTenantContext();
     if (!context || context.role !== "SYSTEM_ADMIN") {
@@ -14,7 +15,7 @@ export async function GET(
     }
 
     const backups = await (prisma as any).tenantBackup.findMany({
-      where: { tenantId: params.id },
+      where: { tenantId: id },
       select: {
         id: true,
         tenantId: true,
@@ -37,8 +38,9 @@ export async function GET(
 
 export async function POST(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     const context = await getTenantContext();
     if (!context || context.role !== "SYSTEM_ADMIN") {
@@ -47,7 +49,7 @@ export async function POST(
 
     // 実際のバックアップ処理（スナップショットを作成）
     const tenant = await (prisma as any).tenant.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         users: { select: { email: true, role: true } },
         clients: true,
@@ -70,8 +72,8 @@ export async function POST(
     }).replace(/\//g, "").replace(/ /g, "_").replace(/:/g, "");
 
     // Supabase StorageはASCII以外のキーを拒否するため、テナント名を除外しIDのみ使用
-    const filename = `backup_${params.id}_${timestamp}.json`;
-    const storagePath = `${params.id}/${filename}`;
+    const filename = `backup_${id}_${timestamp}.json`;
+    const storagePath = `${id}/${filename}`;
 
     // Supabase SDK（管理者モード）を使用してStorageにアップロード
     const { supabaseAdmin } = await import("@/lib/supabaseAdmin");
@@ -89,7 +91,7 @@ export async function POST(
 
     const backup = await (prisma as any).tenantBackup.create({
       data: {
-        tenantId: params.id,
+        tenantId: id,
         filename,
         backupType: "MANUAL",
         data: null, // DBには保存せずnullにする

@@ -20,7 +20,8 @@ const staffUpdateSchema = z.object({
   userId: z.string().optional().nullable(),
 });
 
-export async function GET(req: Request, { params }: { params: { id: string } }) {
+export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const context = await getTenantContext();
     if (!context) {
@@ -30,7 +31,7 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
     const staff = await (prisma as any).staff.findUnique({
       where: {
         tenantId_id: {
-          id: params.id,
+          id: id,
           tenantId: context.tenantId
         }
       },
@@ -48,7 +49,8 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
   }
 }
 
-export async function PATCH(req: Request, { params }: { params: { id: string } }) {
+export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const context = await getTenantContext();
     if (!context) {
@@ -61,7 +63,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     const staff = await (prisma as any).staff.update({
       where: {
         tenantId_id: {
-          id: params.id,
+          id: id,
           tenantId: context.tenantId
         }
       },
@@ -91,7 +93,8 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   }
 }
 
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const context = await getTenantContext();
     if (!context) {
@@ -102,7 +105,7 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
     await (prisma as any).staff.update({
       where: {
         tenantId_id: {
-          id: params.id,
+          id: id,
           tenantId: context.tenantId
         }
       },
@@ -113,7 +116,7 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
     await createAuditLog({
         action: "STAFF_DELETE",
         resource: "staff",
-        payload: { id: params.id },
+        payload: { id: id },
         tenantId: context.tenantId,
         userId: context.userId
     });

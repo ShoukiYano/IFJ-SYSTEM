@@ -8,8 +8,9 @@ import { createAuditLog } from "@/lib/audit";
 // 通用テナント詳細API
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     const context = await getTenantContext();
     if (!context || context.role !== "SYSTEM_ADMIN") {
@@ -17,7 +18,7 @@ export async function GET(
     }
 
     const tenant = await (prisma as any).tenant.findUnique({
-      where: { id: params.id },
+      where: { id: id },
       include: {
         _count: {
           select: {
@@ -42,8 +43,9 @@ export async function GET(
 
 export async function PATCH(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     const context = await getTenantContext();
     if (!context || context.role !== "SYSTEM_ADMIN") {
@@ -54,7 +56,7 @@ export async function PATCH(
     const { name, subdomain, registrationNumber, address, tel, email, isActive, hasInvoiceFeature, hasAttendanceFeature } = body;
 
     const tenant = await (prisma as any).tenant.update({
-      where: { id: params.id },
+      where: { id: id },
       data: {
         name,
         subdomain,
@@ -85,8 +87,9 @@ export async function PATCH(
 
 export async function DELETE(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     const context = await getTenantContext();
     if (!context || context.role !== "SYSTEM_ADMIN") {
@@ -95,14 +98,14 @@ export async function DELETE(
 
     // カスケード削除されることに注意（schemaでCascade設定済み）
     await (prisma as any).tenant.delete({
-      where: { id: params.id },
+      where: { id: id },
     });
 
     // 監査ログ
     await createAuditLog({
         action: "TENANT_DELETE",
         resource: "tenant",
-        payload: { id: params.id },
+        payload: { id: id },
         userId: context.userId
     });
 

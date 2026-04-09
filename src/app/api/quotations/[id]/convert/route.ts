@@ -6,9 +6,10 @@ import { getTenantContext } from "@/lib/tenantContext";
 
 export async function POST(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const context = await getTenantContext();
     if (!context) {
       return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
@@ -17,7 +18,7 @@ export async function POST(
     // 見積書取得 (テナントチェック込み)
     const quotation = await prisma.quotation.findFirst({
       where: {
-        id: params.id,
+        id,
         tenantId: context.tenantId
       },
       include: { items: true },

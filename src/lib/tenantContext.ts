@@ -22,8 +22,9 @@ export async function getTenantContext() {
 
   // Impersonation support for SYSTEM_ADMIN
   if (realRole === "SYSTEM_ADMIN") {
-    const impTenantId = cookies().get("x-impersonate-tenant-id")?.value;
-    const impUserId = cookies().get("x-impersonate-user-id")?.value;
+    const cookieStore = await cookies();
+    const impTenantId = cookieStore.get("x-impersonate-tenant-id")?.value;
+    const impUserId = cookieStore.get("x-impersonate-user-id")?.value;
 
     if (impTenantId) {
       // Fetch tenant features for impersonation

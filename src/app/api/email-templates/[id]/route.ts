@@ -11,9 +11,10 @@ const templateSchema = z.object({
 
 export async function PATCH(
     req: Request,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const { id } = await params;
         const context = await getTenantContext();
         if (!context) {
             return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
@@ -24,7 +25,7 @@ export async function PATCH(
 
         const template = await (prisma as any).emailTemplate.update({
             where: {
-                id: params.id,
+                id,
                 tenantId: context.tenantId,
             },
             data: validated,
@@ -42,9 +43,10 @@ export async function PATCH(
 
 export async function DELETE(
     req: Request,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const { id } = await params;
         const context = await getTenantContext();
         if (!context) {
             return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
@@ -52,7 +54,7 @@ export async function DELETE(
 
         await (prisma as any).emailTemplate.delete({
             where: {
-                id: params.id,
+                id,
                 tenantId: context.tenantId,
             },
         });

@@ -14,9 +14,11 @@ export async function POST(req: Request) {
 
         const { tenantId, userId, action } = await req.json();
 
+        const cookieStore = await cookies();
+
         if (action === "STOP") {
-            cookies().delete("x-impersonate-tenant-id");
-            cookies().delete("x-impersonate-user-id");
+            cookieStore.delete("x-impersonate-tenant-id");
+            cookieStore.delete("x-impersonate-user-id");
             return NextResponse.json({ success: true });
         }
 
@@ -25,9 +27,9 @@ export async function POST(req: Request) {
         }
 
         // Set impersonation cookies (HttpOnly for security)
-        cookies().set("x-impersonate-tenant-id", tenantId, { httpOnly: true, secure: true, sameSite: "lax" });
+        cookieStore.set("x-impersonate-tenant-id", tenantId, { httpOnly: true, secure: true, sameSite: "lax" });
         if (userId) {
-            cookies().set("x-impersonate-user-id", userId, { httpOnly: true, secure: true, sameSite: "lax" });
+            cookieStore.set("x-impersonate-user-id", userId, { httpOnly: true, secure: true, sameSite: "lax" });
         }
 
         return NextResponse.json({ success: true });

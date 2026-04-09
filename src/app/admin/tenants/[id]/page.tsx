@@ -1,11 +1,13 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, use } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Building2, Users, FileText, Save, Trash2, Loader2, CheckCircle2, Plus, Mail, Key, Settings, Database, Download } from "lucide-react";
 import Link from "next/link";
 
-export default function TenantDetailPage({ params }: { params: { id: string } }) {
+export default function TenantDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = use(params);
+  const id = resolvedParams.id;
   const router = useRouter();
   const [tenant, setTenant] = useState<any>(null);
   const [users, setUsers] = useState<any[]>([]);
@@ -29,7 +31,7 @@ export default function TenantDetailPage({ params }: { params: { id: string } })
 
   const fetchTenant = useCallback(async () => {
     try {
-      const res = await fetch(`/api/admin/tenants/${params.id}`);
+      const res = await fetch(`/api/admin/tenants/${id}`);
       if (res.ok) {
         const data = await res.json();
         setTenant(data);
@@ -42,12 +44,12 @@ export default function TenantDetailPage({ params }: { params: { id: string } })
     } finally {
       setLoading(false);
     }
-  }, [params.id, router]);
+  }, [id, router]);
 
   const fetchUsers = useCallback(async () => {
     setUsersLoading(true);
     try {
-      const res = await fetch(`/api/admin/tenants/${params.id}/users`);
+      const res = await fetch(`/api/admin/tenants/${id}/users`);
       if (res.ok) {
         const data = await res.json();
         setUsers(data);
@@ -57,12 +59,12 @@ export default function TenantDetailPage({ params }: { params: { id: string } })
     } finally {
       setUsersLoading(false);
     }
-  }, [params.id]);
+  }, [id]);
 
   const fetchBackups = useCallback(async () => {
     setBackupsLoading(true);
     try {
-      const res = await fetch(`/api/admin/tenants/${params.id}/backups`);
+      const res = await fetch(`/api/admin/tenants/${id}/backups`);
       if (res.ok) {
         const data = await res.json();
         setBackups(data);
@@ -72,7 +74,7 @@ export default function TenantDetailPage({ params }: { params: { id: string } })
     } finally {
       setBackupsLoading(false);
     }
-  }, [params.id]);
+  }, [id]);
 
   useEffect(() => {
     fetchTenant();
@@ -84,7 +86,7 @@ export default function TenantDetailPage({ params }: { params: { id: string } })
     if (!confirm("現在のデータのスナップショットを作成しますか？")) return;
     setCreatingBackup(true);
     try {
-      const res = await fetch(`/api/admin/tenants/${params.id}/backups`, {
+      const res = await fetch(`/api/admin/tenants/${id}/backups`, {
         method: "POST",
       });
       if (res.ok) {
@@ -103,7 +105,7 @@ export default function TenantDetailPage({ params }: { params: { id: string } })
     e.preventDefault();
     setCreatingUser(true);
     try {
-      const res = await fetch(`/api/admin/tenants/${params.id}/users`, {
+      const res = await fetch(`/api/admin/tenants/${id}/users`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newUser),
@@ -127,7 +129,7 @@ export default function TenantDetailPage({ params }: { params: { id: string } })
     setSaving(true);
     setSuccess(false);
     try {
-      const res = await fetch(`/api/admin/tenants/${params.id}`, {
+      const res = await fetch(`/api/admin/tenants/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(tenant),
@@ -150,7 +152,7 @@ export default function TenantDetailPage({ params }: { params: { id: string } })
 
     setDeleting(true);
     try {
-      const res = await fetch(`/api/admin/tenants/${params.id}`, {
+      const res = await fetch(`/api/admin/tenants/${id}`, {
         method: "DELETE",
       });
       if (res.ok) {
@@ -167,7 +169,7 @@ export default function TenantDetailPage({ params }: { params: { id: string } })
 
   const handleDownloadBackup = async (backupId: string, filename: string) => {
     try {
-      const res = await fetch(`/api/admin/tenants/${params.id}/backups/${backupId}`);
+      const res = await fetch(`/api/admin/tenants/${id}/backups/${backupId}`);
       if (!res.ok) throw new Error("ダウンロードに失敗しました");
 
       const blob = await res.blob();

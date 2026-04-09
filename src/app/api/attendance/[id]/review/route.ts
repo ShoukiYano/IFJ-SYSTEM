@@ -4,7 +4,7 @@ import { getTenantContext } from "@/lib/tenantContext";
 
 export async function PATCH(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const context = await getTenantContext();
@@ -13,7 +13,7 @@ export async function PATCH(
     }
 
     const { tenantId, userId } = context;
-    const { id } = params; // AttendanceRecord ID
+    const { id } = await params; // AttendanceRecord ID
     const body = await req.json();
     const { status, note } = body; // APPROVED or REMANDED
 

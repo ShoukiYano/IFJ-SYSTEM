@@ -3,14 +3,15 @@ import { notFound } from "next/navigation";
 import DownloadPageClient from "./DownloadPageClient";
 
 interface Props {
-    params: {
+    params: Promise<{
         accessId: string;
-    };
+    }>;
 }
 
 export default async function PublicInvoiceDownloadPage({ params }: Props) {
+    const { accessId } = await params;
     const invoice = await prisma.invoice.findUnique({
-        where: { accessId: params.accessId },
+        where: { accessId },
         include: {
             tenant: true,
             client: true,

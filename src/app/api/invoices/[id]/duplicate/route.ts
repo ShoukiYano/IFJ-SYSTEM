@@ -6,7 +6,7 @@ import { getTenantContext } from "@/lib/tenantContext";
 
 export async function POST(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const context = await getTenantContext();
@@ -14,7 +14,7 @@ export async function POST(
       return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
     }
 
-    const id = params.id;
+    const { id } = await params;
 
     // Ensure ownership before duplicating
     const original = await prisma.invoice.findFirst({

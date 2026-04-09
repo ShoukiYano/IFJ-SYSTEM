@@ -1,12 +1,14 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, use } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Lock, Mail, Loader2, AlertCircle, Building2 } from "lucide-react";
 import Image from "next/image";
 
-export default function TenantLoginPage({ params }: { params: { subdomain: string } }) {
+export default function TenantLoginPage({ params }: { params: Promise<{ subdomain: string }> }) {
+  const resolvedParams = use(params);
+  const subdomain = resolvedParams.subdomain;
   const [tenant, setTenant] = useState<any>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -19,7 +21,7 @@ export default function TenantLoginPage({ params }: { params: { subdomain: strin
     // サブドメインからテナント情報を取得（簡易的な識別）
     const fetchTenantBySubdomain = async () => {
       try {
-        const res = await fetch(`/api/tenants/${params.subdomain}`);
+        const res = await fetch(`/api/tenants/${subdomain}`);
         if (res.ok) {
           const found = await res.json();
           setTenant(found);
@@ -33,7 +35,7 @@ export default function TenantLoginPage({ params }: { params: { subdomain: strin
       }
     };
     fetchTenantBySubdomain();
-  }, [params.subdomain]);
+  }, [subdomain]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,7 +46,7 @@ export default function TenantLoginPage({ params }: { params: { subdomain: strin
       const res = await signIn("credentials", {
         email,
         password,
-        subdomain: params.subdomain,
+        subdomain: subdomain,
         redirect: false,
       });
 

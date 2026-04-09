@@ -22,8 +22,9 @@ const clientSchema = z.object({
 
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     const context = await getTenantContext();
     if (!context) {
@@ -33,7 +34,7 @@ export async function GET(
     const client = await prisma.client.findUnique({
       where: { 
         tenantId_id: {
-          id: params.id,
+          id: id,
           tenantId: context.tenantId 
         }
       },
@@ -52,15 +53,15 @@ export async function GET(
 
 export async function PATCH(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     const context = await getTenantContext();
     if (!context) {
       return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
     }
 
-    const id = params.id;
     const body = await req.json();
     const validated = clientSchema.parse(body);
 
@@ -95,15 +96,15 @@ export async function PATCH(
 
 export async function DELETE(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     const context = await getTenantContext();
     if (!context) {
       return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
     }
 
-    const id = params.id;
     
     await prisma.client.update({
       where: { 

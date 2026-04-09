@@ -6,16 +6,11 @@ export const dynamic = "force-dynamic";
 
 export async function POST(
     req: Request,
-    { params }: { params: { id: string; backupId: string } }
+    { params }: { params: Promise<{ id: string; backupId: string }> }
 ) {
     try {
+        const { id: tenantId, backupId } = await params;
         const context = await getTenantContext();
-        if (!context || context.role !== "SYSTEM_ADMIN") {
-            return NextResponse.json({ error: "権限がありません" }, { status: 403 });
-        }
-
-        const tenantId = params.id;
-        const backupId = params.backupId;
 
         // 1. バックアップレコードの取得
         const backup = await (prisma as any).tenantBackup.findFirst({

@@ -36,8 +36,9 @@ const invoiceSchema = z.object({
 
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     const context = await getTenantContext();
     if (!context) {
@@ -47,7 +48,7 @@ export async function GET(
     const invoice = await prisma.invoice.findUnique({
       where: {
         tenantId_id: {
-          id: params.id,
+          id: id,
           tenantId: context.tenantId
         }
       },
@@ -73,8 +74,9 @@ export async function GET(
 
 export async function PUT(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     const context = await getTenantContext();
     if (!context) {
@@ -91,7 +93,7 @@ export async function PUT(
     // Check ownership before updating
     const existing = await prisma.invoice.findFirst({
       where: {
-        id: params.id,
+        id: id,
         tenantId: context.tenantId
       }
     });
@@ -103,14 +105,14 @@ export async function PUT(
     const result = await prisma.$transaction(async (tx) => {
       // Delete existing items
       await tx.invoiceItem.deleteMany({
-        where: { invoiceId: params.id }
+        where: { invoiceId: id }
       });
 
       // Update invoice
       return tx.invoice.update({
         where: {
           tenantId_id: {
-            id: params.id,
+            id: id,
             tenantId: context.tenantId
           }
         },

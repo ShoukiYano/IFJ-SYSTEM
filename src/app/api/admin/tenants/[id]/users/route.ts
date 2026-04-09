@@ -8,16 +8,17 @@ import bcrypt from "bcryptjs";
 // テナント所属ユーザー管理API
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const context = await getTenantContext();
     if (!context || context.role !== "SYSTEM_ADMIN") {
       return NextResponse.json({ error: "権限がありません" }, { status: 403 });
     }
 
     const users = await (prisma as any).user.findMany({
-      where: { tenantId: params.id },
+      where: { tenantId: id },
       select: {
         id: true,
         name: true,
@@ -36,9 +37,10 @@ export async function GET(
 
 export async function POST(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const context = await getTenantContext();
     if (!context || context.role !== "SYSTEM_ADMIN") {
       return NextResponse.json({ error: "権限がありません" }, { status: 403 });
@@ -59,7 +61,7 @@ export async function POST(
         name,
         password: hashedPassword,
         role: role || "TENANT_ADMIN",
-        tenantId: params.id,
+        tenantId: id,
       },
     });
 

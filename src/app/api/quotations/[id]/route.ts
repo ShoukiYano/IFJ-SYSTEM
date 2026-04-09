@@ -34,8 +34,9 @@ const quotationSchema = z.object({
 
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     const context = await getTenantContext();
     if (!context) {
@@ -45,7 +46,7 @@ export async function GET(
     const quotation = await prisma.quotation.findUnique({
       where: { 
         tenantId_id: {
-          id: params.id,
+          id: id,
           tenantId: context.tenantId 
         }
       },
@@ -70,8 +71,9 @@ export async function GET(
 
 export async function PATCH(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     const context = await getTenantContext();
     if (!context) {
@@ -88,7 +90,7 @@ export async function PATCH(
     // Check ownership
     const existing = await prisma.quotation.findFirst({
       where: { 
-        id: params.id,
+        id: id,
         tenantId: context.tenantId 
       }
     });
@@ -100,14 +102,14 @@ export async function PATCH(
     const result = await prisma.$transaction(async (tx) => {
       // Delete existing items
       await tx.quotationItem.deleteMany({
-        where: { quotationId: params.id }
+        where: { quotationId: id }
       });
 
       // Update quotation
       return tx.quotation.update({
         where: { 
           tenantId_id: {
-            id: params.id,
+            id: id,
             tenantId: context.tenantId 
           }
         },

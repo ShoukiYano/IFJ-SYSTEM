@@ -162,7 +162,7 @@ function StatCard({ icon, title, value, color }: any) {
     return (
         <div className={`p-6 rounded-[32px] border ${colors[color]} shadow-sm space-y-4`}>
             <div className="p-3 bg-white w-fit rounded-2xl shadow-sm">
-                {React.cloneElement(icon as React.ReactElement, { size: 20 })}
+                {React.isValidElement(icon) ? React.cloneElement(icon as React.ReactElement<any>, { size: 20 }) : icon}
             </div>
             <div>
                 <p className="text-xs font-black uppercase tracking-widest opacity-60">{title}</p>

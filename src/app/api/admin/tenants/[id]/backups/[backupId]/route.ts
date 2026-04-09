@@ -6,9 +6,10 @@ export const dynamic = "force-dynamic";
 
 export async function GET(
     req: Request,
-    { params }: { params: { id: string; backupId: string } }
+    { params }: { params: Promise<{ id: string; backupId: string }> }
 ) {
     try {
+        const { id, backupId } = await params;
         const context = await getTenantContext();
         if (!context || context.role !== "SYSTEM_ADMIN") {
             return NextResponse.json({ error: "権限がありません" }, { status: 403 });
@@ -16,8 +17,8 @@ export async function GET(
 
         const backup = await (prisma as any).tenantBackup.findFirst({
             where: {
-                id: params.backupId,
-                tenantId: params.id
+                id: backupId,
+                tenantId: id
             },
         });
 
@@ -65,9 +66,10 @@ export async function GET(
 
 export async function DELETE(
     req: Request,
-    { params }: { params: { id: string; backupId: string } }
+    { params }: { params: Promise<{ id: string; backupId: string }> }
 ) {
     try {
+        const { id, backupId } = await params;
         const context = await getTenantContext();
         if (!context || context.role !== "SYSTEM_ADMIN") {
             return NextResponse.json({ error: "権限がありません" }, { status: 403 });
@@ -75,8 +77,8 @@ export async function DELETE(
 
         const backup = await (prisma as any).tenantBackup.findFirst({
             where: {
-                id: params.backupId,
-                tenantId: params.id
+                id: backupId,
+                tenantId: id
             },
         });
 

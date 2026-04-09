@@ -13,16 +13,15 @@ const assigneeUpdateSchema = z.object({
 
 export async function PUT(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const context = await getTenantContext();
     if (!context) {
       return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
     }
 
-    const id = params.id;
-    
     // Check ownership
     const existing = await prisma.assignee.findFirst({
       where: { 
@@ -59,15 +58,14 @@ export async function PUT(
 
 export async function DELETE(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const context = await getTenantContext();
     if (!context) {
       return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
     }
-
-    const id = params.id;
 
     // Check ownership
     const existing = await prisma.assignee.findFirst({

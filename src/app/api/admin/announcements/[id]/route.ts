@@ -7,15 +7,15 @@ import { createAuditLog } from "@/lib/audit";
 
 export async function PATCH(
     req: Request,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const { id } = await params;
         const context = await getTenantContext();
         if (!context || (context.role !== "SYSTEM_ADMIN" && (context as any).originalRole !== "SYSTEM_ADMIN")) {
             return NextResponse.json({ error: "権限がありません" }, { status: 403 });
         }
 
-        const { id } = params;
         const body = await req.json();
         const { title, content, isPublished } = body;
 
@@ -45,15 +45,14 @@ export async function PATCH(
 
 export async function DELETE(
     req: Request,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const { id } = await params;
         const context = await getTenantContext();
         if (!context || (context.role !== "SYSTEM_ADMIN" && (context as any).originalRole !== "SYSTEM_ADMIN")) {
             return NextResponse.json({ error: "権限がありません" }, { status: 403 });
         }
-
-        const { id } = params;
 
         await (prisma as any).announcement.delete({
             where: { id },
