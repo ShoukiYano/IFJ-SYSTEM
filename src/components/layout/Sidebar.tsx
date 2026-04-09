@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { LayoutDashboard, FileText, Users, Settings, PlusCircle, HelpCircle, LogOut, Book, Building2, X, Bell, Megaphone, HardDrive, History, FileCheck, ChevronDown, ChevronRight, Briefcase } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -53,7 +53,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
   const role = (session?.user as any)?.role;
   const isTenantAdmin = role === "TENANT_ADMIN" || (isImpersonating && role === "SYSTEM_ADMIN");
 
-  const menuGroups = [
+  const menuGroups = useMemo(() => [
     {
       id: "main",
       label: "メイン",
@@ -96,7 +96,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
         { label: "システム設定", icon: Settings, href: "/settings" },
       ]
     }
-  ];
+  ], [isTenantAdmin]);
 
   // 初期ロード時、現在のアクティブな項目が含まれるグループを展開する
   useEffect(() => {
@@ -130,14 +130,14 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
     });
   };
 
-  const adminItems = [
+  const adminItems = useMemo(() => [
     { label: "システム管理", icon: LayoutDashboard, href: "/admin/dashboard" },
     { label: "テナント管理", icon: Building2, href: "/admin/tenants" },
     { label: "お知らせ管理", icon: Megaphone, href: "/admin/announcements" },
     { label: "バックアップ管理", icon: HardDrive, href: "/admin/backups" },
     { label: "システム監査ログ", icon: History, href: "/admin/audit-logs" },
     { label: "プロフィール設定", icon: Settings, href: "/admin/profile" },
-  ];
+  ], []);
 
 
   // 代理ログイン中はテナントメニューを表示、それ以外は role で判定
