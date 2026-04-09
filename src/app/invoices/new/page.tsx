@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Plus, Trash2, Save, FileText, ChevronLeft, Upload } from "lucide-react";
+import Link from "next/link";
 import { formatCurrency } from "@/lib/utils";
 import { calculateDueDate, isHolidayOrWeekend, checkServiceMonthMismatch } from "@/lib/dateUtils";
 import { AlertTriangle, Info, Calendar as CalendarIcon, Loader2, Building2 } from "lucide-react";
@@ -414,9 +415,9 @@ export default function NewInvoicePage() {
       <div className="max-w-5xl mx-auto">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8 sticky top-0 bg-slate-50/80 backdrop-blur-md z-30 py-2 -mx-4 px-4 sm:static sm:bg-transparent sm:backdrop-blur-none sm:py-0 sm:mx-0 sm:px-0">
           <div className="flex items-center gap-3">
-            <a href="/" className="p-2 hover:bg-slate-200 rounded-full transition-colors">
+            <Link href="/" className="p-2 hover:bg-slate-200 rounded-full transition-colors">
               <ChevronLeft size={24} />
-            </a>
+            </Link>
             <h1 className="text-xl sm:text-3xl font-black text-slate-900">請求書作成</h1>
           </div>
           <div className="hidden sm:flex gap-3">

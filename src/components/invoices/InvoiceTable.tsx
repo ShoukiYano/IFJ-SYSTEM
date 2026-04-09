@@ -97,12 +97,12 @@ export const InvoiceTable = ({
                   </div>
                 </td>
                 <td className="px-6 py-4 text-sm text-slate-600 hidden lg:table-cell">
-                  {format(new Date(invoice.issueDate), "yyyy/MM/dd")}
+                  {invoice.issueDate ? format(new Date(invoice.issueDate), "yyyy/MM/dd") : "-"}
                 </td>
                 <td className="px-6 py-4 text-sm font-bold text-right tabular-nums">
                   {formatCurrency(Number(invoice.totalAmount))}
                 </td>
-                <td className="px-6 py-4 text-sm text-slate-900 font-medium">{invoice.client.name}</td>
+                <td className="px-6 py-4 text-sm text-slate-900 font-medium">{invoice.client?.name || "取引先不明"}</td>
                 <td className="px-6 py-4 hidden sm:table-cell">
                   {showDeleted ? (
                     <span className="px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-red-100 text-red-800">
@@ -169,7 +169,7 @@ export const InvoiceTable = ({
                       <span className="px-1.5 py-0.5 bg-blue-100 text-blue-700 text-[10px] rounded font-bold uppercase tracking-wider">SES</span>
                     )}
                   </div>
-                  <div className="text-xs text-slate-500 truncate">{invoice.client.name}</div>
+                  <div className="text-xs text-slate-500 truncate">{invoice.client?.name || "取引先不明"}</div>
                 </div>
               </div>
               <span className={`shrink-0 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
@@ -183,7 +183,9 @@ export const InvoiceTable = ({
             </div>
             
             <div className="flex justify-between items-center bg-slate-50 p-2 rounded-lg">
-              <div className="text-[10px] text-slate-500 uppercase font-bold">{format(new Date(invoice.issueDate), "yyyy/MM/dd")}</div>
+              <div className="text-[10px] text-slate-500 uppercase font-bold">
+                {invoice.issueDate ? format(new Date(invoice.issueDate), "yyyy/MM/dd") : "-"}
+              </div>
               <div className="text-sm font-black text-slate-900 tabular-nums">{formatCurrency(Number(invoice.totalAmount))}</div>
             </div>
 

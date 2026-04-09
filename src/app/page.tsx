@@ -10,6 +10,7 @@ import { StatusBoard } from "@/components/attendance/StatusBoard";
 
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function DashboardPage() {
   const { data: session, status } = useSession();
@@ -44,6 +45,11 @@ export default function DashboardPage() {
   // 絞り込みフィルタ
   const [filterMonth, setFilterMonth] = useState("");
   const [filterClientId, setFilterClientId] = useState("");
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const fetchInvoices = async (month: string, clientId: string) => {
     const params = new URLSearchParams();
@@ -140,7 +146,7 @@ export default function DashboardPage() {
     fetchContracts();
     fetchClients();
     fetchAttendance();
-  }, [status, session]);
+  }, [status, session, hasAttendanceFeature]);
 
   // フィルタ変更時に再取得
   useEffect(() => {
@@ -149,7 +155,7 @@ export default function DashboardPage() {
       setSelectedIds([]);
       fetchInvoices(filterMonth, filterClientId);
     }
-  }, [filterMonth, filterClientId]);
+  }, [filterMonth, filterClientId, session?.user]);
 
   const handleBulkGenerate = async () => {
     const targetMonth = prompt("対象月を半角数字で入力してください (例: 2024-09)", new Date().toISOString().slice(0, 7));
@@ -204,9 +210,9 @@ export default function DashboardPage() {
           >
             <Calendar size={18} /> 月始一括作成
           </button>
-          <a href="/invoices/new" className="flex-1 sm:flex-none justify-center bg-blue-600 text-white px-4 sm:px-6 py-2 rounded-lg font-bold flex items-center gap-2 hover:bg-blue-700 transition-all shadow-md text-sm">
+          <Link href="/invoices/new" className="flex-1 sm:flex-none justify-center bg-blue-600 text-white px-4 sm:px-6 py-2 rounded-lg font-bold flex items-center gap-2 hover:bg-blue-700 transition-all shadow-md text-sm">
             <Plus size={18} /> 新規作成
-          </a>
+          </Link>
         </div>
       </div>
 
@@ -318,43 +324,47 @@ export default function DashboardPage() {
               </div>
             </div>
           </div>
-          <div className="h-[280px] min-h-[280px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={salesData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.1} />
-                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis
-                  dataKey="name"
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fontSize: 12, fill: '#64748b' }}
-                  dy={10}
-                />
-                <YAxis
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fontSize: 12, fill: '#64748b' }}
-                  tickFormatter={(val) => `¥${(val / 10000).toFixed(0)}万`}
-                />
-                <Tooltip
-                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                  formatter={(val: any) => [`${Number(val || 0).toLocaleString()}円`, "売上"]}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="sales"
-                  stroke="#3b82f6"
-                  strokeWidth={3}
-                  fillOpacity={1}
-                  fill="url(#colorSales)"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
+          <div className="h-[280px] min-h-[280px] w-full flex items-center justify-center">
+            {mounted ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={salesData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.1} />
+                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                  <XAxis
+                    dataKey="name"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 12, fill: '#64748b' }}
+                    dy={10}
+                  />
+                  <YAxis
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 12, fill: '#64748b' }}
+                    tickFormatter={(val) => `¥${(val / 10000).toFixed(0)}万`}
+                  />
+                  <Tooltip
+                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                    formatter={(val: any) => [`${Number(val || 0).toLocaleString()}円`, "売上"]}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="sales"
+                    stroke="#3b82f6"
+                    strokeWidth={3}
+                    fillOpacity={1}
+                    fill="url(#colorSales)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="animate-pulse bg-slate-50 w-full h-full rounded-2xl" />
+            )}
           </div>
         </div>
 
@@ -398,7 +408,7 @@ export default function DashboardPage() {
                 ))}
               </select>
             </div>
-            <a href="/invoices" className="text-blue-600 text-sm font-bold hover:underline whitespace-nowrap">すべて見る</a>
+            <Link href="/invoices" className="text-blue-600 text-sm font-bold hover:underline whitespace-nowrap">すべて見る</Link>
           </div>
         </div>
         {invoices.length > 0 ? (

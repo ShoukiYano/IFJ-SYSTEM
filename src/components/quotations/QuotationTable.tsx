@@ -108,8 +108,8 @@ const QuotationTable = ({
                   <ExternalLink size={14} className="opacity-0 group-hover:opacity-100 transition-opacity" />
                 </a>
               </td>
-              <td className="px-6 py-4 text-sm font-medium text-slate-700">{q.client.name}</td>
-              <td className="px-6 py-4 text-sm text-slate-500">{format(new Date(q.issueDate), "yyyy/MM/dd")}</td>
+              <td className="px-6 py-4 text-sm font-medium text-slate-700">{q.client?.name || "取引先不明"}</td>
+              <td className="px-6 py-4 text-sm text-slate-500">{q.issueDate ? format(new Date(q.issueDate), "yyyy/MM/dd") : "-"}</td>
               <td className="px-6 py-4 text-sm text-right font-bold tabular-nums text-slate-900">{formatCurrency(Number(q.totalAmount))}</td>
               <td className="px-6 py-4 text-center">
                 <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${getStatusColor(q.status)}`}>

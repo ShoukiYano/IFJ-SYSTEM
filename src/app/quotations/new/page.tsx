@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Plus, Trash2, Save, ChevronLeft, Loader2, Calendar } from "lucide-react";
+import { ChevronLeft, FileText, Loader2, Plus, Trash2, Calendar, Search, Save } from "lucide-react";
+import Link from "next/link";
 import { formatCurrency, calculateTax } from "@/lib/utils";
 
 export default function NewQuotationPage() {
@@ -127,9 +128,9 @@ export default function NewQuotationPage() {
     <div className="max-w-5xl mx-auto p-4 sm:p-8">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
         <div className="flex items-center gap-4">
-          <a href="/quotations" className="p-2 hover:bg-slate-200 rounded-full transition-colors font-bold">
+          <Link href="/quotations" className="p-2 hover:bg-slate-200 rounded-full transition-colors text-slate-400">
             <ChevronLeft size={24} />
-          </a>
+          </Link>
           <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">見積書を新規作成</h1>
         </div>
         <button

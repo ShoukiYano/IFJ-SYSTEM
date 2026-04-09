@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { ChevronLeft, Printer, Download, Eye, Loader2, Edit, Copy, FileText, Mail } from "lucide-react";
+import Link from "next/link";
 import dynamic from "next/dynamic";
 import { formatCurrency } from "@/lib/utils";
 import { SendInvoiceEmailModal } from "@/components/invoices/SendInvoiceEmailModal";
@@ -97,7 +98,7 @@ export default function InvoiceDetailPage() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4 text-slate-500">
         <p className="font-bold text-xl">データの取得に失敗しました。</p>
-        <a href="/" className="text-blue-600 hover:underline">ダッシュボードへ戻る</a>
+        <Link href="/invoices" className="text-blue-600 hover:underline">請求書一覧へ戻る</Link>
       </div>
     );
   }
@@ -108,18 +109,18 @@ export default function InvoiceDetailPage() {
         <div className="flex flex-col gap-4 mb-6 sm:mb-8">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 min-w-0">
-              <a href="/" className="p-2 hover:bg-slate-200 rounded-full transition-colors shrink-0">
+              <Link href="/invoices" className="p-2 hover:bg-slate-200 rounded-full transition-colors shrink-0">
                 <ChevronLeft size={24} />
-              </a>
+              </Link>
               <h1 className="text-xl sm:text-3xl font-black text-slate-900 truncate">{data.invoiceNumber}</h1>
             </div>
             <div className="flex items-center gap-2 sm:hidden">
-              <a
+              <Link
                 href={`/invoices/${params.id}/edit`}
                 className="p-2.5 bg-amber-50 text-amber-700 border border-amber-200 rounded-xl hover:bg-amber-100 transition-colors"
               >
                 <Edit size={20} />
-              </a>
+              </Link>
               <button
                 onClick={() => setIsEmailModalOpen(true)}
                 className="p-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-600/20"

@@ -7,6 +7,7 @@ import { format, isSunday, isSaturday } from "date-fns";
 import { ja } from "date-fns/locale";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function AttendancePage() {
   const [loading, setLoading] = useState(true);
@@ -35,7 +36,7 @@ export default function AttendancePage() {
     init();
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
-  }, []);
+  }, [status, hasAttendanceFeature, router]);
 
   const fetchStatus = async () => {
     try {

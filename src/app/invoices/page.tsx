@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { Plus, Search, Filter, CheckCircle, Clock as ClockIcon, Download, ListChecks, Trash2, Edit, FileText, Copy } from "lucide-react";
+import Link from "next/link";
 import { InvoiceTable } from "@/components/invoices/InvoiceTable";
 import BatchGenerateModal from "@/components/invoices/BatchGenerateModal";
 
@@ -132,9 +133,9 @@ export default function InvoicesPage() {
             <Trash2 size={16} className="sm:size-[18px]" /> {showDeleted ? "戻る" : "ゴミ箱"}
           </button>
           {!showDeleted && (
-            <a href="/invoices/new" className="flex-1 sm:flex-none justify-center bg-blue-600 text-white px-3 sm:px-6 py-2 rounded-lg font-bold flex items-center gap-2 hover:bg-blue-700 transition-all shadow-md text-xs sm:text-sm">
+            <Link href="/invoices/new" className="flex-1 sm:flex-none justify-center bg-blue-600 text-white px-3 sm:px-6 py-2 rounded-lg font-bold flex items-center gap-2 hover:bg-blue-700 transition-all shadow-md text-xs sm:text-sm">
               <Plus size={16} className="sm:size-[18px]" /> 新規作成
-            </a>
+            </Link>
           )}
         </div>
       </div>
@@ -154,12 +155,12 @@ export default function InvoicesPage() {
             </div>
             <div className="flex gap-2 w-full sm:w-auto">
               {!showDeleted && (
-                <button
-                  onClick={() => window.location.href = '/api/export/invoices'}
+                <Link
+                  href="/api/export/invoices"
                   className="flex-1 sm:flex-none justify-center flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors"
                 >
                   <Download size={16} /> CSV
-                </button>
+                </Link>
               )}
               <button
                 onClick={() => setShowFilters(!showFilters)}

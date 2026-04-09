@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { LayoutDashboard, FileText, Users, Settings, PlusCircle, HelpCircle, LogOut, Book, Building2, X, Bell, Megaphone, HardDrive, History, FileCheck, ChevronDown, ChevronRight, Briefcase } from "lucide-react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useSession, signOut } from "next-auth/react";
@@ -106,7 +107,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
     if (activeGroupIds.length > 0) {
       setExpandedGroups(prev => Array.from(new Set([...prev, ...activeGroupIds])));
     }
-  }, [pathname]);
+  }, [pathname, menuGroups]);
 
   const toggleGroup = (groupId: string) => {
     setExpandedGroups(prev =>
@@ -215,7 +216,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
                 {group.id === "main" ? (
                   // ダッシュボードなどをグループヘッダーなしで出したい場合はここ
                   visibleItems.map(item => (
-                    <a
+                    <Link
                       key={item.href}
                       href={item.href}
                       className={cn(
@@ -227,7 +228,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
                     >
                       <item.icon size={20} />
                       {item.label}
-                    </a>
+                    </Link>
                   ))
                 ) : (
                   <>
@@ -247,7 +248,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
                     {isExpanded && (
                       <div className="pl-4 space-y-1 animate-in slide-in-from-top-1 duration-200">
                         {visibleItems.map((item) => (
-                          <a
+                          <Link
                             key={item.href}
                             href={item.href}
                             className={cn(
@@ -259,7 +260,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
                           >
                             <item.icon size={18} />
                             {item.label}
-                          </a>
+                          </Link>
                         ))}
                       </div>
                     )}
@@ -273,7 +274,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
             <div className="pt-4 mt-4 border-t border-slate-800">
               <p className="px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">システム管理</p>
               {adminItems.map((item) => (
-                <a
+                <Link
                   key={item.href}
                   href={item.href}
                   className={cn(
@@ -285,7 +286,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
                 >
                   <item.icon size={20} />
                   {item.label}
-                </a>
+                </Link>
               ))}
             </div>
           )}

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Plus, Search, FileText, Loader2, Filter } from "lucide-react";
+import Link from "next/link";
 import QuotationTable from "@/components/quotations/QuotationTable";
 
 export default function QuotationsPage() {
@@ -59,13 +60,13 @@ export default function QuotationsPage() {
           </h1>
           <p className="text-slate-500 mt-1 text-sm font-medium">作成した見積書の管理と請求書への変換が可能です。</p>
         </div>
-        <a
+        <Link
           href="/quotations/new"
           className="w-full sm:w-auto bg-blue-600 text-white px-6 sm:px-8 py-3.5 rounded-2xl font-black flex items-center justify-center gap-2 hover:bg-blue-700 transition-all shadow-xl hover:-translate-y-1 active:translate-y-0"
         >
           <Plus size={20} strokeWidth={3} />
           新規作成
-        </a>
+        </Link>
       </div>
 
       <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { ChevronLeft, Download, Eye, Loader2, ArrowRightLeft, Edit } from "lucide-react";
+import Link from "next/link";
 import dynamic from "next/dynamic";
 import { formatCurrency } from "@/lib/utils";
 
@@ -85,7 +86,7 @@ export default function QuotationDetailPage() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4 text-slate-500">
         <p className="font-bold text-xl">データの取得に失敗しました。</p>
-        <a href="/quotations" className="text-blue-600 hover:underline">見積書一覧へ戻る</a>
+        <Link href="/quotations" className="text-blue-600 hover:underline">見積書一覧へ戻る</Link>
       </div>
     );
   }
@@ -95,9 +96,9 @@ export default function QuotationDetailPage() {
       <div className="max-w-5xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
-            <a href="/quotations" className="p-2 hover:bg-slate-200 rounded-full transition-colors">
+            <Link href="/quotations" className="p-2 hover:bg-slate-200 rounded-full transition-colors">
               <ChevronLeft size={24} />
-            </a>
+            </Link>
             <h1 className="text-3xl font-black text-slate-900">{data.quotationNumber} の詳細</h1>
           </div>
           <div className="flex items-center gap-3">
@@ -118,12 +119,12 @@ export default function QuotationDetailPage() {
               </button>
             )}
 
-            <a 
+            <Link 
               href={`/quotations/${params.id}/edit`}
               className="px-4 py-2 bg-amber-50 text-amber-700 border border-amber-200 rounded-lg font-bold flex items-center gap-2 hover:bg-amber-100 transition-colors"
             >
               <Edit size={20} /> 編集
-            </a>
+            </Link>
 
             <QuotationPDFDownload quotation={data} company={company} />
           </div>
