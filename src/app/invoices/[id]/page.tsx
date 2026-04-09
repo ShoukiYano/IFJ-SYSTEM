@@ -162,7 +162,7 @@ export default function InvoiceDetailPage() {
               <Copy size={18} /> 複製
             </button>
 
-            <PDFActionButtons invoice={data} company={company} />
+            {data.client && <PDFActionButtons invoice={data} company={company} />}
           </div>
         </div>
 

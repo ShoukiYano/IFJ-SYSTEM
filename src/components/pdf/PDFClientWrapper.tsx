@@ -14,8 +14,12 @@ export interface PDFPreviewProps {
 }
 
 const PDFActionButtons: React.FC<PDFPreviewProps> = ({ invoice, company }) => {
+  if (!invoice || !company || !invoice.client) {
+    return <div className="text-slate-400 text-xs px-4 py-2 bg-slate-100 rounded-lg border border-slate-200">準備中...</div>;
+  }
+
   const issueDate = new Date(invoice.issueDate);
-  const month = issueDate.getMonth() + 1;
+  const month = isNaN(issueDate.getTime()) ? "?" : issueDate.getMonth() + 1;
   const clientName = invoice.client?.name || "Unknown";
 
   return (
@@ -36,7 +40,7 @@ const PDFActionButtons: React.FC<PDFPreviewProps> = ({ invoice, company }) => {
       <PDFDownloadLink
         document={<OrderDocument invoice={invoice} company={company} />}
         fileName={`${month}月度御注文書_${clientName}御中.pdf`}
-        className="text-white px-4 py-2 font-bold flex items-center gap-2 hover.bg-blue-700 transition-all border-r border-blue-500"
+        className="text-white px-4 py-2 font-bold flex items-center gap-2 hover:bg-blue-700 transition-all border-r border-blue-500"
       >
         {((props: any) => (
           <span className="flex items-center gap-2">
