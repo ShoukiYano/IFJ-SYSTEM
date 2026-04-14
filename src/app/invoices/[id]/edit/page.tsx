@@ -883,7 +883,7 @@ export default function EditInvoicePage() {
             <div className="mt-8 sm:mt-12 flex justify-end">
               <div className="w-64 space-y-3">
                 <div className="flex justify-between text-slate-500 text-sm">
-                  <span>小計</span>
+                  <span>内訳 10%対象(税抜)</span>
                   <span className="tabular-nums font-bold">{formatCurrency(subtotal)}</span>
                 </div>
                 <div className="flex justify-between text-slate-500 text-sm">

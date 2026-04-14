@@ -256,7 +256,7 @@ export const InvoiceDocument = ({ invoice, company }: any) => {
 
         <View style={styles.summary}>
           <View style={styles.summaryRow}>
-            <Text>小計</Text>
+            <Text>内訳 10%対象(税抜)</Text>
             <Text>¥{safeFormatNumber(subtotal)}</Text>
           </View>
           <View style={styles.summaryRow}>
